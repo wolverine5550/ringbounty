@@ -40,3 +40,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# PRD
+prd.md
+
+# Task manager
+task_manager.md
+
+# Changelog
+CHANGELOG.md

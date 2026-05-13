@@ -98,6 +98,14 @@ If you wish to just develop locally and not deploy to Vercel, [follow the steps 
 
 > Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
 
+## Developer workflow
+
+Husky installs Git hooks through the `prepare` script after `npm install`.
+
+Before each commit, `.husky/pre-commit` runs `npx lint-staged` against staged JavaScript and TypeScript files, then runs `npm run typecheck` for the full TypeScript project. `lint-staged` currently runs ESLint with `--fix` on staged `*.{js,jsx,ts,tsx}` files.
+
+In an emergency, hooks can be skipped with `HUSKY=0 git commit ...`, but this should be reserved for broken work-in-progress commits and followed by a normal passing commit as soon as possible.
+
 ## Feedback and issues
 
 Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
