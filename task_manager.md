@@ -78,16 +78,16 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 0.3 Linting, TypeScript, and build
 
-- [ ] **0.3.1** Run `npm run lint` and fix baseline issues across existing files.
-- [ ] **0.3.2** Enable `strict` in `tsconfig.json` if not already; resolve new type errors incrementally.
-- [ ] **0.3.3** Add `npm run typecheck` script (`tsc --noEmit`) if desired for CI.
-- [ ] **0.3.4** Run `npm run build`; fix all build-time errors and warnings that block deploy.
-- [ ] **0.3.5** CI: add GitHub Action (or other CI) to run `lint`, `typecheck`, and `test` on PRs — complements Husky; does not replace local pre-commit.
+- [x] **0.3.1** Run `npm run lint` and fix baseline issues across existing files. <!-- done: eslint.config.mjs, package.json, package-lock.json, src/components/theme-switcher.tsx -->
+- [x] **0.3.2** Enable `strict` in `tsconfig.json` if not already; resolve new type errors incrementally. <!-- done: tsconfig.json (already strict) -->
+- [x] **0.3.3** Add `npm run typecheck` script (`tsc --noEmit`) if desired for CI. <!-- done: package.json -->
+- [x] **0.3.4** Run `npm run build`; fix all build-time errors and warnings that block deploy. <!-- done: (verified locally) -->
+- [x] **0.3.5** CI: add GitHub Action (or other CI) to run `lint`, `typecheck`, and `test` on PRs — complements Husky; does not replace local pre-commit. <!-- done: .github/workflows/ci.yml -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 0.4 Vitest and unit-test layout
 

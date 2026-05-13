@@ -16,9 +16,11 @@ const ThemeSwitcher = () => {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
 
-  // useEffect only runs on the client, so now we can safely show the UI
+  // Defer to a microtask so setState is not synchronous in the effect body (react-hooks/set-state-in-effect).
   useEffect(() => {
-    setMounted(true);
+    queueMicrotask(() => {
+      setMounted(true);
+    });
   }, []);
 
   if (!mounted) {

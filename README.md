@@ -143,6 +143,10 @@ Before each commit, `.husky/pre-commit` runs `npx lint-staged` against staged Ja
 
 In an emergency, hooks can be skipped with `HUSKY=0 git commit ...`, but this should be reserved for broken work-in-progress commits and followed by a normal passing commit as soon as possible.
 
+## Continuous integration
+
+GitHub Actions runs on every pull request and on pushes to `main` (see `.github/workflows/ci.yml`). It installs dependencies with `npm ci`, then runs `npm run lint`, `npm run typecheck`, and `npm run test --if-present` (the `test` script is added in §0.4 of the task manager). This complements Husky and does not replace local checks before you commit.
+
 ## Feedback and issues
 
 Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
