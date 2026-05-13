@@ -12,6 +12,9 @@
 
 # testing
 /coverage
+/test-results/
+/playwright-report/
+/blob-report/
 
 # next.js
 /.next/
@@ -43,9 +46,3 @@ next-env.d.ts
 
 # PRD
 prd.md
-
-# Task manager
-task_manager.md
-
-# Changelog
-CHANGELOG.md
