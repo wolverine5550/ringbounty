@@ -202,25 +202,25 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 1.7 `dnc_check_results`
 
-- [ ] **1.7.1** Migration: table per PRD; FKs to `claims` and `claim_subjects`.
-- [ ] **1.7.2** Index `(claim_id)`, `(claim_subject_id)`.
-- [ ] **1.7.3** Nullable boolean/date fields documented for “not yet run” vs “ran and negative”.
+- [x] **1.7.1** Migration: table per PRD; FKs to `claims` and `claim_subjects`. <!-- done: supabase/migrations/20260514180400_dnc_check_results.sql; applied via Supabase MCP -->
+- [x] **1.7.2** Index `(claim_id)`, `(claim_subject_id)`. <!-- done: same migration -->
+- [x] **1.7.3** Nullable boolean/date fields documented for “not yet run” vs “ran and negative”. <!-- done: SQL COMMENT ON COLUMN on outcome + *_checked_at columns (see migration) -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 1.8 `claim_events`
 
-- [ ] **1.8.1** Migration: `event_type`, `key`, `value`, `source`, timestamps per PRD.
-- [ ] **1.8.2** Index `(claim_id, event_type, created_at)` for timeline queries.
-- [ ] **1.8.3** Define TypeScript enums / const maps for `event_type` and `source` strings used by app.
+- [x] **1.8.1** Migration: `event_type`, `key`, `value`, `source`, timestamps per PRD. <!-- done: supabase/migrations/20260514180500_claim_events.sql; applied via Supabase MCP (created_at per PRD) -->
+- [x] **1.8.2** Index `(claim_id, event_type, created_at)` for timeline queries. <!-- done: claim_events_claim_id_event_type_created_at_idx -->
+- [x] **1.8.3** Define TypeScript enums / const maps for `event_type` and `source` strings used by app. <!-- done: src/lib/constants/claimEvent.ts (+ claimEvent.test.ts) -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 1.9 `letters`
 

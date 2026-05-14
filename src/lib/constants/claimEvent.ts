@@ -1,0 +1,51 @@
+/**
+ * Canonical `claim_events.event_type` values used in the PRD and task_manager.
+ * The column is plain `text`; extend this list when new flows persist events.
+ *
+ * @see prd.md section 5 (`claim_events` + example rows)
+ * @see task_manager.md §4.2.1 (`evidence_checklist_ack`)
+ */
+export const CLAIM_EVENT_TYPE_VALUES = [
+  "dnc_check",
+  "spam_db_match",
+  "qualification_answer",
+  "value_calculated",
+  "evidence_checklist_ack",
+] as const;
+
+export type ClaimEventType = (typeof CLAIM_EVENT_TYPE_VALUES)[number];
+
+/**
+ * Canonical `claim_events.source` values from the PRD DDL comment, plus `state_api`
+ * which appears in the PRD example table for state registry results.
+ *
+ * @see prd.md section 5 (`claim_events` DDL and example rows)
+ */
+export const CLAIM_EVENT_SOURCE_VALUES = [
+  "user_input",
+  "ftc_api",
+  "state_api",
+  "nomorobo",
+  "youmail",
+  "opencorporates",
+  "openrouter",
+  "system",
+] as const;
+
+export type ClaimEventSource = (typeof CLAIM_EVENT_SOURCE_VALUES)[number];
+
+/** Narrowing guard before inserting or parsing API payloads into `claim_events`. */
+export function isClaimEventType(value: unknown): value is ClaimEventType {
+  return (
+    typeof value === "string" &&
+    (CLAIM_EVENT_TYPE_VALUES as readonly string[]).includes(value)
+  );
+}
+
+/** Narrowing guard for `claim_events.source`. */
+export function isClaimEventSource(value: unknown): value is ClaimEventSource {
+  return (
+    typeof value === "string" &&
+    (CLAIM_EVENT_SOURCE_VALUES as readonly string[]).includes(value)
+  );
+}
