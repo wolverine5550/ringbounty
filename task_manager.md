@@ -177,28 +177,28 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 1.5 `claims`
 
-- [ ] **1.5.1** Migration: `claims` table per PRD columns + `user_id uuid references public.users(id) on delete cascade` **nullable** for anonymous.
-- [ ] **1.5.2** Add `anonymous_session_id text` (or `uuid`) nullable; unique partial index where `user_id is null` if one active anonymous claim per session is desired.
-- [ ] **1.5.3** Add `status` with `text` + check constraint or Postgres `enum` for: `draft`, `qualified`, `letter_purchased`, `letter_generated`, etc. per PRD.
-- [ ] **1.5.4** Indexes: `(user_id)`, `(violation_type)`, `(status)`, `(anonymous_session_id)` where applicable.
-- [ ] **1.5.5** `updated_at` trigger for `claims` (reuse generic trigger pattern).
+- [x] **1.5.1** Migration: `claims` table per PRD columns + `user_id uuid references public.users(id) on delete cascade` **nullable** for anonymous. <!-- done: supabase/migrations/20260514180200_claims.sql; applied via Supabase MCP -->
+- [x] **1.5.2** Add `anonymous_session_id text` (or `uuid`) nullable; unique partial index where `user_id is null` if one active anonymous claim per session is desired. <!-- done: same migration (partial unique on anonymous_session_id where user_id is null) -->
+- [x] **1.5.3** Add `status` with `text` + check constraint or Postgres `enum` for: `draft`, `qualified`, `letter_purchased`, `letter_generated`, etc. per PRD. <!-- done: claims_status_check incl. referral path statuses from prd.md -->
+- [x] **1.5.4** Indexes: `(user_id)`, `(violation_type)`, `(status)`, `(anonymous_session_id)` where applicable. <!-- done: same migration -->
+- [x] **1.5.5** `updated_at` trigger for `claims` (reuse generic trigger pattern). <!-- done: public.set_updated_at() + trigger claims_set_updated_at -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md (claims / claim_subjects listed under Data API) -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 1.6 `claim_subjects`
 
-- [ ] **1.6.1** Migration: all PRD columns including `metadata jsonb`, `phone_number_normalized`.
-- [ ] **1.6.2** FK `claim_id` on delete cascade from `claims`.
-- [ ] **1.6.3** Index `(claim_id)`, `(phone_number_normalized)` for lookups.
-- [ ] **1.6.4** Document `call_category` allowed values in code constant module (sync with PRD exempt list).
+- [x] **1.6.1** Migration: all PRD columns including `metadata jsonb`, `phone_number_normalized`. <!-- done: supabase/migrations/20260514180300_claim_subjects.sql; applied via Supabase MCP -->
+- [x] **1.6.2** FK `claim_id` on delete cascade from `claims`. <!-- done: same migration -->
+- [x] **1.6.3** Index `(claim_id)`, `(phone_number_normalized)` for lookups. <!-- done: same migration -->
+- [x] **1.6.4** Document `call_category` allowed values in code constant module (sync with PRD exempt list). <!-- done: src/lib/constants/claimSubject.ts (+ claimSubject.test.ts); see prd.md section 6 for exempt screening -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 1.7 `dnc_check_results`
 

@@ -2,6 +2,7 @@
 
 ## 2026-05-14
 
+- Added `public.claims` and `public.claim_subjects` (PRD columns, FKs, partial unique index for anonymous sessions, `public.set_updated_at` trigger on claims, RLS for `authenticated` ownership / parent-claim inheritance, explicit `GRANT`s) via `supabase/migrations/20260514180200_claims.sql` and `20260514180300_claim_subjects.sql`; applied with Supabase MCP. Added `src/lib/constants/claimSubject.ts` (and unit test) for `call_category` values. Marked Phase 1 §1.5 and §1.6 complete in `task_manager.md`; updated `README.md` table inventory.
 - Added `public.violation_types` and `public.users` (FK to `auth.users`, RLS, auth sync trigger, explicit Data API `GRANT`s) via `supabase/migrations/20260514180000_violation_types.sql` and `20260514180100_public_users.sql`; applied to the hosted project with Supabase MCP. Documented Supabase **public schema / Data API** grant rollout (May 30 / Oct 30, 2026) and Security Advisor in `README.md`. Marked Phase 1 §1.3 and §1.4 complete in `task_manager.md`.
 - Documented the RingBounty hosted Supabase **project ref** and migration workflow in `README.md` (dashboard SQL Editor apply order; optional `supabase link` + `supabase db push` when CLI is adopted). Added `supabase/migrations/20260514143000_enable_pgcrypto.sql` as the first versioned migration. Removed unused `supabase/config.toml` so the repo does not imply a required local CLI stack.
 

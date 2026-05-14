@@ -115,7 +115,7 @@ Supabase is tightening defaults: **new** tables in `public` may not be exposed t
 
 RingBounty migrations that create app tables include **RLS** plus **explicit `GRANT`s** so `supabase-js` and REST keep working after those dates. When you add a new `public` table, mirror that pattern (RLS policies + grants per role). Use the dashboard [Security Advisor](https://supabase.com/dashboard/project/nktlhjjeqwpubzlvjpjv/advisors/security) to audit access.
 
-**Current reference tables (see `prd.md` section 5):** `public.violation_types` (seeded catalog; read-only for `anon` / `authenticated`), `public.users` (profile row per auth user; `select` / `update` own row only; rows synced from `auth.users` via trigger).
+**Current reference tables (see `prd.md` section 5):** `public.violation_types` (seeded catalog; read-only for `anon` / `authenticated`), `public.users` (profile row per auth user; `select` / `update` own row only; rows synced from `auth.users` via trigger), `public.claims` (consumer claim; `authenticated` DML on own `user_id` rows only; no `anon` grant—anonymous funnel uses the service role on the server), `public.claim_subjects` (child rows per claim; access via RLS join to owned `claims`). `call_category` app constants live in [`src/lib/constants/claimSubject.ts`](src/lib/constants/claimSubject.ts).
 
 ## Clone and run locally
 
