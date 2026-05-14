@@ -29,6 +29,15 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+    /* Claim strength / outcome semantics (green → yellow → orange → red) */
+    --success: 142 71% 41%;
+    --success-foreground: 144 100% 98%;
+    --warning: 45 93% 47%;
+    --warning-foreground: 26 83% 14%;
+    --caution: 25 95% 53%;
+    --caution-foreground: 20 14% 12%;
+    --danger: 0 72% 51%;
+    --danger-foreground: 0 0% 100%;
   }
   .dark {
     --background: 0 0% 3.9%;
@@ -55,6 +64,14 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    --success: 142 70% 45%;
+    --success-foreground: 144 100% 98%;
+    --warning: 48 96% 53%;
+    --warning-foreground: 26 83% 14%;
+    --caution: 27 96% 61%;
+    --caution-foreground: 20 14% 12%;
+    --danger: 0 84% 60%;
+    --danger-foreground: 0 0% 100%;
   }
 }
 

@@ -143,6 +143,12 @@ Before each commit, `.husky/pre-commit` runs `npx lint-staged` against staged Ja
 
 In an emergency, hooks can be skipped with `HUSKY=0 git commit ...`, but this should be reserved for broken work-in-progress commits and followed by a normal passing commit as soon as possible.
 
+## App shell and semantic colors
+
+- **Layout:** The root layout wraps all routes in [`src/components/layout/site-shell.tsx`](src/components/layout/site-shell.tsx): a top **header** landmark (reserved for global navigation), a single document **main** around page content, and a slim **footer** for the global “not legal advice” notice. Nested routes should use `<section>` / `<div>` for inner regions so there is only one `<main>` per page.
+- **Shadcn / Tailwind:** CLI config lives in [`components.json`](components.json); the Tailwind entrypoint is [`src/app/globals.css`](src/app/globals.css) (aligned with the `src/app` tree).
+- **Claim-strength tokens:** CSS variables `--success`, `--warning`, `--caution`, and `--danger` (with matching `*-foreground` values) are defined for light and dark themes and exposed as Tailwind colors `success`, `warning`, `caution`, and `danger` in [`tailwind.config.ts`](tailwind.config.ts). Use them for outcome / claim-strength UI (green → yellow → orange → red). `destructive` remains the default shadcn control color for destructive actions.
+
 ## Continuous integration
 
 GitHub Actions runs on every pull request and on pushes to `main` (see `.github/workflows/ci.yml`). It installs dependencies with `npm ci`, then runs `npm run lint`, `npm run typecheck`, and `npm run test` (Vitest unit tests). This complements Husky and does not replace local checks before you commit.

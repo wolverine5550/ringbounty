@@ -117,13 +117,13 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 0.6 App shell and design system (baseline)
 
-- [ ] **0.6.1** Confirm Shadcn/Tailwind setup (`components.json`, globals) matches project conventions.
-- [ ] **0.6.2** Add root layout regions: header slot, main, footer slot for global disclaimer.
-- [ ] **0.6.3** Define semantic tokens for success/warning/error states aligned to claim strength UI (green/yellow/orange/red).
+- [x] **0.6.1** Confirm Shadcn/Tailwind setup (`components.json`, globals) matches project conventions. <!-- done: components.json (tailwind css → src/app/globals.css), src/app/globals.css, tailwind.config.ts -->
+- [x] **0.6.2** Add root layout regions: header slot, main, footer slot for global disclaimer. <!-- done: src/app/layout.tsx, src/components/layout/site-shell.tsx; nested layouts: src/app/page.tsx, src/app/protected/layout.tsx (no second <main>) -->
+- [x] **0.6.3** Define semantic tokens for success/warning/error states aligned to claim strength UI (green/yellow/orange/red). <!-- done: src/app/globals.css, tailwind.config.ts (success / warning / caution / danger) -->
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ---
 
