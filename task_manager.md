@@ -153,27 +153,27 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 1.3 `violation_types`
 
-- [ ] **1.3.1** Migration: `create table violation_types` per PRD (all columns).
-- [ ] **1.3.2** Seed row `tcpa` with `is_active = true` and correct cents / SOL fields.
-- [ ] **1.3.3** Seed inactive rows: `wage_theft`, `data_breach` (or PRD list) with `is_active = false`.
-- [ ] **1.3.4** Add RLS: typically **read-only to authenticated** users for reference data (or public read if safe).
+- [x] **1.3.1** Migration: `create table violation_types` per PRD (all columns). <!-- done: supabase/migrations/20260514180000_violation_types.sql; applied via Supabase MCP -->
+- [x] **1.3.2** Seed row `tcpa` with `is_active = true` and correct cents / SOL fields. <!-- done: same migration (prd.md seed values) -->
+- [x] **1.3.3** Seed inactive rows: `wage_theft`, `data_breach` (or PRD list) with `is_active = false`. <!-- done: same migration -->
+- [x] **1.3.4** Add RLS: typically **read-only to authenticated** users for reference data (or public read if safe). <!-- done: RLS + select policy for anon + authenticated (reference catalog); explicit GRANTs for Data API -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md (public schema Data API grants + rollout note) -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 1.4 `users` aligned with Auth
 
-- [ ] **1.4.1** Migration: `create table public.users` with `id uuid primary key`, `email unique not null`, `full_name`, `state`, timestamps.
-- [ ] **1.4.2** Add FK: `public.users.id` references `auth.users(id)` on delete cascade (or document alternative one-way sync).
-- [ ] **1.4.3** Implement trigger **or** application hook: on `auth.users` insert/update, upsert `public.users` (email, metadata-derived name).
-- [ ] **1.4.4** RLS: users can `select`/`update` own row where `id = auth.uid()`; no insert from client if trigger-only.
+- [x] **1.4.1** Migration: `create table public.users` with `id uuid primary key`, `email unique not null`, `full_name`, `state`, timestamps. <!-- done: supabase/migrations/20260514180100_public_users.sql; applied via Supabase MCP -->
+- [x] **1.4.2** Add FK: `public.users.id` references `auth.users(id)` on delete cascade (or document alternative one-way sync). <!-- done: same migration (FK on primary key) -->
+- [x] **1.4.3** Implement trigger **or** application hook: on `auth.users` insert/update, upsert `public.users` (email, metadata-derived name). <!-- done: public.sync_auth_user_to_public_users + triggers ringbounty_on_auth_user_created / _updated -->
+- [x] **1.4.4** RLS: users can `select`/`update` own row where `id = auth.uid()`; no insert from client if trigger-only. <!-- done: policies users_select_own / users_update_own; GRANT select, update to authenticated only (no insert/delete for client) -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 1.5 `claims`
 

@@ -109,6 +109,14 @@ Versioned SQL lives in [`supabase/migrations/`](supabase/migrations/). **Naming:
 
 **Optional — Supabase CLI later:** When you adopt the CLI, run `supabase login`, then `supabase link --project-ref nktlhjjeqwpubzlvjpjv`, then push pending files with `supabase db push`. For a **local** database only, `supabase migration up` / `supabase db reset` apply what is under `supabase/migrations/` per the [Supabase CLI database docs](https://supabase.com/docs/guides/deployment/database-migrations).
 
+### Public schema and the Data API (PostgREST / supabase-js)
+
+Supabase is tightening defaults: **new** tables in `public` may not be exposed to the Data API until you grant explicitly to `anon`, `authenticated`, and (for admin paths) `service_role`. Rollout: **May 30, 2026** for new projects; **October 30, 2026** for existing projects. If a grant is missing, PostgREST often returns **42501** with a suggested `GRANT` in the message.
+
+RingBounty migrations that create app tables include **RLS** plus **explicit `GRANT`s** so `supabase-js` and REST keep working after those dates. When you add a new `public` table, mirror that pattern (RLS policies + grants per role). Use the dashboard [Security Advisor](https://supabase.com/dashboard/project/nktlhjjeqwpubzlvjpjv/advisors/security) to audit access.
+
+**Current reference tables (see `prd.md` section 5):** `public.violation_types` (seeded catalog; read-only for `anon` / `authenticated`), `public.users` (profile row per auth user; `select` / `update` own row only; rows synced from `auth.users` via trigger).
+
 ## Clone and run locally
 
 1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
