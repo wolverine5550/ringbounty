@@ -28,5 +28,5 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Unit tests (if configured)
-        run: npm run test --if-present
+      - name: Unit tests
+        run: npm run test

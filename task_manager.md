@@ -52,7 +52,7 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 - [x] **0.1.3** List every required env var **by name** in `README.md` with one-line purpose each (no secret values). <!-- done: README.md -->
 - [x] **0.1.4** List optional env vars (feature flags, spam providers, OpenCorporates) in `README.md`. <!-- done: README.md -->
 - [x] **0.1.5** Confirm `git` repo initialized; `.gitignore` includes `.env.local`, `node_modules`, `.next`, OS junk, and (if used) Playwright output dirs. <!-- done: .gitignore -->
-- [x] **0.1.6** Run `npm install`; run `npm run lint`, `npm run typecheck`, and `npm run test` locally (adjust if test script not yet added — then at minimum lint + typecheck through pre-commit). <!-- done: package.json (no test script yet — lint + typecheck only) -->
+- [x] **0.1.6** Run `npm install`; run `npm run lint`, `npm run typecheck`, and `npm run test` locally (adjust if test script not yet added — then at minimum lint + typecheck through pre-commit). <!-- done: package.json (includes `npm run test` since §0.4) -->
 - [x] **0.1.7** Stage all files intended for the baseline; ensure **no secrets** in the diff (`git diff --staged`). <!-- done: git -->
 - [x] **0.1.8** Create the **first commit** with a conventional message, e.g. `chore: initial RingBounty setup with husky pre-commit` — pre-commit hook must **pass** on this commit. <!-- done: git (baseline + hooks: commits 6c3d63c, 3a200fe) -->
 - [x] **0.1.9** (Optional) Add remote and push default branch if hosting is ready. <!-- done: git (origin https://github.com/wolverine5550/ringbounty.git) -->
@@ -91,28 +91,29 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 0.4 Vitest and unit-test layout
 
-- [ ] **0.4.1** Install Vitest + `@vitejs/plugin-react` (or `vitest` + `@testing-library/react` as needed for Next).
-- [ ] **0.4.2** Add `vitest.config.ts` with path aliases aligned to `tsconfig.json` (`@/` etc.).
-- [ ] **0.4.3** Add `npm run test` and `npm run test:watch` scripts to `package.json`.
-- [ ] **0.4.4** Create `src/test-utils/mockSupabaseClient.ts` with typed mocks matching generated `Database` types (stub until types exist).
-- [ ] **0.4.5** Add one smoke unit test that imports a trivial util to verify Vitest runs in CI.
+- [x] **0.4.1** Install Vitest + `@vitejs/plugin-react` (or `vitest` + `@testing-library/react` as needed for Next). <!-- done: package.json, package-lock.json -->
+- [x] **0.4.2** Add `vitest.config.ts` with path aliases aligned to `tsconfig.json` (`@/` etc.). <!-- done: vitest.config.ts, vite-tsconfig-paths -->
+- [x] **0.4.3** Add `npm run test` and `npm run test:watch` scripts to `package.json`. <!-- done: package.json -->
+- [x] **0.4.4** Create `src/test-utils/mockSupabaseClient.ts` with typed mocks matching generated `Database` types (stub until types exist). <!-- done: src/test-utils/mockSupabaseClient.ts -->
+- [x] **0.4.5** Add one smoke unit test that imports a trivial util to verify Vitest runs in CI. <!-- done: src/lib/utils.test.ts -->
 
+**Assumption (0.4.4 — `mockSupabaseClient`):** `src/test-utils/mockSupabaseClient.ts` is **for unit tests only** (not imported from app or route code). The exported `Database` type is a **stub** until Supabase schema types are generated; then replace it with the real `Database` (e.g. from `supabase gen types typescript`) so mocks stay aligned with the live schema.
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 0.5 Playwright and E2E placeholder
 
-- [ ] **0.5.1** Install `@playwright/test` as devDependency.
-- [ ] **0.5.2** Add `playwright.config.ts` targeting local `baseURL` (e.g. `http://127.0.0.1:3000`).
-- [ ] **0.5.3** Create `/e2e` directory with `.gitkeep` or `README.md` explaining when first E2E lands.
-- [ ] **0.5.4** Add `npm run test:e2e` script (document requirement: dev server running or use `webServer` in config).
+- [x] **0.5.1** Install `@playwright/test` as devDependency. <!-- done: package.json, package-lock.json -->
+- [x] **0.5.2** Add `playwright.config.ts` targeting local `baseURL` (e.g. `http://127.0.0.1:3000`). <!-- done: playwright.config.ts -->
+- [x] **0.5.3** Create `/e2e` directory with `.gitkeep` or `README.md` explaining when first E2E lands. <!-- done: e2e/README.md, e2e/wiring.spec.ts -->
+- [x] **0.5.4** Add `npm run test:e2e` script (document requirement: dev server running or use `webServer` in config). <!-- done: package.json, e2e/README.md -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 0.6 App shell and design system (baseline)
 

@@ -145,7 +145,23 @@ In an emergency, hooks can be skipped with `HUSKY=0 git commit ...`, but this sh
 
 ## Continuous integration
 
-GitHub Actions runs on every pull request and on pushes to `main` (see `.github/workflows/ci.yml`). It installs dependencies with `npm ci`, then runs `npm run lint`, `npm run typecheck`, and `npm run test --if-present` (the `test` script is added in §0.4 of the task manager). This complements Husky and does not replace local checks before you commit.
+GitHub Actions runs on every pull request and on pushes to `main` (see `.github/workflows/ci.yml`). It installs dependencies with `npm ci`, then runs `npm run lint`, `npm run typecheck`, and `npm run test` (Vitest unit tests). This complements Husky and does not replace local checks before you commit.
+
+## Testing
+
+### Unit tests (Vitest)
+
+- `npm run test` — run the Vitest suite once (CI uses this).
+- `npm run test:watch` — watch mode while developing.
+
+Specs live next to source files as `*.test.ts` / `*.test.tsx` under `src/`. Shared Supabase test doubles live in [`src/test-utils/mockSupabaseClient.ts`](src/test-utils/mockSupabaseClient.ts); swap the placeholder `Database` type when generated schema types are checked in.
+
+### End-to-end tests (Playwright)
+
+- One-time browser install: `npx playwright install` (or `npx playwright install chromium` for a smaller footprint).
+- `npm run test:e2e` — run Playwright against specs in [`e2e/`](e2e/).
+
+The included wiring spec does not start Next.js. Specs that hit `http://127.0.0.1:3000` need `npm run dev` in another terminal (or a `webServer` block in `playwright.config.ts`). See [`e2e/README.md`](e2e/README.md).
 
 ## Feedback and issues
 
