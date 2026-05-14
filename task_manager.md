@@ -224,27 +224,27 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 1.9 `letters`
 
-- [ ] **1.9.1** Migration: PRD columns + **`claim_subject_id uuid references claim_subjects(id)`** (or equivalent company grouping FK).
-- [ ] **1.9.2** Add optional `demand_scenario text` — `conservative` | `realistic` | `maximum` to record user choice for letter generation.
-- [ ] **1.9.3** Index `(claim_id)`, `(user_id)`, `(claim_subject_id)`, `(stripe_payment_intent_id)` unique where not null.
-- [ ] **1.9.4** Storage path convention documented: e.g. `letters/{user_id}/{letter_id}.pdf`.
+- [x] **1.9.1** Migration: PRD columns + **`claim_subject_id uuid references claim_subjects(id)`** (or equivalent company grouping FK). <!-- done: supabase/migrations/20260514190900_letters.sql; applied via Supabase MCP -->
+- [x] **1.9.2** Add optional `demand_scenario text` — `conservative` | `realistic` | `maximum` to record user choice for letter generation. <!-- done: letters_demand_scenario_check in same migration -->
+- [x] **1.9.3** Index `(claim_id)`, `(user_id)`, `(claim_subject_id)`, `(stripe_payment_intent_id)` unique where not null. <!-- done: letters_*_idx + letters_stripe_payment_intent_id_unique partial -->
+- [x] **1.9.4** Storage path convention documented: e.g. `letters/{user_id}/{letter_id}.pdf`. <!-- done: README.md (Supabase Storage convention) -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 1.10 v0.2 tables (optional early creation)
 
-- [ ] **1.10.1** Migration: `law_firms` per PRD (`target_states text[]`, `violation_types text[]`, etc.).
-- [ ] **1.10.2** Migration: `firm_users` with `auth_user_id uuid` nullable until linked — prefer over email-only RLS.
-- [ ] **1.10.3** Migration: `leads` per PRD; FKs to `claims`, `users`, `law_firms`.
-- [ ] **1.10.4** Default deny RLS on v0.2 tables until features ship.
+- [x] **1.10.1** Migration: `law_firms` per PRD (`target_states text[]`, `violation_types text[]`, etc.). <!-- done: supabase/migrations/20260514190600_law_firms.sql; applied via Supabase MCP -->
+- [x] **1.10.2** Migration: `firm_users` with `auth_user_id uuid` nullable until linked — prefer over email-only RLS. <!-- done: supabase/migrations/20260514190700_firm_users.sql -->
+- [x] **1.10.3** Migration: `leads` per PRD; FKs to `claims`, `users`, `law_firms`. <!-- done: supabase/migrations/20260514190800_leads.sql (+ violation_types FK) -->
+- [x] **1.10.4** Default deny RLS on v0.2 tables until features ship. <!-- done: RLS enabled, no policies, GRANTs to authenticated + service_role (Postgres denies until policies added) -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 1.11 Row Level Security — policies
 
