@@ -86,6 +86,29 @@ These are reserved for upcoming work—do not commit real secrets:
 - `OPENCORPORATES_API_KEY` — optional business-entity lookup.
 - `FTC_DNC_*` (or vendor-specific names once chosen) — federal DNC / compliance integrations (spike TBD).
 
+## Supabase project (RingBounty)
+
+RingBounty uses a **hosted** Supabase project (no local Supabase stack required for day-to-day app development).
+
+| | |
+|--|--|
+| **Project ref** | `nktlhjjeqwpubzlvjpjv` |
+| **Dashboard** | [Project home](https://supabase.com/dashboard/project/nktlhjjeqwpubzlvjpjv) |
+| **API URL** (same value as `NEXT_PUBLIC_SUPABASE_URL`) | `https://nktlhjjeqwpubzlvjpjv.supabase.co` |
+
+The project ref is public metadata (it appears in URLs); it is **not** a secret. Database password, service role keys, and access tokens must never be committed.
+
+### Database migrations
+
+Versioned SQL lives in [`supabase/migrations/`](supabase/migrations/). **Naming:** `YYYYMMDDHHMMSS_short_description.sql` (UTC wall-clock timestamp + snake_case description), e.g. `20260514143000_enable_pgcrypto.sql`, so files sort in apply order.
+
+**Apply migrations without the Supabase CLI (current default):**
+
+1. Open the [SQL Editor](https://supabase.com/dashboard/project/nktlhjjeqwpubzlvjpjv/sql/new) for this project.
+2. Run each file’s contents **in timestamp order** (oldest first). Prefer a new query tab per migration so you can keep an audit trail of what ran.
+
+**Optional — Supabase CLI later:** When you adopt the CLI, run `supabase login`, then `supabase link --project-ref nktlhjjeqwpubzlvjpjv`, then push pending files with `supabase db push`. For a **local** database only, `supabase migration up` / `supabase db reset` apply what is under `supabase/migrations/` per the [Supabase CLI database docs](https://supabase.com/docs/guides/deployment/database-migrations).
+
 ## Clone and run locally
 
 1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)

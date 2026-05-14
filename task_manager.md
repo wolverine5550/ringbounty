@@ -131,25 +131,25 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 1.1 Project setup
 
-- [ ] **1.1.1** Create Supabase project (hosted) **or** init local Supabase via CLI (`supabase init`, `supabase start`).
-- [ ] **1.1.2** Record project ref / local ports in `README.md` (non-secret).
-- [ ] **1.1.3** Link CLI to project (`supabase link`) if using remote migrations from repo.
+- [x] **1.1.1** Create Supabase project (hosted) **or** init local Supabase via CLI (`supabase init`, `supabase start`). <!-- done: hosted project (dashboard); no local supabase start required for MVP -->
+- [x] **1.1.2** Record project ref / local ports in `README.md` (non-secret). <!-- done: README.md (project ref + API URL; optional CLI ports deferred) -->
+- [ ] **1.1.3** Link CLI to project (`supabase link`) if using remote migrations from repo. <!-- deferred: CLI not in use — README documents optional `supabase login` / `supabase link` / `supabase db push` when you adopt the CLI -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 1.2 Migrations workflow
 
-- [ ] **1.2.1** Add `supabase/migrations` folder if not present; document naming: `YYYYMMDDHHMMSS_description.sql`.
-- [ ] **1.2.2** Add first migration: enable `pgcrypto` or use `gen_random_uuid()` as supported.
-- [ ] **1.2.3** Document in `README.md` how to apply migrations (`supabase db push` / `migration up`).
+- [x] **1.2.1** Add `supabase/migrations` folder if not present; document naming: `YYYYMMDDHHMMSS_description.sql`. <!-- done: supabase/migrations/, README.md -->
+- [x] **1.2.2** Add first migration: enable `pgcrypto` or use `gen_random_uuid()` as supported. <!-- done: supabase/migrations/20260514143000_enable_pgcrypto.sql -->
+- [x] **1.2.3** Document in `README.md` how to apply migrations (`supabase db push` / `migration up`). <!-- done: README.md (SQL Editor + optional CLI db push / migration up) -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 1.3 `violation_types`
 

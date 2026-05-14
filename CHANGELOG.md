@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-14
+
+- Documented the RingBounty hosted Supabase **project ref** and migration workflow in `README.md` (dashboard SQL Editor apply order; optional `supabase link` + `supabase db push` when CLI is adopted). Added `supabase/migrations/20260514143000_enable_pgcrypto.sql` as the first versioned migration. Removed unused `supabase/config.toml` so the repo does not imply a required local CLI stack.
+
 ## 2026-05-13
 
 - Added root app shell (`SiteShell`: header landmark, single `<main>`, global disclaimer footer), RingBounty default metadata, and claim-strength semantic colors (`success`, `warning`, `caution`, `danger`) in `globals.css` / `tailwind.config.ts`. Pointed `components.json` Tailwind CSS path at `src/app/globals.css`. Adjusted home and protected layouts to avoid nested `<main>` elements.
