@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-15
+
+- Completed Phase 1 §1.11 and §1.12 in `task_manager.md`. Added `supabase/migrations/20260515103000_leads_firm_portal_rls.sql` (`firm_users_select_self`, `law_firms_select_for_member`, `leads_select_consumer_own`, `leads_select_firm_assigned`) and applied with Supabase MCP. Checked in `src/types/database.ts` from `supabase gen types typescript`, wired `SupabaseClient<Database>` through `src/lib/supabase/server.ts`, `client.ts`, and `proxy.ts`, aligned `src/test-utils/mockSupabaseClient.ts`, and added optional-live `src/lib/supabase/rls-smoke.test.ts`. Updated `README.md` for RLS patterns, v0.2 policy state, type regen command, and Vitest env vars.
+
 ## 2026-05-14
 
 - Added `public.letters` (PRD columns plus `claim_subject_id`, `demand_scenario` with check constraint, partial unique index on `stripe_payment_intent_id`, ownership RLS for `authenticated`, explicit `GRANT`s) via `supabase/migrations/20260514190900_letters.sql`; applied with Supabase MCP. Documented PDF object key convention `letters/{user_id}/{letter_id}.pdf` in `README.md`. Added v0.2 tables `public.law_firms`, `public.firm_users` (nullable `auth_user_id` → `auth.users`), and `public.leads` (status / `claim_strength` checks, `updated_at` trigger) via `20260514190600_law_firms.sql`, `20260514190700_firm_users.sql`, and `20260514190800_leads.sql`; **RLS on with no policies** (default deny for clients until §1.11 firm policies). Marked Phase 1 §1.9 and §1.10 complete in `task_manager.md`.

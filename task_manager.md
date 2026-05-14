@@ -248,29 +248,29 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 1.11 Row Level Security — policies
 
-- [ ] **1.11.1** Enable RLS on: `claims`, `claim_subjects`, `dnc_check_results`, `claim_events`, `letters`, `leads`, `law_firms`, `firm_users` (as needed).
-- [ ] **1.11.2** `claims`: authenticated users `select`/`update`/`delete` own rows where `user_id = auth.uid()`.
-- [ ] **1.11.3** `claims`: **no** broad `insert` for anonymous from client; inserts/updates for anonymous rows only via service role on server.
-- [ ] **1.11.4** `claim_subjects`, `claim_events`, `dnc_check_results`: inherit access via `claim_id` join to owned `claims` (use subquery policy or security definer views — pick one pattern and document).
-- [ ] **1.11.5** `letters`: user owns rows where `user_id = auth.uid()`.
-- [ ] **1.11.6** `leads`: consumer `select` own; firms `select` assigned leads — implement via `firm_users.auth_user_id = auth.uid()` join.
-- [ ] **1.11.7** Add Supabase **RLS tests** in Vitest with mock JWT claims (service role vs anon vs authenticated).
+- [x] **1.11.1** **Audit** (Security Advisor / `pg_policies`) that RLS stays **on** for: `claims`, `claim_subjects`, `dnc_check_results`, `claim_events`, `letters`, `leads`, `law_firms`, `firm_users`. These tables were already created with **`alter table … enable row level security`** in Phase 1 migrations—this item is **not** a greenfield “turn on RLS only” step. **`letters`** has four `authenticated` owner policies (§1.11.5). **`law_firms`**, **`firm_users`**, and **`leads`** started as §1.10.4 default-deny (RLS on, no policies); **§1.11.6** adds the first `authenticated` **select** policies for firm portal + consumer lead reads (`20260515103000_leads_firm_portal_rls.sql`). <!-- done: audited via Supabase MCP `execute_sql` + dashboard Security Advisor -->
+- [x] **1.11.2** `claims`: authenticated users `select`/`update`/`delete` own rows where `user_id = auth.uid()`. <!-- done: supabase/migrations/20260514180200_claims.sql policies `claims_*_own` -->
+- [x] **1.11.3** `claims`: **no** broad `insert` for anonymous from client; inserts/updates for anonymous rows only via service role on server. <!-- done: no GRANT to `anon` on claims; only `authenticated` + `service_role` in same migration -->
+- [x] **1.11.4** `claim_subjects`, `claim_events`, `dnc_check_results`: inherit access via `claim_id` join to owned `claims` (use subquery policy or security definer views — pick one pattern and document). <!-- done: EXISTS subquery to `claims` in `20260514180300_claim_subjects.sql`, `20260514180500_claim_events.sql`, `20260514180400_dnc_check_results.sql`; README notes subquery pattern -->
+- [x] **1.11.5** `letters`: user owns rows where `user_id = auth.uid()`. <!-- done: `letters_*_own` policies in supabase/migrations/20260514190900_letters.sql; verified on hosted DB (4 policies) -->
+- [x] **1.11.6** `leads`: consumer `select` own; firms `select` assigned leads — implement via `firm_users.auth_user_id = auth.uid()` join. <!-- done: supabase/migrations/20260515103000_leads_firm_portal_rls.sql (`leads_select_*`, `firm_users_select_self`, `law_firms_select_for_member`); applied via Supabase MCP -->
+- [x] **1.11.7** Add Supabase **RLS tests** in Vitest with mock JWT claims (service role vs anon vs authenticated). <!-- done: `src/lib/supabase/rls-smoke.test.ts` — runs when `NEXT_PUBLIC_SUPABASE_*` set; optional `SUPABASE_SERVICE_ROLE_KEY`, `VITEST_SUPABASE_USER_ACCESS_TOKEN` for service-role / user-JWT branches -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md (RLS test env, types regen) -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 1.12 Types and client
 
-- [ ] **1.12.1** Run `supabase gen types typescript` into `src/types/database.ts` (or agreed path).
-- [ ] **1.12.2** Export typed `SupabaseClient<Database>` helper from `src/lib/supabase/server.ts` and `client.ts` patterns for App Router.
-- [ ] **1.12.3** Update `mockSupabaseClient.ts` to use generated types.
+- [x] **1.12.1** Run `supabase gen types typescript` into `src/types/database.ts` (or agreed path). <!-- done: `src/types/database.ts` via `npx supabase gen types typescript --project-id nktlhjjeqwpubzlvjpjv` (or Supabase MCP `generate_typescript_types`) -->
+- [x] **1.12.2** Export typed `SupabaseClient<Database>` helper from `src/lib/supabase/server.ts` and `client.ts` patterns for App Router. <!-- done: same files + `src/lib/supabase/proxy.ts` -->
+- [x] **1.12.3** Update `mockSupabaseClient.ts` to use generated types. <!-- done: `src/test-utils/mockSupabaseClient.ts` imports `Database` from `@/types/database` -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ---
 

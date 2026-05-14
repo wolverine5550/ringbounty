@@ -1,12 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/database";
 import { vi } from "vitest";
 
-/**
- * Stand-in for the generated Supabase `Database` generic from
- * `supabase gen types typescript --local` (or linked project).
- * Replace with the real `Database` type when schema types exist.
- */
-export type Database = Record<string, never>;
+export type { Database };
 
 /** Minimal fluent chain returned by `from()` for common query patterns in tests. */
 function createQueryChain() {
