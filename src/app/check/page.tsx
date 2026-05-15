@@ -31,7 +31,16 @@ export default function CheckPage({ searchParams }: CheckPageProps) {
         </p>
       </header>
 
-      <CheckFunnelClient />
+      <Suspense
+        fallback={
+          <p className="text-muted-foreground text-sm" role="status">
+            Loading check form…
+          </p>
+        }
+      >
+        {/* Next.js 16: `crypto.randomUUID()` in funnel row ids must defer behind Suspense for prerender. */}
+        <CheckFunnelClient />
+      </Suspense>
 
       <Suspense
         fallback={
