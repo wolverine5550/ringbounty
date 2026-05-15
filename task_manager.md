@@ -401,27 +401,27 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 3.1 Landing page `/`
 
-- [ ] **3.1.1** Hero: problem, solution, TCPA framed as informational.
-- [ ] **3.1.2** Primary CTA to `/check`; secondary CTA to `/how-it-works`.
-- [ ] **3.1.3** Trust strip: “not a law firm”, “estimates not guarantees” one-liner.
-- [ ] **3.1.4** Footer with disclaimer + links to privacy/terms.
-- [ ] **3.1.5** Basic SEO: `<title>`, meta description, OG image placeholder.
+- [x] **3.1.1** Hero: problem, solution, TCPA framed as informational. <!-- done: src/components/marketing/landing-hero.tsx, src/app/page.tsx -->
+- [x] **3.1.2** Primary CTA to `/check`; secondary CTA to `/how-it-works`. <!-- done: landing-hero.tsx -->
+- [x] **3.1.3** Trust strip: “not a law firm”, “estimates not guarantees” one-liner. <!-- done: src/components/marketing/trust-strip.tsx, src/lib/marketing/constants.ts -->
+- [x] **3.1.4** Footer with disclaimer + links to privacy/terms. <!-- done: src/components/marketing/marketing-page-footer.tsx (+ FAQ link; privacy/terms pages ship §3.4–3.5) -->
+- [x] **3.1.5** Basic SEO: `<title>`, meta description, OG image placeholder. <!-- done: metadata in src/app/page.tsx (uses /opengraph-image.png) -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 3.2 `/how-it-works`
 
-- [ ] **3.2.1** Explain flow: check → qualify → pay → letter → file (informational).
-- [ ] **3.2.2** TCPA overview without promising outcomes; link to FAQ.
-- [ ] **3.2.3** Disclaimer block mid-page or bottom (PRD §3 text).
+- [x] **3.2.1** Explain flow: check → qualify → pay → letter → file (informational). <!-- done: src/app/how-it-works/page.tsx -->
+- [x] **3.2.2** TCPA overview without promising outcomes; link to FAQ. <!-- done: same page → /faq -->
+- [x] **3.2.3** Disclaimer block mid-page or bottom (PRD §3 text). <!-- done: src/components/marketing/disclaimer-block.tsx -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 3.3 `/faq`
 

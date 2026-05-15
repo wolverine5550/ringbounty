@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-05-15 (Phase 3.1–3.2 — marketing landing)
+
+- **Landing (`/`):** Replaced starter template with RingBounty hero, trust strip, PRD §3 disclaimer, and policy footer links ([`src/app/page.tsx`](src/app/page.tsx), [`src/components/marketing/`](src/components/marketing/)). Primary CTA → `/check`; secondary → `/how-it-works`. Page metadata + Open Graph use [`/opengraph-image.png`](src/app/opengraph-image.png).
+- **How it works:** New [`/how-it-works`](src/app/how-it-works/page.tsx) — informational flow (check → qualify → pay → letter → file), TCPA overview, FAQ link, disclaimer block.
+- **Public routes:** [`isPublicMarketingPath`](src/lib/marketing/public-routes.ts) wired in [`src/lib/supabase/proxy.ts`](src/lib/supabase/proxy.ts) so `/how-it-works`, `/faq`, `/privacy`, and `/terms` are reachable without login (legal pages still ship in §3.4–3.5).
+
 ## 2026-05-15 (Phase 2.7–2.8 — rate limiting + email capture)
 
 - **Rate limiting (§2.7):** Migration `supabase/migrations/20260515120000_rate_limit_and_newsletter_waitlist.sql` adds `public.rate_limit_buckets` and RPC `consume_rate_limit`. App helpers in [`src/lib/rate-limit/`](src/lib/rate-limit/); [`POST /api/check/submit`](src/app/api/check/submit/route.ts) returns **429** when hourly limits are exceeded. CAPTCHA stub in [`captcha.ts`](src/lib/rate-limit/captcha.ts).

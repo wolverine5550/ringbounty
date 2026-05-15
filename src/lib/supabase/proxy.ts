@@ -5,6 +5,7 @@ import {
   attachAnonymousSessionCookieIfNeeded,
   isAnonymousAllowedPath,
 } from "@/lib/anonymous-session";
+import { isPublicMarketingPath } from "@/lib/marketing/public-routes";
 import type { Database } from "@/types/database";
 import { hasEnvVars } from "../utils";
 
@@ -81,10 +82,10 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   if (
-    pathname !== "/" &&
     !user &&
     !pathname.startsWith("/login") &&
     !pathname.startsWith("/auth") &&
+    !isPublicMarketingPath(pathname) &&
     !isAnonymousAllowedPath(pathname)
   ) {
     // RingBounty primary auth entry is magic link at `/login` (Phase 2.1).
