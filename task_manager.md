@@ -278,30 +278,35 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 2.1 Supabase Auth wiring (App Router)
 
-- [ ] **2.1.1** Install/configure `@supabase/ssr` middleware for session refresh (`middleware.ts`).
-- [ ] **2.1.2** Create browser client helper (`createBrowserClient`).
-- [ ] **2.1.3** Create server client helpers: `createServerClient` for Server Components; cookie adapter for Route Handlers.
-- [ ] **2.1.4** Add `/login` route: email input + “send magic link” button.
-- [ ] **2.1.5** Configure Supabase Auth redirect URLs for local + production (`ringbounty.com`).
-- [ ] **2.1.6** Add `/auth/callback` route handler to exchange code for session (PKCE flow as per Supabase docs).
-- [ ] **2.1.7** Add sign-out button and clear session cookies.
-- [ ] **2.1.8** Protect authenticated-only routes via layout guard or redirect helper.
+- [x] **2.1.1** Install/configure `@supabase/ssr` middleware for session refresh (`middleware.ts`). <!-- done: Next.js 16 uses root `proxy.ts` + `src/lib/supabase/proxy.ts` calling `createServerClient` + `getClaims()` per Supabase SSR docs (session refresh + cookie sync); no legacy `middleware.ts` in this template -->
+- [x] **2.1.2** Create browser client helper (`createBrowserClient`). <!-- done: `src/lib/supabase/client.ts` -->
+- [x] **2.1.3** Create server client helpers: `createServerClient` for Server Components; cookie adapter for Route Handlers. <!-- done: `src/lib/supabase/server.ts`; callback route uses `createServerClient` with request/response cookie bridge -->
+- [x] **2.1.4** Add `/login` route: email input + “send magic link” button. <!-- done: `src/app/login/page.tsx`, `src/components/magic-link-login-form.tsx` -->
+- [x] **2.1.5** Configure Supabase Auth redirect URLs for local + production (`ringbounty.com`). <!-- done: documented in `README.md` (dashboard URL configuration); values set in Supabase project Auth settings — **assumption:** repo/docs only list patterns; every preview/staging origin must be added under **Authentication → URL configuration** or magic links are rejected / land with `?code=` on the wrong path; see README “Auth redirects” + `proxy.ts` PKCE recovery -->
+- [x] **2.1.6** Add `/auth/callback` route handler to exchange code for session (PKCE flow as per Supabase docs). <!-- done: `src/app/auth/callback/route.ts` (`exchangeCodeForSession`); distinct from `auth/confirm` token_hash OTP route -->
+- [x] **2.1.7** Add sign-out button and clear session cookies. <!-- done: `src/components/logout-button.tsx` (`signOut` + redirect to `/login`) -->
+- [x] **2.1.8** Protect authenticated-only routes via layout guard or redirect helper. <!-- done: `src/lib/supabase/require-user.ts` + `await requireUser()` in `src/app/protected/layout.tsx`; `src/lib/supabase/proxy.ts` redirects anonymous users away from non-public routes -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md (Auth / magic link / redirect URLs + §2.1.5 / §2.2 assumptions) -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md — `## 2026-05-14 (Phase 2 — Next.js Suspense + PKCE recovery)` -->
 
 ### 2.2 “Successful query” gate — specification
 
-- [ ] **2.2.1** Write internal spec doc (short markdown in repo or comment in code): definition of **successful query** until stakeholder finalizes (see Open questions).
-- [ ] **2.2.2** Implement pure function `isSuccessfulQuery(claimSnapshot): boolean` in `src/lib/claims/successful-query.ts` (name as needed) with unit tests.
-- [ ] **2.2.3** Ensure function uses only persisted inputs (spam result, exempt flags, etc.) — no hidden heuristics without tests.
+- [x] **2.2.1** Write internal spec doc (short markdown in repo or comment in code): definition of **successful query** until stakeholder finalizes (see Open questions). <!-- done: module-level spec in `src/lib/claims/successful-query.ts` -->
+- [x] **2.2.2** Implement pure function `isSuccessfulQuery(claimSnapshot): boolean` in `src/lib/claims/successful-query.ts` (name as needed) with unit tests. <!-- done: same file + `src/lib/claims/successful-query.test.ts` -->
+- [x] **2.2.3** Ensure function uses only persisted inputs (spam result, exempt flags, etc.) — no hidden heuristics without tests. <!-- done: `ClaimQuerySnapshot` only exposes `claim_strength`, `is_exempt`, `call_category`, `spam_db_complaint_count`; tests cover branches — **assumption:** `isSuccessfulQuery` is **interim** until the Open questions bullet **“Successful query” exact predicate** (below) is decided; then update `src/lib/claims/successful-query.ts` and `successful-query.test.ts` together -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md (successful query + §2.2 assumption) -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md — `## 2026-05-14 (Phase 2 — Next.js Suspense + PKCE recovery)` -->
+
+**Assumptions / risks (Phase 2.1–2.2 — carry until product locks them):**
+
+- **§2.1.5 / Auth URLs:** In-repo docs describe required **Site URL** and **Additional redirect URLs**; you must still configure every real preview URL in the Supabase dashboard. Missing entries reject magic links or send PKCE `code` to a route that never calls `exchangeCodeForSession`. Prefer **Site URL** = app origin only (e.g. `http://localhost:3000`), not `/protected`, and list `…/auth/callback` explicitly. `proxy.ts` forwards `/` or `/protected` + `?code=` to `/auth/callback` as a safety net.
+- **§2.2 / Successful query:** `isSuccessfulQuery` is **interim** until the **“Successful query” exact predicate** open question (Open questions section) is resolved; update module comments, implementation, and Vitest in one pass when stakeholders finalize.
 
 ### 2.3 Anonymous session cookie
 

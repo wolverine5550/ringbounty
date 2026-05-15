@@ -1,8 +1,20 @@
 # Changelog
 
+## 2026-05-14 (Phase 2 — Cache Components / blocking-route)
+
+- Resolved Next.js 16 [blocking-route](https://nextjs.org/docs/messages/blocking-route) / Cache Components dev overlay for `/login` and `/protected`: [`src/app/login/page.tsx`](src/app/login/page.tsx) now unwraps the `searchParams` promise with `.then()` inside `<Suspense>` (per Next.js 16.2 streaming docs); added [`src/app/login/loading.tsx`](src/app/login/loading.tsx) and [`src/app/protected/loading.tsx`](src/app/protected/loading.tsx); moved the authenticated shell to [`src/app/protected/protected-shell-with-auth.tsx`](src/app/protected/protected-shell-with-auth.tsx) so [`src/app/protected/layout.tsx`](src/app/protected/layout.tsx) only composes Suspense + fallback. README “Next.js 16 — Cache Components” section documents the pattern and restart guidance.
+
+## 2026-05-14 (Phase 2 — Next.js Suspense + PKCE recovery)
+
+- Fixed Next.js 16 “blocking route” / Cache Components warnings: `/login` reads `searchParams` inside `<Suspense>` (`src/app/login/page.tsx`); `/protected` calls `requireUser()` / `cookies()` inside `<Suspense>` (`src/app/protected/layout.tsx`). Documented **§2.1.5** assumption (dashboard must list every preview URL; Site URL should be origin-only) and **§2.2** interim `isSuccessfulQuery` note in `README.md` and `task_manager.md`. `src/lib/supabase/proxy.ts` now forwards `GET /` or `GET /protected` with `?code=` to `/auth/callback` so PKCE exchange runs when Auth URL configuration sends the code to the wrong path.
+
 ## 2026-05-15
 
 - Completed Phase 1 §1.11 and §1.12 in `task_manager.md`. Added `supabase/migrations/20260515103000_leads_firm_portal_rls.sql` (`firm_users_select_self`, `law_firms_select_for_member`, `leads_select_consumer_own`, `leads_select_firm_assigned`) and applied with Supabase MCP. Checked in `src/types/database.ts` from `supabase gen types typescript`, wired `SupabaseClient<Database>` through `src/lib/supabase/server.ts`, `client.ts`, and `proxy.ts`, aligned `src/test-utils/mockSupabaseClient.ts`, and added optional-live `src/lib/supabase/rls-smoke.test.ts`. Updated `README.md` for RLS patterns, v0.2 policy state, type regen command, and Vitest env vars.
+
+## 2026-05-14 (Phase 2.1–2.2)
+
+- Phase 2 §2.1–§2.2 in `task_manager.md`: magic-link `/login` (`src/app/login/page.tsx`, `src/components/magic-link-login-form.tsx`), PKCE `GET /auth/callback` (`src/app/auth/callback/route.ts`), `requireUser` (`src/lib/supabase/require-user.ts`) wired into `src/app/protected/layout.tsx`, proxy anonymous redirect to `/login` (`src/lib/supabase/proxy.ts`), logout + nav links aligned, and provisional `isSuccessfulQuery` with Vitest (`src/lib/claims/successful-query.ts`, `successful-query.test.ts`). README documents Auth URL configuration (Site URL + `/auth/callback` allow list) and the successful-query module pointer.
 
 ## 2026-05-14
 

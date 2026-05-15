@@ -67,6 +67,25 @@ The repo root `package.json` includes an `engines.node` field that matches this 
 
 Create `.env.local` from `.env.example` and set values from your [Supabase project API settings](https://supabase.com/dashboard/project/_/settings/api).
 
+### Auth routes (RingBounty)
+
+| Route | Purpose |
+|-------|---------|
+| [`/login`](src/app/login/page.tsx) (+ [`loading.tsx`](src/app/login/loading.tsx)) | Magic link (email OTP): sends a sign-in link via `signInWithOtp` → user lands on `/auth/callback` for PKCE `code` exchange. Uses `searchParams.then(…)` inside `<Suspense>` for Cache Components. |
+| [`/auth/callback`](src/app/auth/callback/route.ts) | Server route: `exchangeCodeForSession` then redirect (cookies set on the redirect response). |
+| `/auth/login`, `/auth/sign-up`, … | Starter **email + password** flows from the template. |
+
+In the Supabase dashboard, open **Authentication → URL configuration** for project [`nktlhjjeqwpubzlvjpjv`](https://supabase.com/dashboard/project/nktlhjjeqwpubzlvjpjv/auth/url-configuration) and set:
+
+- **Site URL** — e.g. `http://localhost:3000` for local dev; production `https://ringbounty.com` (or your canonical host).
+- **Additional redirect URLs** — include `http://localhost:3000/auth/callback`, `https://ringbounty.com/auth/callback`, and **every** preview or staging origin you use (full origin + `/auth/callback`), or Supabase will reject the link or bounce users to a path that never exchanges the PKCE `code`.
+
+**Assumption / risk (§2.1.5):** README cannot configure the hosted project for you. If magic links fail or email confirmations land on e.g. `/protected?code=…` instead of `/auth/callback`, check **Site URL** (should be the site **origin**, not a deep link like `/protected`) and expand **Additional redirect URLs** as above.
+
+**Auth redirects (PKCE recovery):** [`proxy.ts`](proxy.ts) forwards requests that arrive with `?code=` on `/` or `/protected` to [`/auth/callback`](src/app/auth/callback/route.ts) so `exchangeCodeForSession` still runs when dashboard URL settings are slightly off.
+
+The app’s root [`proxy.ts`](proxy.ts) refreshes the session (see [`src/lib/supabase/proxy.ts`](src/lib/supabase/proxy.ts)); unauthenticated visitors are sent to `/login`.
+
 ### Optional (Vercel / hosting)
 
 | Name | Purpose |
@@ -186,6 +205,15 @@ Before each commit, `.husky/pre-commit` runs `npx lint-staged` against staged Ja
 
 In an emergency, hooks can be skipped with `HUSKY=0 git commit ...`, but this should be reserved for broken work-in-progress commits and followed by a normal passing commit as soon as possible.
 
+## Next.js 16 — Cache Components (`blocking-route`)
+
+This app ships on **Next.js 16.2.x** with **Cache Components** enabled. Request-time APIs (`cookies()`, `headers()`, and **awaiting** page `searchParams` / `params` promises in the wrong place) can trigger the dev overlay [“Route … was accessed outside `<Suspense>`”](https://nextjs.org/docs/messages/blocking-route). RingBounty follows the **Next.js 16.2** streaming guidance:
+
+- **[`/login`](src/app/login/page.tsx)** — Sync page component; `<Suspense>` wraps `searchParams.then(({ next }) => …)` so the magic-link form receives `next` without blocking the segment. **[`src/app/login/loading.tsx`](src/app/login/loading.tsx)** provides the route `loading` fallback.
+- **[`/protected`](src/app/protected/layout.tsx)** — Layout wraps **[`ProtectedShellWithAuth`](src/app/protected/protected-shell-with-auth.tsx)** (which calls `requireUser()` → Supabase server client → `cookies()`) in `<Suspense>` with a shell fallback. **[`src/app/protected/loading.tsx`](src/app/protected/loading.tsx)** covers the segment during navigation.
+
+After changing these files, **restart `npm run dev`** if Turbopack still shows a stale stack trace.
+
 ## App shell and semantic colors
 
 - **Layout:** The root layout wraps all routes in [`src/components/layout/site-shell.tsx`](src/components/layout/site-shell.tsx): a top **header** landmark (reserved for global navigation), a single document **main** around page content, and a slim **footer** for the global “not legal advice” notice. Nested routes should use `<section>` / `<div>` for inner regions so there is only one `<main>` per page.
@@ -203,7 +231,11 @@ GitHub Actions runs on every pull request and on pushes to `main` (see `.github/
 - `npm run test` — run the Vitest suite once (CI uses this).
 - `npm run test:watch` — watch mode while developing.
 
-Specs live next to source files as `*.test.ts` / `*.test.tsx` under `src/`. Shared Supabase test doubles live in [`src/test-utils/mockSupabaseClient.ts`](src/test-utils/mockSupabaseClient.ts); swap the placeholder `Database` type when generated schema types are checked in.
+Specs live next to source files as `*.test.ts` / `*.test.tsx` under `src/`. Shared Supabase test doubles live in [`src/test-utils/mockSupabaseClient.ts`](src/test-utils/mockSupabaseClient.ts) (uses generated [`src/types/database.ts`](src/types/database.ts)).
+
+**Successful query gate (anonymous funnel):** interim predicate and tests live in [`src/lib/claims/successful-query.ts`](src/lib/claims/successful-query.ts) (`isSuccessfulQuery`).
+
+**Assumption / risk (§2.2):** The predicate is **interim** until the **“Successful query” exact predicate** open question in [`task_manager.md`](task_manager.md) is decided. When product locks the rule, update the module spec in `successful-query.ts` and [`successful-query.test.ts`](src/lib/claims/successful-query.test.ts) together so marketing and enforcement stay aligned.
 
 ### End-to-end tests (Playwright)
 

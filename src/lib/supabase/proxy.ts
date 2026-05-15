@@ -14,6 +14,25 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
+  // If Supabase Auth "Site URL" or email redirect points at `/protected` (or `/`) with a
+  // PKCE `code`, the exchange must run on `/auth/callback` — otherwise the proxy sends
+  // anonymous users to `/login` and the `code` is lost. Forward before session checks.
+  const pkceCode = request.nextUrl.searchParams.get("code");
+  const path = request.nextUrl.pathname;
+  if (
+    pkceCode &&
+    (path === "/protected" || path === "/")
+  ) {
+    const target = request.nextUrl.clone();
+    target.pathname = "/auth/callback";
+    target.searchParams.delete("code");
+    target.searchParams.set("code", pkceCode);
+    if (!target.searchParams.has("next")) {
+      target.searchParams.set("next", path === "/" ? "/" : "/protected");
+    }
+    return NextResponse.redirect(target);
+  }
+
   // With Fluid compute, don't put this client in a global environment
   // variable. Always create a new one on each request.
   const supabase = createServerClient<Database>(
@@ -54,9 +73,9 @@ export async function updateSession(request: NextRequest) {
     !request.nextUrl.pathname.startsWith("/login") &&
     !request.nextUrl.pathname.startsWith("/auth")
   ) {
-    // no user, potentially respond by redirecting the user to the login page
+    // RingBounty primary auth entry is magic link at `/login` (Phase 2.1).
     const url = request.nextUrl.clone();
-    url.pathname = "/auth/login";
+    url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
