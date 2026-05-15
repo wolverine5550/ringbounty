@@ -333,28 +333,32 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 2.5 Account wall UX
 
-- [ ] **2.5.1** After check completes: if `isSuccessfulQuery` and no authenticated user, render **Account wall** modal or full page with headline + benefits + CTA to `/login`.
-- [ ] **2.5.2** Block navigation to `/results` full detail, `/qualify/*`, `/summary`, `/letter/*` for unauthenticated successful-query state (define exact routes).
-- [ ] **2.5.3** If **not** successful query: allow retry another number without login; show gentle copy.
-- [ ] **2.5.4** Store minimal state in URL or encrypted query param if needed for deep link post-login (avoid PII in query string).
+- [x] **2.5.1** After check completes: if `isSuccessfulQuery` and no authenticated user, render **Account wall** modal or full page with headline + benefits + CTA to `/login`. <!-- done: `src/components/account-wall.tsx`, `src/components/check-outcome-panel.tsx`, `src/app/check/page.tsx`, `src/app/check/account-required/page.tsx` -->
+- [x] **2.5.2** Block navigation to `/results` full detail, `/qualify/*`, `/summary`, `/letter/*` for unauthenticated successful-query state (define exact routes). <!-- done: `src/lib/claims/gated-routes.ts`, `src/lib/claims/enforce-post-check-access.ts`, `src/app/(post-check)/**`, `src/lib/supabase/proxy.ts` (`isAnonymousAllowedPath`) -->
+- [x] **2.5.3** If **not** successful query: allow retry another number without login; show gentle copy. <!-- done: `CheckOutcomePanel` + `/check?retry=1` redirect from enforce guard -->
+- [x] **2.5.4** Store minimal state in URL or encrypted query param if needed for deep link post-login (avoid PII in query string). <!-- done: `claim` + `returnTo` query params only (`buildLoginHrefForClaim`, `buildAccountRequiredHref`) -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 2.6 Post-login merge
 
-- [ ] **2.6.1** On first authenticated request after magic link: locate anonymous claim by `anonymous_session_id`.
-- [ ] **2.6.2** Transaction: set `claims.user_id = auth.uid()`, clear `anonymous_session_id` (or leave audit trail), attach `public.users` row exists.
-- [ ] **2.6.3** Clear anonymous cookie after successful merge.
-- [ ] **2.6.4** Handle collision: user already has active claim — define merge vs abandon rules; document in code comment.
-- [ ] **2.6.5** Redirect user to appropriate next step (`/results` or per-subject qualify).
+- [x] **2.6.1** On first authenticated request after magic link: locate anonymous claim by `anonymous_session_id`. <!-- done: `mergeAnonymousDraftOnLogin` in `src/lib/claims/merge-anonymous-draft-on-login.ts` -->
+- [x] **2.6.2** Transaction: set `claims.user_id = auth.uid()`, clear `anonymous_session_id` (or leave audit trail), attach `public.users` row exists. <!-- done: sequential admin updates + `ensurePublicUserRow` (auth trigger fallback via `auth.admin.getUserById`); **assumption:** future RPC for true DB transaction -->
+- [x] **2.6.3** Clear anonymous cookie after successful merge. <!-- done: `src/app/auth/callback/route.ts` -->
+- [x] **2.6.4** Handle collision: user already has active claim — define merge vs abandon rules; document in code comment. <!-- done: abandon anonymous draft when user already owns a `draft` claim — see module docstring in `merge-anonymous-draft-on-login.ts` + Vitest -->
+- [x] **2.6.5** Redirect user to appropriate next step (`/results` or per-subject qualify). <!-- done: `resolvePostMergeRedirectPath` in `src/lib/claims/post-merge-redirect.ts` + callback -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
+
+**Assumptions / risks (Phase 2.6 — carry until hardened):**
+
+- **§2.6.2 / Merge atomicity:** `mergeAnonymousDraftOnLogin` runs **sequential admin client calls**, not a single Postgres transaction. A partial failure could leave inconsistent state (e.g. `public.users` upserted but claim not attached). Documented in `src/lib/claims/merge-anonymous-draft-on-login.ts`. **Follow-up:** add a timestamped migration with an RPC (e.g. `merge_anonymous_claim_on_login`) that wraps locate → collision check → attach/abandon in `BEGIN … COMMIT`.
 
 ### 2.7 Rate limiting and abuse
 

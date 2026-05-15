@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-05-15 (Phase 2.5–2.6 — account wall + post-login merge)
+
+- **Account wall (§2.5):** [`AccountWall`](src/components/account-wall.tsx) + [`CheckOutcomePanel`](src/components/check-outcome-panel.tsx) on [`/check`](src/app/check/page.tsx); full-page [`/check/account-required`](src/app/check/account-required/page.tsx); [`GET /api/claims/anonymous/status`](src/app/api/claims/anonymous/status/route.ts). Gated placeholders under [`src/app/(post-check)/`](src/app/(post-check)/) with [`enforcePostCheckAccess`](src/lib/claims/enforce-post-check-access.ts). Deep links use `claim` UUID query only ([`gated-routes.ts`](src/lib/claims/gated-routes.ts)).
+- **Post-login merge (§2.6):** [`mergeAnonymousDraftOnLogin`](src/lib/claims/merge-anonymous-draft-on-login.ts) — collision abandons anonymous draft when user already has an owned `draft`; `ensurePublicUserRow` before attach; [`resolvePostMergeRedirectPath`](src/lib/claims/post-merge-redirect.ts) in auth callback. Vitest: [`merge-anonymous-draft-on-login.test.ts`](src/lib/claims/merge-anonymous-draft-on-login.test.ts), [`gated-routes.test.ts`](src/lib/claims/gated-routes.test.ts), [`post-merge-redirect.test.ts`](src/lib/claims/post-merge-redirect.test.ts).
+
 ## 2026-05-15 (Phase 2.3–2.4 — cookie bootstrap + route fixes)
 
 - Hardened anonymous session minting: [`attachAnonymousSessionCookieIfNeeded`](src/lib/anonymous-session.ts) runs from [`src/lib/supabase/proxy.ts`](src/lib/supabase/proxy.ts) **before** the Supabase env early-return (so `/check` gets `rb_anonymous_sid` even when public env vars are missing). Added [`POST /api/session/anonymous`](src/app/api/session/anonymous/route.ts) and [`CheckSessionBootstrap`](src/components/check-session-bootstrap.tsx) on [`/check`](src/app/check/page.tsx) as a client fallback via `Set-Cookie`.

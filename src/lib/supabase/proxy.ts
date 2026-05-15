@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import {
   attachAnonymousSessionCookieIfNeeded,
-  isAnonymousFunnelPath,
+  isAnonymousAllowedPath,
 } from "@/lib/anonymous-session";
 import type { Database } from "@/types/database";
 import { hasEnvVars } from "../utils";
@@ -85,7 +85,7 @@ export async function updateSession(request: NextRequest) {
     !user &&
     !pathname.startsWith("/login") &&
     !pathname.startsWith("/auth") &&
-    !isAnonymousFunnelPath(pathname)
+    !isAnonymousAllowedPath(pathname)
   ) {
     // RingBounty primary auth entry is magic link at `/login` (Phase 2.1).
     const url = request.nextUrl.clone();

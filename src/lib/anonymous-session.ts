@@ -33,6 +33,8 @@ export function getAnonymousSessionCookieOptions() {
   };
 }
 
+import { isPostCheckGatedRoute } from "@/lib/claims/gated-routes";
+
 /** Paths where anonymous users may enter without auth redirect. */
 export function isAnonymousFunnelPath(pathname: string): boolean {
   return (
@@ -41,6 +43,13 @@ export function isAnonymousFunnelPath(pathname: string): boolean {
     pathname.startsWith("/api/claims/anonymous") ||
     pathname.startsWith("/api/session/anonymous")
   );
+}
+
+/**
+ * Anonymous visitors may hit post-check URLs only to be redirected to the account wall (§2.5.2).
+ */
+export function isAnonymousAllowedPath(pathname: string): boolean {
+  return isAnonymousFunnelPath(pathname) || isPostCheckGatedRoute(pathname);
 }
 
 /**

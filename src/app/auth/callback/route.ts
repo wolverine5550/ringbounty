@@ -7,11 +7,19 @@ import {
   isValidAnonymousSessionId,
 } from "@/lib/anonymous-session";
 import { mergeAnonymousDraftOnLogin } from "@/lib/claims/merge-anonymous-draft-on-login";
+import { sanitizeLoginNextPath } from "@/lib/claims/gated-routes";
+import { resolvePostMergeRedirectPath } from "@/lib/claims/post-merge-redirect";
 import type { Database } from "@/types/database";
 import {
   createAdminClient,
   SupabaseAdminKeyMissingError,
 } from "@/lib/supabase/admin";
+
+type CookieToSet = {
+  name: string;
+  value: string;
+  options?: Parameters<NextResponse["cookies"]["set"]>[2];
+};
 
 /**
  * PKCE / server-side auth: Supabase redirects here with `?code=` after the user
@@ -33,7 +41,8 @@ export async function GET(request: NextRequest) {
   }
 
   const safeNext = nextPath.startsWith("/") ? nextPath : "/protected";
-  const response = NextResponse.redirect(new URL(safeNext, requestUrl.origin));
+  let redirectTarget = sanitizeLoginNextPath(safeNext);
+  const cookiesToSet: CookieToSet[] = [];
 
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -43,10 +52,8 @@ export async function GET(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options),
-          );
+        setAll(incoming) {
+          cookiesToSet.push(...incoming);
         },
       },
     },
@@ -63,8 +70,10 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // §2.3.3 — Attach anonymous draft claim to the new session (full collision UX in §2.6).
+  // §2.6 — Attach anonymous draft; redirect to `/results?claim=` when merge succeeds (§2.6.5).
   const anonymousRaw = request.cookies.get(ANONYMOUS_SESSION_COOKIE_NAME)?.value;
+  let clearAnonymousCookie = false;
+
   if (isValidAnonymousSessionId(anonymousRaw)) {
     try {
       const { data: userData } = await supabase.auth.getUser();
@@ -76,19 +85,33 @@ export async function GET(request: NextRequest) {
           anonymousSessionId: anonymousRaw,
         });
         if (mergedClaimId) {
-          response.cookies.set(
-            ANONYMOUS_SESSION_COOKIE_NAME,
-            "",
-            { ...getAnonymousSessionCookieOptions(), maxAge: 0 },
+          redirectTarget = await resolvePostMergeRedirectPath(
+            admin,
+            mergedClaimId,
           );
+          clearAnonymousCookie = true;
         }
       }
     } catch (e) {
       if (!(e instanceof SupabaseAdminKeyMissingError)) {
         console.error("mergeAnonymousDraftOnLogin", e);
       }
-      // Intentionally keep the anonymous cookie so a later retry can merge once configured.
     }
+  }
+
+  const response = NextResponse.redirect(
+    new URL(redirectTarget, requestUrl.origin),
+  );
+
+  cookiesToSet.forEach(({ name, value, options }) =>
+    response.cookies.set(name, value, options),
+  );
+
+  if (clearAnonymousCookie) {
+    response.cookies.set(ANONYMOUS_SESSION_COOKIE_NAME, "", {
+      ...getAnonymousSessionCookieOptions(),
+      maxAge: 0,
+    });
   }
 
   return response;
