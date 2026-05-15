@@ -525,18 +525,24 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 4.6 Loading and errors
 
-- [ ] **4.6.1** Skeleton UI while checks run; per-number progress if parallel.
-- [ ] **4.6.2** Partial failure UX: one provider down, still show other data.
-- [ ] **4.6.3** Retry button with backoff; log error codes server-side.
+- [x] **4.6.1** Skeleton UI while checks run; per-number progress if parallel. <!-- done: per-row skeleton + parallel copy in `check-funnel-client.tsx` while `/api/check/submit` runs; numbers run in parallel via `runStubChecksForPhoneList` -->
+- [x] **4.6.2** Partial failure UX: one provider down, still show other data. <!-- done: `number_checks[].providers` per-outcome UI; HTTP 200 when persist succeeds; `parallel-check-pipeline-stub.ts` + tests with `failProviderId` -->
+- [x] **4.6.3** Retry button with backoff; log error codes server-side. <!-- done: **Retry with backoff** (`checkSubmitRetryBackoffMs`) in `check-funnel-client.tsx`; `console.error` JSON `{ event, error_code, … }` in `parallel-check-pipeline-stub.ts` + `check_submit_unhandled` in submit route -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
+
+**§4.6 — Risks / follow-ups (stubs interim)**
+- The parallel “providers” in [`src/lib/check/parallel-check-pipeline-stub.ts`](src/lib/check/parallel-check-pipeline-stub.ts) (**`runStubChecksForPhoneList`**) are **placeholder until Phase 5**: they **always succeed in production** unless you later wire env-driven failure for staging. Phase 5 should **replace** `runStubChecksForPhoneList` with real adapters but **can keep the same `number_checks` shape**.
+- Per-number **“progress” is honest loading** (skeleton until the single response returns), **not streaming** — fine until you add SSE or split requests.
 
 ---
 
 ## Phase 5 — Spam / exempt pipeline (pluggable)
+
+**Bridge from §4.6:** Replace stub `runStubChecksForPhoneList` with Nomorobo / YouMail (and orchestration per §5.4); preserve **`number_checks`** (or evolve it minimally) unless product changes the API contract.
 
 ### 5.1 Types and configuration
 

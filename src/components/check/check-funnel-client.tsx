@@ -24,7 +24,21 @@ import {
   formatUsPhoneMask,
   normalizeUsPhoneToE164,
 } from "@/lib/check/us-phone";
+import type { NumberCheckSummary } from "@/lib/check/parallel-check-pipeline-stub";
 import { RATE_LIMIT_USER_MESSAGE } from "@/lib/rate-limit/constants";
+
+const PROVIDER_CHECK_LABEL: Record<string, string> = {
+  nomorobo_stub: "Spam DB A (stub)",
+  youmail_stub: "Spam DB B (stub)",
+};
+
+/** Milliseconds to wait before a §4.6 retry after consecutive failures (capped). */
+function checkSubmitRetryBackoffMs(failureCount: number): number {
+  if (failureCount <= 0) {
+    return 0;
+  }
+  return Math.min(8000, 1000 * 2 ** (failureCount - 1));
+}
 
 const INITIAL_FUNNEL_STEP = 0 satisfies CheckFlowStepId;
 
@@ -100,7 +114,17 @@ export function CheckFunnelClient() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [rateLimitMessage, setRateLimitMessage] = useState<string | null>(null);
   const [checkSubmitting, setCheckSubmitting] = useState(false);
+  const [retryWaiting, setRetryWaiting] = useState(false);
+  const [submitFailureCount, setSubmitFailureCount] = useState(0);
+  const [numberChecks, setNumberChecks] = useState<NumberCheckSummary[] | null>(
+    null,
+  );
   const stepOneRef = useRef<HTMLElement | null>(null);
+
+  const validPhoneRowsForSubmit = useMemo(
+    () => phoneRows.filter((r) => normalizeUsPhoneToE164(r.digits) !== null),
+    [phoneRows],
+  );
 
   const duplicateRowIds = useMemo(
     () => computeDuplicateRowIds(phoneRows),
@@ -127,6 +151,7 @@ export function CheckFunnelClient() {
 
   const changeRowDigits = useCallback((rowId: string, raw: string) => {
     setSubmitError(null);
+    setNumberChecks(null);
     const digits = extractUsPhoneDigits(raw).slice(0, 10);
     setPhoneRows((prev) =>
       prev.map((row) => (row.id === rowId ? { ...row, digits } : row)),
@@ -154,7 +179,8 @@ export function CheckFunnelClient() {
     });
   }, []);
 
-  const runCheckSubmit = useCallback(async () => {
+  const runCheckSubmit = useCallback(
+    async (options?: { isBackoffRetry?: boolean }) => {
     setSubmitError(null);
     setRateLimitMessage(null);
 
@@ -184,7 +210,17 @@ export function CheckFunnelClient() {
       return;
     }
 
+    if (options?.isBackoffRetry && submitFailureCount > 0) {
+      const waitMs = checkSubmitRetryBackoffMs(submitFailureCount);
+      if (waitMs > 0) {
+        setRetryWaiting(true);
+        await new Promise((r) => setTimeout(r, waitMs));
+        setRetryWaiting(false);
+      }
+    }
+
     setCheckSubmitting(true);
+    setNumberChecks(null);
     try {
       const res = await fetch("/api/check/submit", {
         method: "POST",
@@ -199,29 +235,46 @@ export function CheckFunnelClient() {
         error?: string;
         claim_id?: string;
         claim_subject_ids?: string[];
+        number_checks?: NumberCheckSummary[];
       };
 
       if (res.status === 429) {
+        setSubmitFailureCount((n) => n + 1);
         setRateLimitMessage(body.error ?? RATE_LIMIT_USER_MESSAGE);
         return;
       }
 
       if (!res.ok) {
+        setSubmitFailureCount((n) => n + 1);
         setSubmitError(
           body.error ?? `Check request failed (${String(res.status)}).`,
         );
         return;
       }
 
-      // §4.5: `claim_subject_ids` is available for post-check redirects when Phase 5+ gate UX allows it.
+      setSubmitFailureCount(0);
+
+      const checks = Array.isArray(body.number_checks)
+        ? body.number_checks
+        : null;
+      setNumberChecks(checks ?? []);
+
+      if (checks?.some((row) => row.had_provider_failure)) {
+        setSubmitError(
+          "Some data sources did not respond. Details are shown below; saved numbers stay on your claim.",
+        );
+      }
 
       window.dispatchEvent(new Event(RB_CHECK_SUBMITTED_EVENT));
     } catch {
+      setSubmitFailureCount((n) => n + 1);
       setSubmitError("Could not run check. Please try again.");
     } finally {
       setCheckSubmitting(false);
     }
-  }, [duplicateRowIds.size, phoneRows]);
+    },
+    [duplicateRowIds.size, phoneRows, submitFailureCount],
+  );
 
   useEffect(() => {
     if (funnelStep !== 1) {
@@ -399,23 +452,120 @@ export function CheckFunnelClient() {
             ) : null}
 
             {submitError ? (
-              <p className="text-destructive text-sm" role="alert">
+              <p
+                className={
+                  numberChecks?.some((r) => r.had_provider_failure)
+                    ? "text-warning text-sm"
+                    : "text-destructive text-sm"
+                }
+                role="alert"
+              >
                 {submitError}
               </p>
             ) : null}
 
-            <Button
-              type="button"
-              disabled={
-                checkSubmitting ||
-                duplicateRowIds.size > 0 ||
-                phoneRows.some((r) => rowValidityHint(r.digits) !== null) ||
-                !phoneRows.some((r) => normalizeUsPhoneToE164(r.digits) !== null)
-              }
-              onClick={() => void runCheckSubmit()}
-            >
-              {checkSubmitting ? "Running check…" : "Run check"}
-            </Button>
+            {checkSubmitting ? (
+              <div
+                className="flex flex-col gap-2"
+                aria-busy="true"
+                aria-label="Check status by number"
+              >
+                <p className="text-muted-foreground text-xs">
+                  Running checks (parallel per number)…
+                </p>
+                <ul className="flex flex-col gap-2">
+                  {validPhoneRowsForSubmit.map((row) => (
+                    <li
+                      key={row.id}
+                      className="flex flex-col gap-2 rounded-md border border-border p-3 sm:flex-row sm:items-center"
+                    >
+                      <div className="bg-muted h-4 w-32 shrink-0 animate-pulse rounded" />
+                      <div className="flex flex-1 flex-wrap gap-2">
+                        {Array.from({ length: 2 }).map((_, i) => (
+                          <div
+                            key={`${row.id}-sk-${String(i)}`}
+                            className="bg-muted h-7 min-w-[7rem] flex-1 animate-pulse rounded-md"
+                          />
+                        ))}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            {numberChecks !== null && numberChecks.length > 0 ? (
+              <div className="flex flex-col gap-2">
+                <p className="text-sm font-medium">Check results</p>
+                <ul className="flex flex-col gap-3">
+                  {numberChecks.map((row) => (
+                    <li
+                      key={row.phone_number_normalized}
+                      className="rounded-md border border-border bg-card/30 p-3 text-sm"
+                    >
+                      <p className="font-mono text-xs">
+                        {row.phone_number_normalized}
+                      </p>
+                      <ul className="mt-2 flex flex-col gap-1.5">
+                        {row.providers.map((p) => (
+                          <li
+                            key={p.provider_id}
+                            className="text-muted-foreground flex flex-wrap items-baseline justify-between gap-2 text-xs"
+                          >
+                            <span>
+                              {PROVIDER_CHECK_LABEL[p.provider_id] ?? p.provider_id}
+                            </span>
+                            {p.status === "ok" ? (
+                              <span className="text-success font-medium">
+                                Received
+                              </span>
+                            ) : (
+                              <span className="text-warning font-medium">
+                                Unavailable ({p.error_code})
+                              </span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                disabled={
+                  checkSubmitting ||
+                  retryWaiting ||
+                  duplicateRowIds.size > 0 ||
+                  phoneRows.some((r) => rowValidityHint(r.digits) !== null) ||
+                  !phoneRows.some(
+                    (r) => normalizeUsPhoneToE164(r.digits) !== null,
+                  )
+                }
+                onClick={() => void runCheckSubmit()}
+              >
+                {checkSubmitting || retryWaiting
+                  ? "Running check…"
+                  : "Run check"}
+              </Button>
+              {submitFailureCount > 0 ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={checkSubmitting || retryWaiting}
+                  onClick={() =>
+                    void runCheckSubmit({ isBackoffRetry: true })
+                  }
+                >
+                  {retryWaiting
+                    ? "Waiting to retry…"
+                    : "Retry with backoff"}
+                </Button>
+              ) : null}
+            </div>
           </section>
         ) : null}
       </section>

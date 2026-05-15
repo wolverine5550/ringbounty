@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-05-15 (Phase 4.6 — loading, partial failures, retry, structured logs)
+
+- **§4.6 `/check` UX + API:** While [`POST /api/check/submit`](src/app/api/check/submit/route.ts) runs, [`CheckFunnelClient`](src/components/check/check-funnel-client.tsx) shows per-number skeleton rows. Successful phone submits extend JSON with **`number_checks`** — parallel stub “providers” per number ([`parallel-check-pipeline-stub.ts`](src/lib/check/parallel-check-pipeline-stub.ts), Vitest [`parallel-check-pipeline-stub.test.ts`](src/lib/check/parallel-check-pipeline-stub.test.ts)); one failing provider still returns others. **Retry with backoff** (cap 8s) after consecutive submit failures; provider / pipeline failures log **`error_code`** via structured `console.error` JSON (`check_provider_failure`, `check_number_pipeline_failure`, `check_submit_unhandled`).
+- **§4.6 follow-ups:** Stubs **always succeed in production** until you optionally add env-driven failure for staging. **Phase 5** replaces **`runStubChecksForPhoneList`** with real Nomorobo / YouMail adapters but **can keep the same `number_checks` shape**. Per-number progress is skeleton until the single response returns (**not streaming** until SSE or split requests).
+
 ## 2026-05-15 (Phase 4.5 — persist subjects + submit response)
 
 - **§4.5 persistence:** Migration [`20260515160000_claims_status_checking.sql`](supabase/migrations/20260515160000_claims_status_checking.sql) adds `checking` to `claims.status`. [`POST /api/check/submit`](src/app/api/check/submit/route.ts) creates/loads the anonymous claim (**`draft`**), replaces `claim_subjects`, then updates to **`checking`**; session resolution uses `draft` **or** **`checking`** ([`anonymous-funnel-claim-status.ts`](src/lib/claims/anonymous-funnel-claim-status.ts)). Response includes **`claim_subject_ids`** plus **`claim_id`** (ids follow multi-row `INSERT … RETURNING` order, i.e. listed row order).

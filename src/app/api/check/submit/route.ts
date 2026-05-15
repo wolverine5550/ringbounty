@@ -5,6 +5,7 @@ import {
   isValidAnonymousSessionId,
 } from "@/lib/anonymous-session";
 import { CHECK_MAX_PHONE_ROWS } from "@/lib/check/constants";
+import { runStubChecksForPhoneList } from "@/lib/check/parallel-check-pipeline-stub";
 import {
   parseAndDedupePhoneNumberPayload,
   type DedupedPhoneEntry,
@@ -143,6 +144,11 @@ async function replaceClaimSubjectsForPhones(
  * order as the listed rows (matches `phone_numbers`). Use these for `/results`, `/summary`,
  * and `/qualify/[id]?claim=…` when the product wires client navigation.
  *
+ * §4.6 — After persistence, stub provider checks run **in parallel per number** and per
+ * provider (`Promise.allSettled`); failures attach `error_code` and are logged server-side.
+ * Response may include **`number_checks`** with per-provider outcomes (partial failure is
+ * still HTTP 200 when persistence succeeded).
+ *
  * Empty POST body keeps the outcome-panel preview submit behavior.
  */
 export async function POST(request: NextRequest) {
@@ -209,6 +215,7 @@ export async function POST(request: NextRequest) {
 
     let claimId: string | undefined;
     let claimSubjectIds: string[] | undefined;
+    let numberChecks: Awaited<ReturnType<typeof runStubChecksForPhoneList>> | undefined;
     if (phonePayload && phonePayload.length > 0) {
       const persisted = await replaceClaimSubjectsForPhones(
         admin,
@@ -217,6 +224,12 @@ export async function POST(request: NextRequest) {
       );
       claimId = persisted.claimId;
       claimSubjectIds = persisted.subjectIds;
+      numberChecks = await runStubChecksForPhoneList(
+        phonePayload.map((e, i) => ({
+          phoneNumberNormalized: e.phoneNumberNormalized,
+          subjectId: persisted.subjectIds[i] ?? null,
+        })),
+      );
     }
 
     return NextResponse.json({
@@ -226,6 +239,9 @@ export async function POST(request: NextRequest) {
       ...(claimId ? { claim_id: claimId } : {}),
       ...(claimSubjectIds !== undefined && claimSubjectIds.length > 0
         ? { claim_subject_ids: claimSubjectIds }
+        : {}),
+      ...(numberChecks !== undefined && numberChecks.length > 0
+        ? { number_checks: numberChecks }
         : {}),
     });
   } catch (e) {
@@ -249,7 +265,13 @@ export async function POST(request: NextRequest) {
         { status: 503 },
       );
     }
-    console.error("POST /api/check/submit", e);
+    console.error(
+      JSON.stringify({
+        event: "check_submit_unhandled",
+        error_code: "INTERNAL_ERROR",
+      }),
+      e,
+    );
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
