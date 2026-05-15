@@ -9,7 +9,7 @@ export default function CheckLayout({
   return (
     <>
       {children}
-      <div className="mx-auto max-w-lg px-8 pb-8">
+      <div className="mx-auto max-w-lg px-4 pb-6 sm:px-6 sm:pb-8">
         <DisclaimerBanner variant="block" />
       </div>
     </>

@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-05-15 (Phase 4.2 — evidence checklist on `/check`)
+
+- **§4.2 checklist + gating:** Six PRD §10-style items with checkboxes, supportive non-guarantee copy, and **Continue to enter numbers** enabled when all are checked **or** the user acknowledges **continue anyway** ([`CheckFunnelClient`](src/components/check/check-funnel-client.tsx), [`evidence-checklist-items.ts`](src/lib/check/evidence-checklist-items.ts), [`evidence-checklist-gate.ts`](src/lib/check/evidence-checklist-gate.ts), Vitest [`evidence-checklist.test.ts`](src/lib/check/evidence-checklist.test.ts)). Reveal Step 1 placeholder until §4.3. Optional `claim_events` / `evidence_checklist_ack` insert not wired (anonymous funnel + RLS).
+
+## 2026-05-15 (Phase 4.1 — `/check` route and step indicator)
+
+- **`/check` funnel shell (§4.1):** Mobile-first layout via [`CheckPageShell`](src/components/check/check-page-shell.tsx); [`CheckStepIndicator`](src/components/check/check-step-indicator.tsx) shows **Step 0 — Preserve evidence** before **Step 1 — Enter numbers** (PRD §10). Step headings and intro copy in [`src/lib/check/constants.ts`](src/lib/check/constants.ts) (+ Vitest). Updated [`src/app/check/page.tsx`](src/app/check/page.tsx) and check layout padding. Checklist UI and number entry remain §4.2–4.3.
+
 ## 2026-05-15 (Homepage — wireframe layout)
 
 - Rebuilt [`/`](src/app/page.tsx) to match the SEO/conversion wireframe: two-column hero, informational stats (no customer logos), problem/solution, three feature cards, infrastructure partners + trust badges, CTA band, FAQ accordion, multi-column footer. Section components under [`src/components/marketing/landing-*.tsx`](src/components/marketing/); copy in [`src/lib/marketing/landing-content.ts`](src/lib/marketing/landing-content.ts).

@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { CheckOutcomePanel } from "@/components/check-outcome-panel";
+import { CheckFunnelClient } from "@/components/check/check-funnel-client";
+import { CheckPageShell } from "@/components/check/check-page-shell";
 import { CheckSessionBootstrap } from "@/components/check-session-bootstrap";
 
 type CheckPageProps = {
@@ -9,28 +11,41 @@ type CheckPageProps = {
 };
 
 /**
- * Anonymous funnel entry (Phase §2.3 / §2.5). Proxy mints `rb_anonymous_sid`; outcome panel
- * loads gate status and renders the account wall when `isSuccessfulQuery` (§2.5.1).
+ * Anonymous funnel entry (Phase §2.3 / §4.1–4.2). Step 0 — evidence preservation before number entry (PRD §10).
  */
 export default function CheckPage({ searchParams }: CheckPageProps) {
   return (
-    <div className="mx-auto flex min-h-svh max-w-lg flex-col gap-6 p-8">
+    <CheckPageShell>
       <CheckSessionBootstrap />
-      <h1 className="text-2xl font-semibold tracking-tight">Check a number</h1>
-      <p className="text-muted-foreground text-sm">
-        Run a TCPA-style screening without an account until we find a potential claim. The
-        full evidence checklist and number entry UI arrive in Phase 4.
-      </p>
+
+      <header className="flex flex-col gap-2">
+        <p className="text-primary text-xs font-medium uppercase tracking-wide">
+          Free TCPA screening
+        </p>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+          Check your spam calls
+        </h1>
+        <p className="text-muted-foreground text-sm leading-relaxed">
+          Screen numbers for potential TCPA issues and prepare a DIY demand letter path.
+          Informational tools only — not legal advice.
+        </p>
+      </header>
+
+      <CheckFunnelClient />
+
       <Suspense
         fallback={
-          <p className="text-muted-foreground text-sm">Loading check status…</p>
+          <p className="text-muted-foreground text-sm" role="status">
+            Loading check status…
+          </p>
         }
       >
         {searchParams.then(({ retry }) => (
           <CheckOutcomePanel showRetryHint={retry === "1"} />
         ))}
       </Suspense>
-      <div className="flex flex-wrap gap-3">
+
+      <footer className="flex flex-wrap gap-4 border-t border-border pt-4">
         <Link
           href="/"
           className="text-primary text-sm font-medium underline-offset-4 hover:underline"
@@ -43,7 +58,7 @@ export default function CheckPage({ searchParams }: CheckPageProps) {
         >
           Sign in
         </Link>
-      </div>
-    </div>
+      </footer>
+    </CheckPageShell>
   );
 }

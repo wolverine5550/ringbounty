@@ -471,24 +471,24 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 4.1 Route and layout
 
-- [ ] **4.1.1** Create `app/check/page.tsx` (or route group) with mobile-first layout.
-- [ ] **4.1.2** Step indicator: “Step 0 — Preserve evidence” before numbers (PRD §10).
+- [x] **4.1.1** Create `app/check/page.tsx` (or route group) with mobile-first layout. <!-- done: src/app/check/page.tsx, src/components/check/check-page-shell.tsx, src/app/check/layout.tsx (padding) -->
+- [x] **4.1.2** Step indicator: “Step 0 — Preserve evidence” before numbers (PRD §10). <!-- done: src/components/check/check-step-indicator.tsx, src/lib/check/constants.ts -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 4.2 Evidence checklist UI
 
-- [ ] **4.2.1** Render six checklist items from PRD §10 with checkboxes (local state OK; optional persist to `claim_events` as `evidence_checklist_ack`).
-- [ ] **4.2.2** Add supportive copy: “stronger evidence, stronger claim” without guaranteeing outcomes.
-- [ ] **4.2.3** “Continue to enter numbers” button disabled until user checks all **or** explicit “I understand, continue anyway” (product choice — pick one and test).
+- [x] **4.2.1** Render six checklist items from PRD §10 with checkboxes (local state OK; optional persist to `claim_events` as `evidence_checklist_ack`). <!-- done: src/lib/check/evidence-checklist-items.ts, src/components/check/check-funnel-client.tsx — persist deferred: anonymous funnel + RLS on claim_events is authenticated-only today -->
+- [x] **4.2.2** Add supportive copy: “stronger evidence, stronger claim” without guaranteeing outcomes. <!-- done: CHECK_EVIDENCE_CHECKLIST_SUPPORT_COPY in src/lib/check/evidence-checklist-items.ts -->
+- [x] **4.2.3** “Continue to enter numbers” button disabled until user checks all **or** explicit “I understand, continue anyway” (product choice — pick one and test). <!-- done: canContinueToNumberEntry in src/lib/check/evidence-checklist-gate.ts + Vitest src/lib/check/evidence-checklist.test.ts; UI in check-funnel-client.tsx -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 4.3 Number input UX
 
@@ -1255,7 +1255,7 @@ Track resolutions here by checking items off and adding `<!-- done: decision rec
 - [ ] **Anonymous attempt limits** — How many numbers per session / per day before soft block or CAPTCHA?
 - [ ] **Multi-number in v0.1** — Confirm same-session UX: add list, remove number, re-run checks independently per subject.
 - [ ] **Weakest-link vs per-subject strength** — If one number is ineligible and another strong, how does summary read?
-- [ ] **Evidence checklist gating** — Require all boxes vs “continue anyway” acknowledgement (Phase 4.2.3 fork).
+- [x] **Evidence checklist gating** — Require all boxes vs “continue anyway” acknowledgement (Phase 4.2.3 fork). <!-- done: both — all items OR “continue anyway” in src/components/check/check-funnel-client.tsx + src/lib/check/evidence-checklist-gate.ts -->
 
 
 **Docs — this subsection**
