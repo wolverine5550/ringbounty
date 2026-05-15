@@ -495,6 +495,71 @@ export type Database = {
           },
         ]
       }
+      newsletter_waitlist: {
+        Row: {
+          anonymous_session_id: string | null
+          claim_id: string | null
+          created_at: string
+          email: string
+          email_hash: string
+          id: string
+          marketing_consent: boolean
+          source: string
+        }
+        Insert: {
+          anonymous_session_id?: string | null
+          claim_id?: string | null
+          created_at?: string
+          email: string
+          email_hash: string
+          id?: string
+          marketing_consent?: boolean
+          source: string
+        }
+        Update: {
+          anonymous_session_id?: string | null
+          claim_id?: string | null
+          created_at?: string
+          email?: string
+          email_hash?: string
+          id?: string
+          marketing_consent?: boolean
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_waitlist_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "claims"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rate_limit_buckets: {
+        Row: {
+          action: string
+          bucket_key: string
+          hit_count: number
+          scope: string
+          window_start: string
+        }
+        Insert: {
+          action: string
+          bucket_key: string
+          hit_count?: number
+          scope: string
+          window_start: string
+        }
+        Update: {
+          action?: string
+          bucket_key?: string
+          hit_count?: number
+          scope?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string
@@ -563,7 +628,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      consume_rate_limit: {
+        Args: {
+          p_action: string
+          p_bucket_key: string
+          p_max_count: number
+          p_scope: string
+          p_window_secs?: number
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

@@ -3,6 +3,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 
 import {
+  getEmailCaptureTrigger,
+  type EmailCaptureReason,
+} from "./email-capture-trigger";
+import {
   isSuccessfulQuery,
   type ClaimQuerySnapshot,
   type ClaimStrengthGate,
@@ -14,6 +18,9 @@ export type ClaimGateStatus = {
   isSuccessfulQuery: boolean;
   /** True when anonymous user must sign in before viewing gated routes. */
   requiresAccountWall: boolean;
+  /** Offer waitlist signup for ineligible / exempt-only (§2.8.4). */
+  showEmailCapture: boolean;
+  emailCaptureReason: EmailCaptureReason | null;
 };
 
 /**
@@ -58,11 +65,14 @@ export async function loadClaimGateStatusByClaimId(
   };
 
   const successful = isSuccessfulQuery(snapshot);
+  const emailCapture = getEmailCaptureTrigger(snapshot);
   return {
     claimId: claim.id,
     snapshot,
     isSuccessfulQuery: successful,
     requiresAccountWall: successful,
+    showEmailCapture: emailCapture.showEmailCapture,
+    emailCaptureReason: emailCapture.emailCaptureReason,
   };
 }
 

@@ -1,5 +1,30 @@
 # Changelog
 
+## 2026-05-15 (Phase 2.7–2.8 — rate limiting + email capture)
+
+- **Rate limiting (§2.7):** Migration `supabase/migrations/20260515120000_rate_limit_and_newsletter_waitlist.sql` adds `public.rate_limit_buckets` and RPC `consume_rate_limit`. App helpers in [`src/lib/rate-limit/`](src/lib/rate-limit/); [`POST /api/check/submit`](src/app/api/check/submit/route.ts) returns **429** when hourly limits are exceeded. CAPTCHA stub in [`captcha.ts`](src/lib/rate-limit/captcha.ts).
+- **Email capture (§2.8):** `public.newsletter_waitlist` + [`POST /api/waitlist`](src/app/api/waitlist/route.ts) (email validation, SHA-256 dedupe, IP rate limit). [`EmailCaptureModal`](src/components/email-capture-modal.tsx) wired in [`CheckOutcomePanel`](src/components/check-outcome-panel.tsx) for ineligible / exempt-only gate status and explicit **Notify me** CTA. Placeholder marketing consent copy in [`src/lib/waitlist/constants.ts`](src/lib/waitlist/constants.ts). Gate API adds `show_email_capture` / `email_capture_reason`.
+
+### MVP defaults (2.7-2.8)
+
+| Area | Default | Where to change |
+|------|---------|-----------------|
+| Rate-limit **store** | In-DB (`rate_limit_buckets` + `consume_rate_limit` RPC), not Redis/KV | New store = new migration + swap callers in `src/lib/rate-limit/` |
+| Check submissions / **session** | **10** per hour per `rb_anonymous_sid` | [`CHECK_SUBMISSION_LIMIT_PER_SESSION`](src/lib/rate-limit/constants.ts) |
+| Check submissions / **IP** | **30** per hour | [`CHECK_SUBMISSION_LIMIT_PER_IP`](src/lib/rate-limit/constants.ts) |
+| Rate-limit **window** | **3600** seconds (1 hour) | [`CHECK_SUBMISSION_WINDOW_SECONDS`](src/lib/rate-limit/constants.ts), [`WAITLIST_WINDOW_SECONDS`](src/lib/rate-limit/constants.ts) |
+| Waitlist signups / **IP** | **5** per hour | [`WAITLIST_LIMIT_PER_IP`](src/lib/rate-limit/constants.ts) |
+| **CAPTCHA** | Off (stub only) | [`src/lib/rate-limit/captcha.ts`](src/lib/rate-limit/captcha.ts) |
+| Waitlist **dedupe** | SHA-256 of normalized email (`email_hash` unique) | [`src/lib/waitlist/hash-email.ts`](src/lib/waitlist/hash-email.ts) |
+| Email capture — **ineligible** | `claim_strength === 'ineligible'` | [`getEmailCaptureTrigger`](src/lib/claims/email-capture-trigger.ts) |
+| Email capture — **exempt-only** | Every `claim_subjects` row has `is_exempt = true` (≥1 subject) | Same file |
+| Email capture — **notify me** | User clicks **Notify me** on `/check` (`notify_me_cta` source) | [`CheckOutcomePanel`](src/components/check-outcome-panel.tsx) |
+| Marketing **consent** | Opt-in checkbox; **placeholder** legal copy | [`MARKETING_CONSENT_*`](src/lib/waitlist/constants.ts) — replace after legal review |
+
+**User-facing limit messages:** [`RATE_LIMIT_USER_MESSAGE`](src/lib/rate-limit/constants.ts), [`WAITLIST_RATE_LIMIT_USER_MESSAGE`](src/lib/rate-limit/constants.ts).
+
+**Open questions still tied to these defaults:** “Anonymous attempt limits” and final marketing consent text in `task_manager.md` → Open questions.
+
 ## 2026-05-15 (Phase 2.5–2.6 — account wall + post-login merge)
 
 - **Account wall (§2.5):** [`AccountWall`](src/components/account-wall.tsx) + [`CheckOutcomePanel`](src/components/check-outcome-panel.tsx) on [`/check`](src/app/check/page.tsx); full-page [`/check/account-required`](src/app/check/account-required/page.tsx); [`GET /api/claims/anonymous/status`](src/app/api/claims/anonymous/status/route.ts). Gated placeholders under [`src/app/(post-check)/`](src/app/(post-check)/) with [`enforcePostCheckAccess`](src/lib/claims/enforce-post-check-access.ts). Deep links use `claim` UUID query only ([`gated-routes.ts`](src/lib/claims/gated-routes.ts)).

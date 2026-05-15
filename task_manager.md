@@ -362,27 +362,38 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 2.7 Rate limiting and abuse
 
-- [ ] **2.7.1** Choose store: Vercel KV, Upstash Redis, or in-DB sliding window per IP + per `anonymous_session_id`.
-- [ ] **2.7.2** Implement limit for “check submissions per hour” for anonymous sessions (tune constants later).
-- [ ] **2.7.3** Return user-friendly message when limited; log incident server-side.
-- [ ] **2.7.4** Optional: CAPTCHA hook after threshold (stub interface if not enabled day one).
+- [x] **2.7.1** Choose store: Vercel KV, Upstash Redis, or in-DB sliding window per IP + per `anonymous_session_id`. <!-- done: in-DB `public.rate_limit_buckets` + `consume_rate_limit` RPC — `supabase/migrations/20260515120000_rate_limit_and_newsletter_waitlist.sql` -->
+- [x] **2.7.2** Implement limit for “check submissions per hour” for anonymous sessions (tune constants later). <!-- done: `src/lib/rate-limit/constants.ts` (10/session, 30/IP), `assertCheckSubmissionAllowed`, `POST` `src/app/api/check/submit/route.ts` -->
+- [x] **2.7.3** Return user-friendly message when limited; log incident server-side. <!-- done: `RateLimitExceededError`, `logRateLimitIncident`, 429 in check submit + waitlist routes -->
+- [x] **2.7.4** Optional: CAPTCHA hook after threshold (stub interface if not enabled day one). <!-- done: `src/lib/rate-limit/captcha.ts` (`noopCaptchaVerifier`, `requiresCaptcha` stub) -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
+
+**Assumptions / risks (Phase 2.7 — carry until tuned):**
+
+- **Store:** In-DB counters (no Redis/KV) — sufficient for MVP; revisit if hot-path latency matters.
+- **Check submit:** Phase 4 pipeline should call `assertCheckSubmissionAllowed` before expensive work; preview button on `/check` calls `POST /api/check/submit` today.
+- **Limits:** Defaults are interim until **Anonymous attempt limits** open question is resolved.
 
 ### 2.8 Email capture (ineligible / blocked)
 
-- [ ] **2.8.1** Design modal: email + optional marketing consent checkbox text reviewed for CAN-SPAM/GDPR where applicable.
-- [ ] **2.8.2** Persist to `newsletter_waitlist` table **or** CRM webhook — if no CRM, store table with `source`, `created_at`.
-- [ ] **2.8.3** Server-side validate email; dedupe by email hash optional.
-- [ ] **2.8.4** Trigger on: ineligible strength, exempt-only results, explicit “notify me” CTA.
+- [x] **2.8.1** Design modal: email + optional marketing consent checkbox text reviewed for CAN-SPAM/GDPR where applicable. <!-- done: `src/components/email-capture-modal.tsx` + placeholder copy `src/lib/waitlist/constants.ts` — **legal review pending** -->
+- [x] **2.8.2** Persist to `newsletter_waitlist` table **or** CRM webhook — if no CRM, store table with `source`, `created_at`. <!-- done: `public.newsletter_waitlist`, `src/lib/waitlist/subscribe-waitlist.ts`, `POST` `src/app/api/waitlist/route.ts` -->
+- [x] **2.8.3** Server-side validate email; dedupe by email hash optional. <!-- done: `src/lib/waitlist/validate-email.ts`, `hash-email.ts`, unique on `email_hash` -->
+- [x] **2.8.4** Trigger on: ineligible strength, exempt-only results, explicit “notify me” CTA. <!-- done: `getEmailCaptureTrigger`, status API fields, `CheckOutcomePanel` + notify overlay -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
+
+**Assumptions / risks (Phase 2.8 — carry until product/legal lock):**
+
+- **Consent copy:** Placeholder only — replace `MARKETING_CONSENT_*` in `src/lib/waitlist/constants.ts` after CAN-SPAM/GDPR review.
+- **Exempt-only:** All `claim_subjects` rows `is_exempt = true` triggers capture; mixed exempt/non-exempt does not.
 
 ---
 

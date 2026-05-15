@@ -45,6 +45,8 @@ export async function GET(request: NextRequest) {
       claim_id: gate.claimId,
       is_successful_query: gate.isSuccessfulQuery,
       requires_account_wall: gate.requiresAccountWall,
+      show_email_capture: gate.showEmailCapture,
+      email_capture_reason: gate.emailCaptureReason,
     });
   } catch (e) {
     if (e instanceof SupabaseAdminKeyMissingError) {
