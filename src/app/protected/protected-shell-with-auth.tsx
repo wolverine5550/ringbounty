@@ -1,3 +1,4 @@
+import { DisclaimerBanner } from "@/components/marketing/disclaimer-banner";
 import { DeployButton } from "@/components/deploy-button";
 import { EnvVarWarning } from "@/components/env-var-warning";
 import { AuthButton } from "@/components/auth-button";
@@ -40,6 +41,10 @@ export async function ProtectedShellWithAuth({
           </div>
         </nav>
         <div className="flex max-w-5xl flex-1 flex-col gap-20 p-5">{children}</div>
+
+        <div className="mx-auto w-full max-w-5xl px-5 pb-6">
+          <DisclaimerBanner variant="block" />
+        </div>
 
         <footer className="mx-auto flex w-full items-center justify-center gap-8 border-t py-16 text-center text-xs">
           <p>

@@ -9,29 +9,7 @@ import {
   DEFAULT_MARKETING_DESCRIPTION,
   SITE_NAME,
 } from "@/lib/marketing/constants";
-
-const FLOW_STEPS = [
-  {
-    title: "Check",
-    body: "Enter a phone number. We run informational screening (spam signals, exemptions, and more as features ship) so you can see whether TCPA may be worth exploring — without creating an account first.",
-  },
-  {
-    title: "Qualify",
-    body: "Answer factual questions about the calls. We estimate claim strength and statutory ranges from your inputs. Estimates are educational, not promises.",
-  },
-  {
-    title: "Pay",
-    body: "Purchase a DIY demand letter when you are ready. Pricing and Stripe checkout ship in a later milestone.",
-  },
-  {
-    title: "Letter",
-    body: "We generate a template letter from the facts you provide. You choose a demand scenario; we do not recommend which amount to request.",
-  },
-  {
-    title: "File",
-    body: "You send and track the letter yourself. RingBounty explains the general process; we do not file on your behalf or represent you.",
-  },
-] as const;
+import { LANDING_FLOW_STEPS } from "@/lib/marketing/landing-content";
 
 export const metadata: Metadata = {
   title: `How it works — ${SITE_NAME}`,
@@ -61,7 +39,7 @@ export default function HowItWorksPage() {
         </header>
 
         <ol className="flex flex-col gap-8">
-          {FLOW_STEPS.map((step, index) => (
+          {LANDING_FLOW_STEPS.map((step, index) => (
             <li key={step.title} className="flex gap-4">
               <span
                 className="bg-primary text-primary-foreground flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-medium"

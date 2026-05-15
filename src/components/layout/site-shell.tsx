@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { DisclaimerBanner } from "@/components/marketing/disclaimer-banner";
+
 type SiteShellProps = {
   /** Route-level content (pages, nested layouts). Rendered inside the primary `<main>`. */
   children: ReactNode;
@@ -27,15 +29,11 @@ export function SiteShell({ children }: SiteShellProps) {
       </main>
 
       <footer
-        className="shrink-0 border-t border-border bg-muted/30 px-4 py-3 text-center"
+        className="shrink-0 border-t border-border bg-muted/30 px-4 py-3"
         role="contentinfo"
         aria-label="Global notices"
       >
-        <p className="text-muted-foreground text-xs leading-relaxed">
-          RingBounty does not provide legal advice. Information and tools are for
-          general educational purposes only; consult a qualified attorney about
-          your situation.
-        </p>
+        <DisclaimerBanner variant="footer" />
       </footer>
     </div>
   );

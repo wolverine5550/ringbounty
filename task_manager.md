@@ -425,45 +425,45 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 3.3 `/faq`
 
-- [ ] **3.3.1** Objection-handling Qs: cost, legality, “will I win”, time to pay, DNC, attorney need.
-- [ ] **3.3.2** Each answer ends with non-advice reminder where appropriate.
+- [x] **3.3.1** Objection-handling Qs: cost, legality, “will I win”, time to pay, DNC, attorney need. <!-- done: src/lib/marketing/faq.ts, src/app/faq/page.tsx, src/components/marketing/faq-list.tsx -->
+- [x] **3.3.2** Each answer ends with non-advice reminder where appropriate. <!-- done: FAQ_NON_ADVICE_REMINDER in src/lib/marketing/non-advice-reminder.ts; faq.test.ts -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 3.4 `/privacy`
 
-- [ ] **3.4.1** Plain-English sections: what you collect, why, retention, third parties (Stripe, Supabase, AI vendor), no selling data.
-- [ ] **3.4.2** CCPA: how to request deletion/export (mail or form).
-- [ ] **3.4.3** Describe anonymous vs authenticated data lifecycle.
+- [x] **3.4.1** Plain-English sections: what you collect, why, retention, third parties (Stripe, Supabase, AI vendor), no selling data. <!-- done: src/lib/marketing/privacy.ts, src/app/privacy/page.tsx -->
+- [x] **3.4.2** CCPA: how to request deletion/export (mail or form). <!-- done: privacy@ringbounty.com CCPA section in privacy.ts -->
+- [x] **3.4.3** Describe anonymous vs authenticated data lifecycle. <!-- done: privacy.ts lifecycle section -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 3.5 `/terms`
 
-- [ ] **3.5.1** Terms of service: not legal advice, limitation of liability (lawyer-reviewed draft), acceptable use, age requirement (18+), jurisdiction.
-- [ ] **3.5.2** Digital product / letter purchase terms; **no refund** clause matches current product decision or neutral wording.
+- [x] **3.5.1** Terms of service: not legal advice, limitation of liability (lawyer-reviewed draft), acceptable use, age requirement (18+), jurisdiction. <!-- done: src/lib/marketing/terms.ts, src/app/terms/page.tsx -->
+- [x] **3.5.2** Digital product / letter purchase terms; **no refund** clause matches current product decision or neutral wording. <!-- done: terms.ts digital-product + refunds sections -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 3.6 Global disclaimer component
 
-- [ ] **3.6.1** Build `DisclaimerBanner` or footer text component with PRD exact disclaimer string.
-- [ ] **3.6.2** Mount on: landing, check, results, qualify, summary, letter, guide, account layouts.
-- [ ] **3.6.3** Ensure disclaimer never uses the phrase “legal advice” as offering (PRD §3).
+- [x] **3.6.1** Build `DisclaimerBanner` or footer text component with PRD exact disclaimer string. <!-- done: src/components/marketing/disclaimer-banner.tsx; DisclaimerBlock wraps it -->
+- [x] **3.6.2** Mount on: landing, check, results, qualify, summary, letter, guide, account layouts. <!-- done: SiteShell footer, marketing pages, src/app/check/layout.tsx, src/app/(post-check)/layout.tsx, protected-shell-with-auth.tsx; /guide layout deferred to Phase §10.7 -->
+- [x] **3.6.3** Ensure disclaimer never uses the phrase “legal advice” as offering (PRD §3). <!-- done: constants.test.ts -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ---
 

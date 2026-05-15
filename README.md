@@ -86,14 +86,19 @@ In the Supabase dashboard, open **Authentication → URL configuration** for pro
 
 The app’s root [`proxy.ts`](proxy.ts) refreshes the session (see [`src/lib/supabase/proxy.ts`](src/lib/supabase/proxy.ts)); unauthenticated visitors are sent to `/login`.
 
-### Public marketing (Phase §3.1–§3.2)
+### Public marketing (Phase §3.1–§3.6)
 
 | Route | Purpose |
 |-------|---------|
 | [`/`](src/app/page.tsx) | Landing: TCPA informational hero, trust strip, CTAs to `/check` and `/how-it-works`, PRD disclaimer footer. |
 | [`/how-it-works`](src/app/how-it-works/page.tsx) | Product flow overview (check → qualify → pay → letter → file), TCPA overview, link to `/faq`. |
+| [`/faq`](src/app/faq/page.tsx) | Objection-handling FAQ (cost, legality, outcomes, timing, DNC, attorneys) with non-advice reminders. |
+| [`/privacy`](src/app/privacy/page.tsx) | Plain-English privacy policy (collection, retention, third parties, CCPA, anonymous vs signed-in lifecycle). |
+| [`/terms`](src/app/terms/page.tsx) | Terms of service (eligibility 18+, acceptable use, digital letters, refunds, liability draft). |
 
-Shared copy and the PRD §3 disclaimer string live in [`src/lib/marketing/constants.ts`](src/lib/marketing/constants.ts). Marketing UI: [`src/components/marketing/`](src/components/marketing/). Unauthenticated access to `/how-it-works` (and future `/faq`, `/privacy`, `/terms`) is allowed via [`isPublicMarketingPath`](src/lib/marketing/public-routes.ts) in [`src/lib/supabase/proxy.ts`](src/lib/supabase/proxy.ts).
+Shared copy lives in [`src/lib/marketing/`](src/lib/marketing/) (`constants.ts`, `faq.ts`, `privacy.ts`, `terms.ts`). The PRD §3 disclaimer is rendered by [`DisclaimerBanner`](src/components/marketing/disclaimer-banner.tsx) (global site footer, marketing pages, [`/check` layout](src/app/check/layout.tsx), [`(post-check)` layout](src/app/(post-check)/layout.tsx), and [`/protected`](src/app/protected/protected-shell-with-auth.tsx)). `/guide` will reuse the same component when Phase 10 ships.
+
+Marketing UI: [`src/components/marketing/`](src/components/marketing/). Unauthenticated access to marketing routes is allowed via [`isPublicMarketingPath`](src/lib/marketing/public-routes.ts) in [`src/lib/supabase/proxy.ts`](src/lib/supabase/proxy.ts).
 
 ### Anonymous funnel (Phase §2.3–§2.4)
 

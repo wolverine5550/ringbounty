@@ -1,14 +1,10 @@
-import { PRODUCT_DISCLAIMER } from "@/lib/marketing/constants";
+import { DisclaimerBanner } from "@/components/marketing/disclaimer-banner";
 
-/** PRD §3 disclaimer block for mid-page or bottom placement (§3.2.3). */
-export function DisclaimerBlock() {
-  return (
-    <aside
-      className="rounded-lg border border-border bg-muted/40 px-4 py-4 text-sm leading-relaxed text-muted-foreground"
-      role="note"
-      aria-label="Important information"
-    >
-      {PRODUCT_DISCLAIMER}
-    </aside>
-  );
+type DisclaimerBlockProps = {
+  className?: string;
+};
+
+/** Bordered PRD §3 disclaimer aside (§3.2.3 / §3.6). */
+export function DisclaimerBlock({ className }: DisclaimerBlockProps) {
+  return <DisclaimerBanner variant="block" className={className} />;
 }

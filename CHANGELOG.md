@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-05-15 (Homepage — wireframe layout)
+
+- Rebuilt [`/`](src/app/page.tsx) to match the SEO/conversion wireframe: two-column hero, informational stats (no customer logos), problem/solution, three feature cards, infrastructure partners + trust badges, CTA band, FAQ accordion, multi-column footer. Section components under [`src/components/marketing/landing-*.tsx`](src/components/marketing/); copy in [`src/lib/marketing/landing-content.ts`](src/lib/marketing/landing-content.ts).
+
+## 2026-05-15 (Phase 3.3–3.6 — FAQ, legal pages, global disclaimer)
+
+- **FAQ (`/faq`):** Objection-handling Q&A with non-advice reminders ([`src/app/faq/page.tsx`](src/app/faq/page.tsx), [`src/lib/marketing/faq.ts`](src/lib/marketing/faq.ts), [`src/components/marketing/faq-list.tsx`](src/components/marketing/faq-list.tsx)).
+- **Privacy (`/privacy`) and terms (`/terms`):** Plain-English policy pages; CCPA request path, third-party list, anonymous vs authenticated lifecycle, digital-product / no-refund wording ([`src/lib/marketing/privacy.ts`](src/lib/marketing/privacy.ts), [`src/lib/marketing/terms.ts`](src/lib/marketing/terms.ts), shared [`MarketingDocPage`](src/components/marketing/marketing-doc-page.tsx)).
+- **Global disclaimer (§3.6):** [`DisclaimerBanner`](src/components/marketing/disclaimer-banner.tsx) with PRD exact string; mounted in site footer, check + post-check layouts, protected account shell, and marketing footers. Vitest: [`faq.test.ts`](src/lib/marketing/faq.test.ts), extended [`constants.test.ts`](src/lib/marketing/constants.test.ts).
+
 ## 2026-05-15 (Phase 3.1–3.2 — marketing landing)
 
 - **Landing (`/`):** Replaced starter template with RingBounty hero, trust strip, PRD §3 disclaimer, and policy footer links ([`src/app/page.tsx`](src/app/page.tsx), [`src/components/marketing/`](src/components/marketing/)). Primary CTA → `/check`; secondary → `/how-it-works`. Page metadata + Open Graph use [`/opengraph-image.png`](src/app/opengraph-image.png).

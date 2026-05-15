@@ -46,3 +46,6 @@ next-env.d.ts
 
 # PRD
 prd.md
+
+# Internal Images
+internal-images/

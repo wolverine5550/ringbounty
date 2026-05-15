@@ -3,13 +3,24 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { SITE_NAME } from "@/lib/marketing/constants";
 
+import {
+  LANDING_FAQ_SECTION_ID,
+  LANDING_HOW_IT_WORKS_SECTION_ID,
+} from "@/lib/marketing/landing-content";
+
+/** In-page anchors on `/` (sticky header offset via `scroll-mt-*` on sections). */
+const NAV_LINKS = [
+  { href: `/#${LANDING_HOW_IT_WORKS_SECTION_ID}`, label: "How it works" },
+  { href: `/#${LANDING_FAQ_SECTION_ID}`, label: "FAQ" },
+] as const;
+
 /**
- * Lightweight header for public marketing pages (§3.1 / §3.2).
+ * Navigation menu for public marketing pages (wireframe header).
  */
 export function MarketingHeader() {
   return (
-    <div className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
+    <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:h-16 sm:px-6">
         <Link
           href="/"
           className="text-sm font-semibold tracking-tight hover:underline underline-offset-4"
@@ -17,20 +28,23 @@ export function MarketingHeader() {
           {SITE_NAME}
         </Link>
         <nav
-          className="flex items-center gap-4 text-sm"
-          aria-label="Marketing"
+          className="flex items-center gap-3 text-sm sm:gap-6"
+          aria-label="Main"
         >
-          <Link
-            href="/how-it-works"
-            className="text-muted-foreground hover:text-foreground"
-          >
-            How it works
-          </Link>
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              {link.label}
+            </Link>
+          ))}
           <Button asChild size="sm">
             <Link href="/check">Check a number</Link>
           </Button>
         </nav>
       </div>
-    </div>
+    </header>
   );
 }
