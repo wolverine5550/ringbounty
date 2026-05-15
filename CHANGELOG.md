@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-05-15 (Phase 2.3–2.4 — cookie bootstrap + route fixes)
+
+- Hardened anonymous session minting: [`attachAnonymousSessionCookieIfNeeded`](src/lib/anonymous-session.ts) runs from [`src/lib/supabase/proxy.ts`](src/lib/supabase/proxy.ts) **before** the Supabase env early-return (so `/check` gets `rb_anonymous_sid` even when public env vars are missing). Added [`POST /api/session/anonymous`](src/app/api/session/anonymous/route.ts) and [`CheckSessionBootstrap`](src/components/check-session-bootstrap.tsx) on [`/check`](src/app/check/page.tsx) as a client fallback via `Set-Cookie`.
+- Removed `export const runtime = "nodejs"` from route handlers — incompatible with `nextConfig.cacheComponents` (fixes dev/build 500 on [`/api/claims/anonymous`](src/app/api/claims/anonymous/route.ts) and [`/auth/callback`](src/app/auth/callback/route.ts)).
+- README anonymous-funnel section updated (bootstrap API, DevTools note, local verification). Verified: `POST /api/claims/anonymous` with `rb_anonymous_sid` returns `{ claim_id }` when `SUPABASE_SECRET_KEY` is set.
+
+## 2026-05-14 (Supabase secret API key)
+
+- Replaced `src/lib/supabase/service-role.ts` with [`src/lib/supabase/admin.ts`](src/lib/supabase/admin.ts): prefer **`SUPABASE_SECRET_KEY`** (`sb_secret_…`); legacy **`SUPABASE_SERVICE_ROLE_KEY`** remains a fallback. `createAdminClient()` powers anonymous claims and post-login merge. README and `.env.example` updated per [Supabase API keys](https://supabase.com/docs/guides/api/api-keys).
+
+## 2026-05-14 (Phase 2.3–2.4 — anonymous session + server claims)
+
+- Completed `task_manager.md` §2.3–§2.4: HTTP-only **`rb_anonymous_sid`** cookie (30-day, `SameSite=Lax`, `Secure` in production) minted on [`/check`](src/app/check/page.tsx) via [`src/lib/supabase/proxy.ts`](src/lib/supabase/proxy.ts); helpers in [`src/lib/anonymous-session.ts`](src/lib/anonymous-session.ts). [`POST /api/claims/anonymous`](src/app/api/claims/anonymous/route.ts) + [`createOrGetActiveClaimForSession`](src/lib/claims/create-or-get-active-claim-for-session.ts) + [`src/lib/supabase/service-role.ts`](src/lib/supabase/service-role.ts) for service-role inserts; Vitest in [`create-or-get-active-claim-for-session.test.ts`](src/lib/claims/create-or-get-active-claim-for-session.test.ts). Post-login draft merge + cookie clear in [`src/app/auth/callback/route.ts`](src/app/auth/callback/route.ts) via [`mergeAnonymousDraftOnLogin`](src/lib/claims/merge-anonymous-draft-on-login.ts). README documents the funnel and env expectations.
+
 ## 2026-05-14 (Phase 2 — Cache Components / blocking-route)
 
 - Resolved Next.js 16 [blocking-route](https://nextjs.org/docs/messages/blocking-route) / Cache Components dev overlay for `/login` and `/protected`: [`src/app/login/page.tsx`](src/app/login/page.tsx) now unwraps the `searchParams` promise with `.then()` inside `<Suspense>` (per Next.js 16.2 streaming docs); added [`src/app/login/loading.tsx`](src/app/login/loading.tsx) and [`src/app/protected/loading.tsx`](src/app/protected/loading.tsx); moved the authenticated shell to [`src/app/protected/protected-shell-with-auth.tsx`](src/app/protected/protected-shell-with-auth.tsx) so [`src/app/protected/layout.tsx`](src/app/protected/layout.tsx) only composes Suspense + fallback. README “Next.js 16 — Cache Components” section documents the pattern and restart guidance.

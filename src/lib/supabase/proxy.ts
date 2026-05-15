@@ -1,5 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+
+import {
+  attachAnonymousSessionCookieIfNeeded,
+  isAnonymousFunnelPath,
+} from "@/lib/anonymous-session";
 import type { Database } from "@/types/database";
 import { hasEnvVars } from "../utils";
 
@@ -7,6 +12,12 @@ export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   });
+
+  // Mint anonymous session on /check even when Supabase public env vars are unset.
+  supabaseResponse = attachAnonymousSessionCookieIfNeeded(
+    request,
+    supabaseResponse,
+  );
 
   // If the env vars are not set, skip proxy check. You can remove this
   // once you setup the project.
@@ -67,11 +78,14 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
 
+  const pathname = request.nextUrl.pathname;
+
   if (
-    request.nextUrl.pathname !== "/" &&
+    pathname !== "/" &&
     !user &&
-    !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/auth")
+    !pathname.startsWith("/login") &&
+    !pathname.startsWith("/auth") &&
+    !isAnonymousFunnelPath(pathname)
   ) {
     // RingBounty primary auth entry is magic link at `/login` (Phase 2.1).
     const url = request.nextUrl.clone();
@@ -92,5 +106,5 @@ export async function updateSession(request: NextRequest) {
   // If this is not done, you may be causing the browser and server to go out
   // of sync and terminate the user's session prematurely!
 
-  return supabaseResponse;
+  return attachAnonymousSessionCookieIfNeeded(request, supabaseResponse);
 }

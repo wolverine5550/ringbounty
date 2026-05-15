@@ -65,7 +65,7 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 ### 0.2 Environment templates
 
 - [ ] **0.2.1** Add `.env.example` at repo root with `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-- [ ] **0.2.2** Add server-only placeholders: `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`.
+- [ ] **0.2.2** Add server-only placeholders: `SUPABASE_SECRET_KEY` (preferred; legacy `SUPABASE_SERVICE_ROLE_KEY` fallback), `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`.
 - [ ] **0.2.3** Add `OPENROUTER_API_KEY` (or chosen AI gateway) placeholder.
 - [ ] **0.2.4** Add optional: `NOMOROBO_API_KEY`, `YOUMAIL_API_KEY`, `OPENCORPORATES_API_KEY`, `FTC_DNC_*` (or vendor-specific names once spike completes).
 - [ ] **0.2.5** Document in `README.md` which vars are client-exposed (`NEXT_PUBLIC_*`) vs server-only.
@@ -254,7 +254,7 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 - [x] **1.11.4** `claim_subjects`, `claim_events`, `dnc_check_results`: inherit access via `claim_id` join to owned `claims` (use subquery policy or security definer views — pick one pattern and document). <!-- done: EXISTS subquery to `claims` in `20260514180300_claim_subjects.sql`, `20260514180500_claim_events.sql`, `20260514180400_dnc_check_results.sql`; README notes subquery pattern -->
 - [x] **1.11.5** `letters`: user owns rows where `user_id = auth.uid()`. <!-- done: `letters_*_own` policies in supabase/migrations/20260514190900_letters.sql; verified on hosted DB (4 policies) -->
 - [x] **1.11.6** `leads`: consumer `select` own; firms `select` assigned leads — implement via `firm_users.auth_user_id = auth.uid()` join. <!-- done: supabase/migrations/20260515103000_leads_firm_portal_rls.sql (`leads_select_*`, `firm_users_select_self`, `law_firms_select_for_member`); applied via Supabase MCP -->
-- [x] **1.11.7** Add Supabase **RLS tests** in Vitest with mock JWT claims (service role vs anon vs authenticated). <!-- done: `src/lib/supabase/rls-smoke.test.ts` — runs when `NEXT_PUBLIC_SUPABASE_*` set; optional `SUPABASE_SERVICE_ROLE_KEY`, `VITEST_SUPABASE_USER_ACCESS_TOKEN` for service-role / user-JWT branches -->
+- [x] **1.11.7** Add Supabase **RLS tests** in Vitest with mock JWT claims (service role vs anon vs authenticated). <!-- done: `src/lib/supabase/rls-smoke.test.ts` — runs when `NEXT_PUBLIC_SUPABASE_*` set; optional `SUPABASE_SECRET_KEY` (or legacy `SUPABASE_SERVICE_ROLE_KEY`), `VITEST_SUPABASE_USER_ACCESS_TOKEN` for admin / user-JWT branches -->
 
 
 **Docs — this subsection**
@@ -310,26 +310,26 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 2.3 Anonymous session cookie
 
-- [ ] **2.3.1** Generate cryptographically secure `anonymous_session_id` on first visit to `/check` (Route Handler or middleware).
-- [ ] **2.3.2** Set HTTP-only, `Secure`, `SameSite=Lax` (or `Strict` where safe) cookie; define max age (e.g. 30 days).
-- [ ] **2.3.3** On login: read anonymous id; find draft claim with `user_id is null` and matching session id; run merge (below).
+- [x] **2.3.1** Generate cryptographically secure `anonymous_session_id` on first visit to `/check` (Route Handler or middleware). <!-- done: mint in `src/lib/supabase/proxy.ts` on `/check` using `crypto.randomUUID()`; placeholder UI `src/app/check/page.tsx` -->
+- [x] **2.3.2** Set HTTP-only, `Secure`, `SameSite=Lax` (or `Strict` where safe) cookie; define max age (e.g. 30 days). <!-- done: `src/lib/anonymous-session.ts` (`getAnonymousSessionCookieOptions`); `Secure` only when `NODE_ENV === "production"` for local HTTP -->
+- [x] **2.3.3** On login: read anonymous id; find draft claim with `user_id is null` and matching session id; run merge (below). <!-- done: `mergeAnonymousDraftOnLogin` from `src/app/auth/callback/route.ts` after `exchangeCodeForSession`; clears `rb_anonymous_sid` on success — §2.6 for collision UX -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md “Anonymous funnel” -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md `## 2026-05-14 (Phase 2.3–2.4 …)` -->
 
 ### 2.4 Anonymous claim CRUD (server-only)
 
-- [ ] **2.4.1** Route Handler or Server Action: `createOrGetActiveClaimForSession` using service role — returns `claim_id`.
-- [ ] **2.4.2** Validate session cookie presence before creating claim; reject forged ids (format check).
-- [ ] **2.4.3** Ensure client **never** receives service role key; all anonymous DB writes go through your API.
-- [ ] **2.4.4** Unit tests: mock service client verifies correct insert shape.
+- [x] **2.4.1** Route Handler or Server Action: `createOrGetActiveClaimForSession` using service role — returns `claim_id`. <!-- done: `src/lib/claims/create-or-get-active-claim-for-session.ts` + `POST` `src/app/api/claims/anonymous/route.ts` -->
+- [x] **2.4.2** Validate session cookie presence before creating claim; reject forged ids (format check). <!-- done: `isValidAnonymousSessionId` in `src/lib/anonymous-session.ts`; used by API route -->
+- [x] **2.4.3** Ensure client **never** receives service role key; all anonymous DB writes go through your API. <!-- done: `src/lib/supabase/admin.ts` server-only (`SUPABASE_SECRET_KEY`); no `NEXT_PUBLIC_*` -->
+- [x] **2.4.4** Unit tests: mock service client verifies correct insert shape. <!-- done: `src/lib/claims/create-or-get-active-claim-for-session.test.ts` -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md “Anonymous funnel” + testing pointers -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md `## 2026-05-14 (Phase 2.3–2.4 …)` -->
 
 ### 2.5 Account wall UX
 

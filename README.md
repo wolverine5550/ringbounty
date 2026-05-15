@@ -86,6 +86,27 @@ In the Supabase dashboard, open **Authentication → URL configuration** for pro
 
 The app’s root [`proxy.ts`](proxy.ts) refreshes the session (see [`src/lib/supabase/proxy.ts`](src/lib/supabase/proxy.ts)); unauthenticated visitors are sent to `/login`.
 
+### Anonymous funnel (Phase §2.3–§2.4)
+
+| Piece | Location / notes |
+|-------|-------------------|
+| Session cookie | Name **`rb_anonymous_sid`**: HTTP-only, `SameSite=Lax`, **30-day** `maxAge`, `Secure` when `NODE_ENV === "production"`. Minted on [`/check`](src/app/check/page.tsx) by [`src/lib/supabase/proxy.ts`](src/lib/supabase/proxy.ts) and, if needed, by [`POST /api/session/anonymous`](src/app/api/session/anonymous/route.ts) via [`CheckSessionBootstrap`](src/components/check-session-bootstrap.tsx) (UUID v4). |
+| Bootstrap claim (server-only) | [`POST /api/claims/anonymous`](src/app/api/claims/anonymous/route.ts) — requires a valid session cookie; uses [`createOrGetActiveClaimForSession`](src/lib/claims/create-or-get-active-claim-for-session.ts) with [`createAdminClient`](src/lib/supabase/admin.ts) and a **secret API key**. Returns JSON `{ claim_id }`. |
+| Post-login merge | After PKCE success, [`src/app/auth/callback/route.ts`](src/app/auth/callback/route.ts) calls [`mergeAnonymousDraftOnLogin`](src/lib/claims/merge-anonymous-draft-on-login.ts); on success clears `rb_anonymous_sid`. §2.6 will refine collision / redirect rules. |
+
+Set **`SUPABASE_SECRET_KEY`** (`sb_secret_…` from [Settings → API Keys](https://supabase.com/dashboard/project/nktlhjjeqwpubzlvjpjv/settings/api-keys)) in `.env.local` (server-only; never commit) for the anonymous API and merge path. Supabase [recommends secret keys](https://supabase.com/docs/guides/api/api-keys) over the legacy JWT `service_role` key (browser-blocked, easier rotation). Legacy **`SUPABASE_SERVICE_ROLE_KEY`** still works as a fallback. Without either key, `POST /api/claims/anonymous` responds **503** and merge is skipped.
+
+**Finding the cookie in DevTools:** Application → Cookies → **`http://localhost:3000`** (match your dev port). `rb_anonymous_sid` is **HttpOnly** (visible in DevTools, not in `document.cookie`). After visiting `/check`, you should also see Network → **`anonymous`** (`POST /api/session/anonymous`, 200).
+
+**Local smoke test** (replace with your cookie value from DevTools):
+
+```bash
+curl -X POST http://localhost:3000/api/claims/anonymous \
+  -H "Cookie: rb_anonymous_sid=YOUR-UUID-HERE"
+```
+
+Expected: `{"claim_id":"<uuid>"}`. Route handlers must not set `export const runtime = "nodejs"` while **Cache Components** is enabled (see README “Next.js 16 — Cache Components”).
+
 ### Optional (Vercel / hosting)
 
 | Name | Purpose |
@@ -98,7 +119,7 @@ The app’s root [`proxy.ts`](proxy.ts) refreshes the session (see [`src/lib/sup
 
 These are reserved for upcoming work—do not commit real secrets:
 
-- `SUPABASE_SERVICE_ROLE_KEY` — server-only Supabase admin usage when features require it.
+- `SUPABASE_SECRET_KEY` — server-only secret API key (`sb_secret_…`): Phase §2.3–§2.4 anonymous **`POST /api/claims/anonymous`**, merge after magic link in **`/auth/callback`**, and optional `rls-smoke.test.ts` admin-key branch. Legacy `SUPABASE_SERVICE_ROLE_KEY` is accepted if unset.
 - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` — Stripe payments and webhooks.
 - `OPENROUTER_API_KEY` — AI gateway (or an equivalent provider key if you swap vendors).
 - `NOMOROBO_API_KEY`, `YOUMAIL_API_KEY` — optional spam / reputation providers.
@@ -144,7 +165,7 @@ npx supabase gen types typescript --project-id nktlhjjeqwpubzlvjpjv 2>/dev/null 
 
 Re-run after migrations so `SupabaseClient<Database>` in [`src/lib/supabase/server.ts`](src/lib/supabase/server.ts), [`src/lib/supabase/client.ts`](src/lib/supabase/client.ts), and [`src/lib/supabase/proxy.ts`](src/lib/supabase/proxy.ts) stays accurate.
 
-**Optional RLS smoke tests (Vitest):** [`src/lib/supabase/rls-smoke.test.ts`](src/lib/supabase/rls-smoke.test.ts) runs live checks when `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` are set (e.g. in `.env.local`). Set **`SUPABASE_SERVICE_ROLE_KEY`** (server-only; never commit) to enable the service-role branch, and **`VITEST_SUPABASE_USER_ACCESS_TOKEN`** (short-lived user JWT from the dashboard or a test login) to exercise the “authenticated JWT in `Authorization` header” branch. CI skips these when env vars are absent.
+**Optional RLS smoke tests (Vitest):** [`src/lib/supabase/rls-smoke.test.ts`](src/lib/supabase/rls-smoke.test.ts) runs live checks when `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` are set (e.g. in `.env.local`). Set **`SUPABASE_SECRET_KEY`** (server-only; never commit) to enable the admin-key branch, and **`VITEST_SUPABASE_USER_ACCESS_TOKEN`** (short-lived user JWT from the dashboard or a test login) to exercise the “authenticated JWT in `Authorization` header” branch. CI skips these when env vars are absent.
 
 **Letter PDF storage (convention):** when you add a Supabase Storage bucket for generated PDFs, store objects at **`letters/{user_id}/{letter_id}.pdf`** (replace with your bucket name prefix if you namespace buckets differently). `public.letters.pdf_url` should point at the final public or signed URL returned to the client.
 
@@ -233,7 +254,7 @@ GitHub Actions runs on every pull request and on pushes to `main` (see `.github/
 
 Specs live next to source files as `*.test.ts` / `*.test.tsx` under `src/`. Shared Supabase test doubles live in [`src/test-utils/mockSupabaseClient.ts`](src/test-utils/mockSupabaseClient.ts) (uses generated [`src/types/database.ts`](src/types/database.ts)).
 
-**Successful query gate (anonymous funnel):** interim predicate and tests live in [`src/lib/claims/successful-query.ts`](src/lib/claims/successful-query.ts) (`isSuccessfulQuery`).
+**Successful query gate (anonymous funnel):** interim predicate and tests live in [`src/lib/claims/successful-query.ts`](src/lib/claims/successful-query.ts) (`isSuccessfulQuery`). **Anonymous claim bootstrap:** [`create-or-get-active-claim-for-session.ts`](src/lib/claims/create-or-get-active-claim-for-session.ts) (+ [`create-or-get-active-claim-for-session.test.ts`](src/lib/claims/create-or-get-active-claim-for-session.test.ts)).
 
 **Assumption / risk (§2.2):** The predicate is **interim** until the **“Successful query” exact predicate** open question in [`task_manager.md`](task_manager.md) is decided. When product locks the rule, update the module spec in `successful-query.ts` and [`successful-query.test.ts`](src/lib/claims/successful-query.test.ts) together so marketing and enforcement stay aligned.
 
