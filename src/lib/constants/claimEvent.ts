@@ -19,13 +19,15 @@ export type ClaimEventType = (typeof CLAIM_EVENT_TYPE_VALUES)[number];
  * Canonical `claim_events.source` values from the PRD DDL comment, plus `state_api`
  * which appears in the PRD example table for state registry results.
  *
+ * `twilio` — spam / reputation signals retrieved via **Twilio’s API** (see task_manager §5.2).
+ *
  * @see prd.md section 5 (`claim_events` DDL and example rows)
  */
 export const CLAIM_EVENT_SOURCE_VALUES = [
   "user_input",
   "ftc_api",
   "state_api",
-  "nomorobo",
+  "twilio",
   "youmail",
   "opencorporates",
   "openrouter",

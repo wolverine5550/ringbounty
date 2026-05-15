@@ -1,9 +1,17 @@
 # Changelog
 
+## 2026-05-15 (Phase 5 — Twilio-first spam path)
+
+- **Integration note:** Phase 5’s first spam / reputation wire path is **Twilio REST** (§5.2). Env flag [`SPAM_PROVIDER_TWILIO_ENABLED`](src/lib/spam/provider-flags.ts) toggles that adapter; the stub pipeline uses `twilio_stub`. [`CLAIM_EVENT_SOURCE_VALUES`](src/lib/constants/claimEvent.ts) uses `twilio` as the `claim_events.source` for Twilio API–backed events.
+
+## 2026-05-15 (Phase 5.1 — spam types + provider env flags)
+
+- **§5.1 contracts:** [`SpamCheckResult`](src/lib/spam/types.ts) and [`SpamCheckProvider`](src/lib/spam/types.ts) define the adapter surface for **Twilio REST** (spam / reputation — §5.2) and YouMail (§5.3–§5.4). Server env toggles [`SPAM_PROVIDER_TWILIO_ENABLED`](src/lib/spam/provider-flags.ts) / [`SPAM_PROVIDER_YOUMAIL_ENABLED`](src/lib/spam/provider-flags.ts) via [`getSpamProviderFeatureFlags`](src/lib/spam/provider-flags.ts) (`true` / `false` / `1` / `yes`; unset = off). Vitest: [`provider-flags.test.ts`](src/lib/spam/provider-flags.test.ts). `.env.example` documents the keys.
+
 ## 2026-05-15 (Phase 4.6 — loading, partial failures, retry, structured logs)
 
 - **§4.6 `/check` UX + API:** While [`POST /api/check/submit`](src/app/api/check/submit/route.ts) runs, [`CheckFunnelClient`](src/components/check/check-funnel-client.tsx) shows per-number skeleton rows. Successful phone submits extend JSON with **`number_checks`** — parallel stub “providers” per number ([`parallel-check-pipeline-stub.ts`](src/lib/check/parallel-check-pipeline-stub.ts), Vitest [`parallel-check-pipeline-stub.test.ts`](src/lib/check/parallel-check-pipeline-stub.test.ts)); one failing provider still returns others. **Retry with backoff** (cap 8s) after consecutive submit failures; provider / pipeline failures log **`error_code`** via structured `console.error` JSON (`check_provider_failure`, `check_number_pipeline_failure`, `check_submit_unhandled`).
-- **§4.6 follow-ups:** Stubs **always succeed in production** until you optionally add env-driven failure for staging. **Phase 5** replaces **`runStubChecksForPhoneList`** with real Nomorobo / YouMail adapters but **can keep the same `number_checks` shape**. Per-number progress is skeleton until the single response returns (**not streaming** until SSE or split requests).
+- **§4.6 follow-ups:** Stubs **always succeed in production** until you optionally add env-driven failure for staging. **Phase 5** replaces **`runStubChecksForPhoneList`** with real **Twilio** + YouMail adapters but **can keep the same `number_checks` shape**. Per-number progress is skeleton until the single response returns (**not streaming** until SSE or split requests).
 
 ## 2026-05-15 (Phase 4.5 — persist subjects + submit response)
 

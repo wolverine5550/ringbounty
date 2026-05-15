@@ -30,8 +30,8 @@ describe("parallel-check-pipeline-stub", () => {
     if (youmail && youmail.status === "error") {
       expect(youmail.error_code).toBe("STUB_PROVIDER_UNAVAILABLE");
     }
-    const nomo = rows[0]?.providers.find((p) => p.provider_id === "nomorobo_stub");
-    expect(nomo?.status).toBe("ok");
+    const twilio = rows[0]?.providers.find((p) => p.provider_id === "twilio_stub");
+    expect(twilio?.status).toBe("ok");
     expect(spy).toHaveBeenCalled();
     const payload = JSON.parse(String(spy.mock.calls[0]?.[0]));
     expect(payload.event).toBe("check_provider_failure");

@@ -28,8 +28,8 @@ import type { NumberCheckSummary } from "@/lib/check/parallel-check-pipeline-stu
 import { RATE_LIMIT_USER_MESSAGE } from "@/lib/rate-limit/constants";
 
 const PROVIDER_CHECK_LABEL: Record<string, string> = {
-  nomorobo_stub: "Spam DB A (stub)",
-  youmail_stub: "Spam DB B (stub)",
+  twilio_stub: "Twilio lookup (stub)",
+  youmail_stub: "YouMail (stub)",
 };
 
 /** Milliseconds to wait before a §4.6 retry after consecutive failures (capped). */

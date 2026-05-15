@@ -15,7 +15,7 @@ Living checklist for building RingBounty from `prd.md` and product decisions.
 | Cell vs residential (TCPA subsection) | **Explicit user attestation** only — do not infer from carrier or metadata alone. |
 | Demand amount in letter | **User-selectable** option (e.g. conservative / realistic / maximum) with disclaimers; product does not recommend which to choose. |
 | Federal DNC / FTC access | **Unknown** — treat as spike; do not assume a specific API until validated. |
-| Spam APIs (Nomorobo / YouMail) | **Undecided** — design for **pluggable providers** and possible **single-provider MVP**. |
+| Spam / reputation (Twilio API + YouMail) | **Undecided** — design for **pluggable providers** and possible **single-provider MVP**. First path: **Twilio REST** (§5.2). |
 | OpenCorporates | **Undecided budget** — define caps and fallback UX before heavy usage. |
 | Stripe bundles | **Undecided** — choose one Checkout pattern during payments milestone. |
 | Stripe Tax | **In scope for v0.1** — enable/configure as part of payments work. |
@@ -67,7 +67,7 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 - [ ] **0.2.1** Add `.env.example` at repo root with `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 - [ ] **0.2.2** Add server-only placeholders: `SUPABASE_SECRET_KEY` (preferred; legacy `SUPABASE_SERVICE_ROLE_KEY` fallback), `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`.
 - [ ] **0.2.3** Add `OPENROUTER_API_KEY` (or chosen AI gateway) placeholder.
-- [ ] **0.2.4** Add optional: `NOMOROBO_API_KEY`, `YOUMAIL_API_KEY`, `OPENCORPORATES_API_KEY`, `FTC_DNC_*` (or vendor-specific names once spike completes).
+- [ ] **0.2.4** Add optional: `TWILIO_*` (spam / reputation via **Twilio REST** per §5.2), `YOUMAIL_API_KEY`, `OPENCORPORATES_API_KEY`, `FTC_DNC_*` (or vendor-specific names once spike completes).
 - [ ] **0.2.5** Document in `README.md` which vars are client-exposed (`NEXT_PUBLIC_*`) vs server-only.
 - [ ] **0.2.6** Ensure `.env.local` remains gitignored; confirm no keys committed.
 
@@ -542,20 +542,22 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ## Phase 5 — Spam / exempt pipeline (pluggable)
 
-**Bridge from §4.6:** Replace stub `runStubChecksForPhoneList` with Nomorobo / YouMail (and orchestration per §5.4); preserve **`number_checks`** (or evolve it minimally) unless product changes the API contract.
+**Bridge from §4.6:** Replace stub `runStubChecksForPhoneList` with **Twilio REST** + YouMail clients (orchestration per §5.4). Preserve **`number_checks`** (or evolve it minimally) unless product changes the API contract.
 
 ### 5.1 Types and configuration
 
-- [ ] **5.1.1** Define `SpamCheckResult` interface: `isSpam`, `score`, `complaints`, `category`, `companyName`, `raw`, `providerId`.
-- [ ] **5.1.2** Define `SpamCheckProvider` interface: `check(phone: string): Promise<SpamCheckResult>`.
-- [ ] **5.1.3** Env-driven flags: `SPAM_PROVIDER_NOMOROBO_ENABLED`, `SPAM_PROVIDER_YOUMAIL_ENABLED` (boolean strings).
+- [x] **5.1.1** Define `SpamCheckResult` interface: `isSpam`, `score`, `complaints`, `category`, `companyName`, `raw`, `providerId`. <!-- done: src/lib/spam/types.ts -->
+- [x] **5.1.2** Define `SpamCheckProvider` interface: `check(phone: string): Promise<SpamCheckResult>`. <!-- done: src/lib/spam/types.ts -->
+- [x] **5.1.3** Env-driven flags: `SPAM_PROVIDER_TWILIO_ENABLED`, `SPAM_PROVIDER_YOUMAIL_ENABLED` (boolean strings). <!-- done: src/lib/spam/provider-flags.ts + src/lib/spam/provider-flags.test.ts; `.env.example` -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md — planned integrations -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
-### 5.2 Nomorobo adapter
+### 5.2 Twilio adapter (spam / reputation)
+
+> **Wire protocol:** Implement against **Twilio’s REST API** for spam and reputation lookups (Twilio product docs + this checklist).
 
 - [ ] **5.2.1** Read API docs; implement HTTP client with timeout (e.g. 5s) and typed response mapping.
 - [ ] **5.2.2** Map response fields into `SpamCheckResult`; store **full** raw JSON in `claim_events` or `metadata` per PRD.
@@ -570,7 +572,7 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 ### 5.3 YouMail adapter
 
 - [ ] **5.3.1** Same structure as 5.2.x for YouMail-specific schema.
-- [ ] **5.3.2** Fixture tests and error handling parity with Nomorobo.
+- [ ] **5.3.2** Fixture tests and error handling parity with the Twilio adapter (§5.2).
 
 
 **Docs — this subsection**
@@ -1271,7 +1273,7 @@ Track resolutions here by checking items off and adding `<!-- done: decision rec
 ### Integrations and compliance
 
 - [ ] **Federal DNC / FTC** — Access method still unknown; legal review of ToS for any vendor or government system.
-- [ ] **Nomorobo vs YouMail** — One for MVP vs both at launch; pricing and rate limits; storage of raw responses under their ToS.
+- [ ] **Twilio spam lookup vs YouMail** — One for MVP vs both at launch; pricing and rate limits; storage of raw responses under Twilio / YouMail ToS (§5.2 / §5.3).
 - [ ] **OpenCorporates** — Pricing tier, monthly cap, behavior when cap hit (queue vs fail vs manual-only).
 - [ ] **State DNC APIs** — Per-state reality (API vs scrape vs none); order of rollout.
 - [ ] **FTC consumer complaint lookup** — Allowed use for company identification; implementation approach.

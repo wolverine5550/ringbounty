@@ -146,7 +146,9 @@ These are reserved for upcoming work—do not commit real secrets:
 - `SUPABASE_SECRET_KEY` — server-only secret API key (`sb_secret_…`): Phase §2.3–§2.4 anonymous **`POST /api/claims/anonymous`**, merge after magic link in **`/auth/callback`**, and optional `rls-smoke.test.ts` admin-key branch. Legacy `SUPABASE_SERVICE_ROLE_KEY` is accepted if unset.
 - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` — Stripe payments and webhooks.
 - `OPENROUTER_API_KEY` — AI gateway (or an equivalent provider key if you swap vendors).
-- `NOMOROBO_API_KEY`, `YOUMAIL_API_KEY` — optional spam / reputation providers.
+- `TWILIO_*` — Twilio REST credentials / helper keys for **spam and reputation lookups** (exact variable names in task_manager §5.2). Do not commit real secrets.
+- `YOUMAIL_API_KEY` — optional YouMail spam / reputation provider (direct HTTP — §5.3).
+- `SPAM_PROVIDER_TWILIO_ENABLED`, `SPAM_PROVIDER_YOUMAIL_ENABLED` — boolean strings (`true` / `false` / `1` / `yes`) toggling each adapter in the Phase 5 orchestrator; see [`src/lib/spam/provider-flags.ts`](src/lib/spam/provider-flags.ts). Defaults to off when unset.
 - `OPENCORPORATES_API_KEY` — optional business-entity lookup.
 - `FTC_DNC_*` (or vendor-specific names once chosen) — federal DNC / compliance integrations (spike TBD).
 

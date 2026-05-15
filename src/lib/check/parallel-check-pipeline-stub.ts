@@ -1,11 +1,12 @@
 /**
  * §4.6 — Parallel per-number checks with `Promise.allSettled`.
- * Phase 5 replaces stub providers with real Nomorobo / YouMail HTTP clients; this module
- * keeps the response shape (per provider + per number) stable for UI and tests.
+ * Phase 5 replaces stub providers with real clients: **Twilio REST** (§5.2) and YouMail (§5.3). This
+ * module keeps the response shape (per provider + per
+ * number) stable for UI and tests.
  */
 
 export const CHECK_PIPELINE_STUB_PROVIDER_IDS = [
-  "nomorobo_stub",
+  "twilio_stub",
   "youmail_stub",
 ] as const;
 
