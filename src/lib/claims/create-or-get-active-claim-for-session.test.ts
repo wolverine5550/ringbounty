@@ -17,6 +17,7 @@ function mockSelectChain(existingId: string | null) {
   chain.select = vi.fn(() => chain);
   chain.eq = vi.fn(() => chain);
   chain.is = vi.fn(() => chain);
+  chain.in = vi.fn(() => chain);
   chain.maybeSingle = maybeSingle;
   return { chain, maybeSingle };
 }

@@ -514,14 +514,14 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 4.5 Persist subjects
 
-- [ ] **4.5.1** On “Run check”: create or load `claims` row for session/user; attach `claim_subjects` rows.
-- [ ] **4.5.2** Set initial `claim.status` to `draft` or `checking` if you add intermediate status.
-- [ ] **4.5.3** Return `claim_id` and subject ids to client for redirect to results/qualify.
+- [x] **4.5.1** On “Run check”: create or load `claims` row for session/user; attach `claim_subjects` rows. <!-- done: `createOrGetActiveClaimForSession` + `replaceClaimSubjectsForPhones` in `src/app/api/check/submit/route.ts` -->
+- [x] **4.5.2** Set initial `claim.status` to `draft` or `checking` if you add intermediate status. <!-- done: migration `supabase/migrations/20260515160000_claims_status_checking.sql`; anonymous claim stays `draft` until first phone persist, then `checking` via `src/app/api/check/submit/route.ts`; `ANONYMOUS_FUNNEL_ACTIVE_STATUSES` in `src/lib/claims/anonymous-funnel-claim-status.ts` -->
+- [x] **4.5.3** Return `claim_id` and subject ids to client for redirect to results/qualify. <!-- done: JSON `claim_subject_ids` (order matches request) from `POST /api/check/submit`; client still stays on `/check` until post-check auth/gate lines up with Phase 5+ -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 4.6 Loading and errors
 

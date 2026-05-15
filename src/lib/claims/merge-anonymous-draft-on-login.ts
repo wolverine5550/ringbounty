@@ -2,6 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/types/database";
 
+import { ANONYMOUS_FUNNEL_ACTIVE_STATUSES } from "./anonymous-funnel-claim-status";
+
 export type MergeAnonymousDraftResult = {
   /** Claim id the user should continue with (merged or pre-existing owned draft). */
   mergedClaimId: string | null;
@@ -12,11 +14,12 @@ export type MergeAnonymousDraftResult = {
 /**
  * Collision rule (§2.6.4 — v0):
  *
- * - If the user **already owns** a `draft` claim, we **abandon** the anonymous draft
+ * - If the user **already owns** a `draft` claim, we **abandon** the anonymous funnel row
+ *   (`draft` or `checking`; shared constant in `./anonymous-funnel-claim-status.ts`).
  *   (delete the anonymous-only row; subjects cascade). The user continues with their
  *   existing owned draft. Rationale: one active draft per user until product defines
  *   multi-draft or subject-merge rules.
- * - Otherwise we attach the anonymous draft: `user_id = auth.uid()`, clear
+ * - Otherwise we attach the anonymous claim: `user_id = auth.uid()`, clear
  *   `anonymous_session_id`.
  *
  * `public.users` is expected from the auth sync trigger (§1.4.3). If missing, we
@@ -62,7 +65,7 @@ export async function mergeAnonymousDraftOnLogin(
     .eq("id", anonymousClaimId)
     .eq("anonymous_session_id", params.anonymousSessionId)
     .is("user_id", null)
-    .eq("status", "draft")
+    .in("status", [...ANONYMOUS_FUNNEL_ACTIVE_STATUSES])
     .select("id")
     .maybeSingle();
 
@@ -101,7 +104,7 @@ async function findAnonymousDraftClaimId(
     .select("id")
     .eq("anonymous_session_id", anonymousSessionId)
     .is("user_id", null)
-    .eq("status", "draft")
+    .in("status", [...ANONYMOUS_FUNNEL_ACTIVE_STATUSES])
     .maybeSingle();
 
   if (error) {

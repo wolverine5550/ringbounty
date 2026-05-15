@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/types/database";
 
+import { ANONYMOUS_FUNNEL_ACTIVE_STATUSES } from "./anonymous-funnel-claim-status";
 import {
   getEmailCaptureTrigger,
   type EmailCaptureReason,
@@ -77,7 +78,7 @@ export async function loadClaimGateStatusByClaimId(
 }
 
 /**
- * Resolves the active anonymous draft for a session cookie value.
+ * Resolves the active anonymous funnel claim (`draft` or `checking`) for a session cookie value.
  */
 export async function loadAnonymousDraftGateStatus(
   admin: SupabaseClient<Database>,
@@ -88,7 +89,7 @@ export async function loadAnonymousDraftGateStatus(
     .select("id")
     .eq("anonymous_session_id", anonymousSessionId)
     .is("user_id", null)
-    .eq("status", "draft")
+    .in("status", [...ANONYMOUS_FUNNEL_ACTIVE_STATUSES])
     .maybeSingle();
 
   if (error) {

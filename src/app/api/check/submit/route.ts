@@ -82,7 +82,7 @@ async function replaceClaimSubjectsForPhones(
   admin: SupabaseClient<Database>,
   anonymousSessionId: string,
   entries: DedupedPhoneEntry[],
-): Promise<{ claimId: string }> {
+): Promise<{ claimId: string; subjectIds: string[] }> {
   const { claimId } = await createOrGetActiveClaimForSession(
     admin,
     anonymousSessionId,
@@ -95,19 +95,36 @@ async function replaceClaimSubjectsForPhones(
     throw deleteError;
   }
   if (entries.length === 0) {
-    return { claimId };
+    return { claimId, subjectIds: [] };
   }
-  const { error: insertError } = await admin.from("claim_subjects").insert(
-    entries.map((e) => ({
-      claim_id: claimId,
-      phone_number: e.phoneNumberDisplay,
-      phone_number_normalized: e.phoneNumberNormalized,
-    })),
-  );
+  const { data: inserted, error: insertError } = await admin
+    .from("claim_subjects")
+    .insert(
+      entries.map((e) => ({
+        claim_id: claimId,
+        phone_number: e.phoneNumberDisplay,
+        phone_number_normalized: e.phoneNumberNormalized,
+      })),
+    )
+    .select("id");
   if (insertError) {
     throw insertError;
   }
-  return { claimId };
+  const subjectIds =
+    inserted?.map((row) => row.id).filter((id): id is string => !!id) ?? [];
+  if (subjectIds.length !== entries.length) {
+    throw new Error("claim_subjects insert row count mismatch");
+  }
+  if (entries.length > 0) {
+    const { error: statusError } = await admin
+      .from("claims")
+      .update({ status: "checking" })
+      .eq("id", claimId);
+    if (statusError) {
+      throw statusError;
+    }
+  }
+  return { claimId, subjectIds };
 }
 
 /**
@@ -117,7 +134,14 @@ async function replaceClaimSubjectsForPhones(
  * `{ "phone_numbers": […], "phone_displays"?: […] }` — each number parsed to **E.164**
  * (`+1` + 10 digits) with NANP checks; duplicates rejected. When `phone_displays` is
  * sent it must align row-for-row (`null`/`""` ⇒ store `phone_number` null). Persisted via
- * service role to `claim_subjects` (task_manager §4.4–4.5 bridge).
+ * service role to `claim_subjects` (task_manager §4.5). The parent **`claims` row** advances
+ * **`draft` → `checking`** when at least one subject row is written (migration
+ * `supabase/migrations/20260515160000_claims_status_checking.sql`).
+ *
+ * Successful body write returns **`claim_id`** and **`claim_subject_ids`**; for a single
+ * `INSERT … VALUES (row1), (row2), … RETURNING id`, PostgreSQL returns ids in the same
+ * order as the listed rows (matches `phone_numbers`). Use these for `/results`, `/summary`,
+ * and `/qualify/[id]?claim=…` when the product wires client navigation.
  *
  * Empty POST body keeps the outcome-panel preview submit behavior.
  */
@@ -184,12 +208,15 @@ export async function POST(request: NextRequest) {
     await assertCheckSubmissionAllowed(admin, request, raw);
 
     let claimId: string | undefined;
+    let claimSubjectIds: string[] | undefined;
     if (phonePayload && phonePayload.length > 0) {
-      ({ claimId } = await replaceClaimSubjectsForPhones(
+      const persisted = await replaceClaimSubjectsForPhones(
         admin,
         raw,
         phonePayload,
-      ));
+      );
+      claimId = persisted.claimId;
+      claimSubjectIds = persisted.subjectIds;
     }
 
     return NextResponse.json({
@@ -197,6 +224,9 @@ export async function POST(request: NextRequest) {
       message:
         "Check submission recorded. Full provider pipeline completes in Phase 5.",
       ...(claimId ? { claim_id: claimId } : {}),
+      ...(claimSubjectIds !== undefined && claimSubjectIds.length > 0
+        ? { claim_subject_ids: claimSubjectIds }
+        : {}),
     });
   } catch (e) {
     if (e instanceof RateLimitExceededError) {

@@ -32,6 +32,7 @@ function createClaimsChain(config: ClaimsMockConfig, deleteEq: ReturnType<typeof
     return chain;
   });
   chain.is = vi.fn(() => chain);
+  chain.in = vi.fn(() => chain);
   chain.order = vi.fn(() => chain);
   chain.limit = vi.fn(() => chain);
   chain.update = vi.fn(() => {

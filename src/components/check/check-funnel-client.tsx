@@ -195,7 +195,11 @@ export function CheckFunnelClient() {
           phone_displays: validRows.map((r) => formatUsPhoneMask(r.digits)),
         }),
       });
-      const body = (await res.json().catch(() => ({}))) as { error?: string };
+      const body = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        claim_id?: string;
+        claim_subject_ids?: string[];
+      };
 
       if (res.status === 429) {
         setRateLimitMessage(body.error ?? RATE_LIMIT_USER_MESSAGE);
@@ -208,6 +212,8 @@ export function CheckFunnelClient() {
         );
         return;
       }
+
+      // §4.5: `claim_subject_ids` is available for post-check redirects when Phase 5+ gate UX allows it.
 
       window.dispatchEvent(new Event(RB_CHECK_SUBMITTED_EVENT));
     } catch {

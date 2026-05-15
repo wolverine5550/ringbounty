@@ -2,13 +2,15 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/types/database";
 
+import { ANONYMOUS_FUNNEL_ACTIVE_STATUSES } from "./anonymous-funnel-claim-status";
+
 /** Default TCPA vertical — `public.violation_types` seed includes `tcpa`. */
 export const DEFAULT_ANONYMOUS_VIOLATION_TYPE = "tcpa";
 
 const POSTGRES_UNIQUE_VIOLATION = "23505";
 
 /**
- * Returns the active **draft** anonymous claim for this session, or inserts one.
+ * Returns the active anonymous funnel claim (`draft` **or** `checking`) for this session, or inserts **`draft`**.
  * Callers must pass an **admin** client (`createAdminClient` / secret key); RLS does not grant anon inserts on `claims`.
  *
  * Handles a rare race (two parallel inserts for the same session) by re-reading after
@@ -19,7 +21,7 @@ export async function createOrGetActiveClaimForSession(
   anonymousSessionId: string,
   violationType: string = DEFAULT_ANONYMOUS_VIOLATION_TYPE,
 ): Promise<{ claimId: string }> {
-  const existingId = await findDraftAnonymousClaimId(
+  const existingId = await findActiveAnonymousFunnelClaimId(
     admin,
     anonymousSessionId,
   );
@@ -43,7 +45,7 @@ export async function createOrGetActiveClaimForSession(
   }
 
   if (insertError?.code === POSTGRES_UNIQUE_VIOLATION) {
-    const afterRace = await findDraftAnonymousClaimId(
+    const afterRace = await findActiveAnonymousFunnelClaimId(
       admin,
       anonymousSessionId,
     );
@@ -55,7 +57,7 @@ export async function createOrGetActiveClaimForSession(
   throw insertError ?? new Error("Failed to create anonymous claim");
 }
 
-async function findDraftAnonymousClaimId(
+async function findActiveAnonymousFunnelClaimId(
   admin: SupabaseClient<Database>,
   anonymousSessionId: string,
 ): Promise<string | null> {
@@ -64,7 +66,7 @@ async function findDraftAnonymousClaimId(
     .select("id")
     .eq("anonymous_session_id", anonymousSessionId)
     .is("user_id", null)
-    .eq("status", "draft")
+    .in("status", [...ANONYMOUS_FUNNEL_ACTIVE_STATUSES])
     .maybeSingle();
 
   if (error) {

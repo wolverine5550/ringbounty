@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-15 (Phase 4.5 — persist subjects + submit response)
+
+- **§4.5 persistence:** Migration [`20260515160000_claims_status_checking.sql`](supabase/migrations/20260515160000_claims_status_checking.sql) adds `checking` to `claims.status`. [`POST /api/check/submit`](src/app/api/check/submit/route.ts) creates/loads the anonymous claim (**`draft`**), replaces `claim_subjects`, then updates to **`checking`**; session resolution uses `draft` **or** **`checking`** ([`anonymous-funnel-claim-status.ts`](src/lib/claims/anonymous-funnel-claim-status.ts)). Response includes **`claim_subject_ids`** plus **`claim_id`** (ids follow multi-row `INSERT … RETURNING` order, i.e. listed row order).
+
 ## 2026-05-15 (Phase 4.4 — normalization + persistence on `/check`)
 
 - **§4.4 phone normalization:** Added `normalizeUsPhoneToE164` (NANP first-digit checks) with Vitests in [`us-phone.test.ts`](src/lib/check/us-phone.test.ts). [`CheckFunnelClient`](src/components/check/check-funnel-client.tsx) shows inline errors for incomplete lengths and invalid area/exchange patterns; duplicate detection uses validated E.164 keys.
