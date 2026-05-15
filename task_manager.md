@@ -503,14 +503,14 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 4.4 Normalization and validation
 
-- [ ] **4.4.1** Implement `normalizeUsPhoneToE164(input): string | null` with tests (NANP, leading 1, etc.).
-- [ ] **4.4.2** Reject invalid lengths; show inline error.
-- [ ] **4.4.3** Store raw display string optional; always persist `phone_number_normalized`.
+- [x] **4.4.1** Implement `normalizeUsPhoneToE164(input): string | null` with tests (NANP, leading 1, etc.). <!-- done: src/lib/check/us-phone.ts, src/lib/check/us-phone.test.ts -->
+- [x] **4.4.2** Reject invalid lengths; show inline error. <!-- done: rowValidityHint + digitLengthIssue in src/components/check/check-funnel-client.tsx; server rejects via parseAndDedupePhoneNumberPayload -->
+- [x] **4.4.3** Store raw display string optional; always persist `phone_number_normalized`. <!-- done: POST /api/check/submit + phone_displays → claim_subjects.phone_number / phone_number_normalized (service role) -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 4.5 Persist subjects
 

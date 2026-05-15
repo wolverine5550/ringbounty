@@ -5,7 +5,11 @@ import {
   isValidAnonymousSessionId,
 } from "@/lib/anonymous-session";
 import { CHECK_MAX_PHONE_ROWS } from "@/lib/check/constants";
-import { parseAndDedupePhoneNumberPayload } from "@/lib/check/us-phone";
+import {
+  parseAndDedupePhoneNumberPayload,
+  type DedupedPhoneEntry,
+} from "@/lib/check/us-phone";
+import { createOrGetActiveClaimForSession } from "@/lib/claims/create-or-get-active-claim-for-session";
 import {
   assertCheckSubmissionAllowed,
   RateLimitExceededError,
@@ -14,6 +18,8 @@ import {
   createAdminClient,
   SupabaseAdminKeyMissingError,
 } from "@/lib/supabase/admin";
+import type { Database } from "@/types/database";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 type PhonePayloadError = Extract<
   ReturnType<typeof parseAndDedupePhoneNumberPayload>,
@@ -25,7 +31,10 @@ function jsonErrorForPhoneParse(error: PhonePayloadError): NextResponse {
   switch (error) {
     case "invalid_body":
       return NextResponse.json(
-        { error: "`phone_numbers` must be an array of strings." },
+        {
+          error:
+            "`phone_numbers` must be an array of strings. Optional `phone_displays` must be an aligned array.",
+        },
         { status },
       );
     case "too_many":
@@ -39,7 +48,7 @@ function jsonErrorForPhoneParse(error: PhonePayloadError): NextResponse {
       return NextResponse.json(
         {
           error:
-            "Each entry must be a complete U.S. phone number (10 digits, optional leading 1).",
+            "Each entry must be a complete, valid U.S. phone number (10 digits plus optional leading 1; standard area/exchange rules).",
         },
         { status },
       );
@@ -48,18 +57,69 @@ function jsonErrorForPhoneParse(error: PhonePayloadError): NextResponse {
         { error: "The same number was included more than once." },
         { status },
       );
+    case "display_length_mismatch":
+      return NextResponse.json(
+        {
+          error:
+            "`phone_displays`, when sent, must have the same length as `phone_numbers`.",
+        },
+        { status },
+      );
+    case "invalid_display_entry":
+      return NextResponse.json(
+        {
+          error:
+            "Each `phone_displays` item must be a string or null when provided.",
+        },
+        { status },
+      );
     default:
       return NextResponse.json({ error: "Invalid phone numbers." }, { status });
   }
 }
 
+async function replaceClaimSubjectsForPhones(
+  admin: SupabaseClient<Database>,
+  anonymousSessionId: string,
+  entries: DedupedPhoneEntry[],
+): Promise<{ claimId: string }> {
+  const { claimId } = await createOrGetActiveClaimForSession(
+    admin,
+    anonymousSessionId,
+  );
+  const { error: deleteError } = await admin
+    .from("claim_subjects")
+    .delete()
+    .eq("claim_id", claimId);
+  if (deleteError) {
+    throw deleteError;
+  }
+  if (entries.length === 0) {
+    return { claimId };
+  }
+  const { error: insertError } = await admin.from("claim_subjects").insert(
+    entries.map((e) => ({
+      claim_id: claimId,
+      phone_number: e.phoneNumberDisplay,
+      phone_number_normalized: e.phoneNumberNormalized,
+    })),
+  );
+  if (insertError) {
+    throw insertError;
+  }
+  return { claimId };
+}
+
 /**
- * §2.7 — Rate-limited check submission endpoint. Phase 4 will run the full pipeline here;
- * for now it records an allowed submission after enforcing hourly limits.
+ * §2.7 — Rate-limited check submission endpoint.
  *
- * Optional JSON body: `{ "phone_numbers": ["5551234567", …] }` — digits-only or formatted
- * strings; normalized and deduped server-side (task_manager §4.3.3). Empty POST body keeps
- * the legacy “preview submit” used by the outcome panel.
+ * Optional JSON body:
+ * `{ "phone_numbers": […], "phone_displays"?: […] }` — each number parsed to **E.164**
+ * (`+1` + 10 digits) with NANP checks; duplicates rejected. When `phone_displays` is
+ * sent it must align row-for-row (`null`/`""` ⇒ store `phone_number` null). Persisted via
+ * service role to `claim_subjects` (task_manager §4.4–4.5 bridge).
+ *
+ * Empty POST body keeps the outcome-panel preview submit behavior.
  */
 export async function POST(request: NextRequest) {
   const raw = request.cookies.get(ANONYMOUS_SESSION_COOKIE_NAME)?.value;
@@ -69,6 +129,8 @@ export async function POST(request: NextRequest) {
       { status: 401 },
     );
   }
+
+  let phonePayload: DedupedPhoneEntry[] | null = null;
 
   const text = await request.text();
   if (text.trim()) {
@@ -95,14 +157,25 @@ export async function POST(request: NextRequest) {
           { status: 400 },
         );
       }
+
+      let displayInputs: unknown;
+      if (
+        typeof body === "object" &&
+        body !== null &&
+        "phone_displays" in body
+      ) {
+        displayInputs = (body as { phone_displays: unknown }).phone_displays;
+      }
+
       const parsed = parseAndDedupePhoneNumberPayload(
         rawList,
         CHECK_MAX_PHONE_ROWS,
+        displayInputs,
       );
       if (!parsed.ok) {
         return jsonErrorForPhoneParse(parsed.error);
       }
-      void parsed.normalized;
+      phonePayload = parsed.entries;
     }
   }
 
@@ -110,10 +183,20 @@ export async function POST(request: NextRequest) {
     const admin = createAdminClient();
     await assertCheckSubmissionAllowed(admin, request, raw);
 
+    let claimId: string | undefined;
+    if (phonePayload && phonePayload.length > 0) {
+      ({ claimId } = await replaceClaimSubjectsForPhones(
+        admin,
+        raw,
+        phonePayload,
+      ));
+    }
+
     return NextResponse.json({
       ok: true,
       message:
-        "Check submission recorded. Full number-check pipeline ships in Phase 4.",
+        "Check submission recorded. Full provider pipeline completes in Phase 5.",
+      ...(claimId ? { claim_id: claimId } : {}),
     });
   } catch (e) {
     if (e instanceof RateLimitExceededError) {

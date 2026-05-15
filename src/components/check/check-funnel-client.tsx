@@ -22,7 +22,7 @@ import {
 import {
   extractUsPhoneDigits,
   formatUsPhoneMask,
-  normalizeNanp10Key,
+  normalizeUsPhoneToE164,
 } from "@/lib/check/us-phone";
 import { RATE_LIMIT_USER_MESSAGE } from "@/lib/rate-limit/constants";
 
@@ -44,11 +44,30 @@ function newEmptyPhoneRow(): PhoneRow {
   return { id: crypto.randomUUID(), digits: "" };
 }
 
-/** Rows that share the same completed NANP key (task_manager §4.3.3). */
+/** Duplicate rows keyed by validated E.164 (task_manager §4.3.3 + §4.4 NANP validation). */
+function digitLengthIssue(digits: string): "incomplete" | null {
+  const len = extractUsPhoneDigits(digits).length;
+  if (len === 0 || len >= 10) {
+    return null;
+  }
+  return "incomplete";
+}
+
+/** Row-level validation for §4.4 (excluding duplicates). */
+function rowValidityHint(digits: string): string | null {
+  if (digitLengthIssue(digits) === "incomplete") {
+    return "Enter all 10 digits.";
+  }
+  if (digits.length === 10 && normalizeUsPhoneToE164(digits) === null) {
+    return "That number does not match a valid U.S. area / exchange pattern.";
+  }
+  return null;
+}
+
 function computeDuplicateRowIds(rows: PhoneRow[]): Set<string> {
   const byKey = new Map<string, string[]>();
   for (const row of rows) {
-    const key = normalizeNanp10Key(row.digits);
+    const key = normalizeUsPhoneToE164(row.digits);
     if (key === null) {
       continue;
     }
@@ -68,7 +87,7 @@ function computeDuplicateRowIds(rows: PhoneRow[]): Set<string> {
 }
 
 /**
- * Step 0 evidence checklist (§4.2), Step 1 masked US phone rows + submit (§4.3).
+ * Step 0 evidence checklist (§4.2); Step 1 masked US NANP rows, validation + submit (§4.3–4.4).
  */
 export function CheckFunnelClient() {
   const [funnelStep, setFunnelStep] =
@@ -139,13 +158,13 @@ export function CheckFunnelClient() {
     setSubmitError(null);
     setRateLimitMessage(null);
 
-    const normalized = phoneRows
-      .map((r) => normalizeNanp10Key(r.digits))
-      .filter((k): k is string => k !== null);
+    const validRows = phoneRows.filter(
+      (r) => normalizeUsPhoneToE164(r.digits) !== null,
+    );
 
-    if (normalized.length === 0) {
+    if (validRows.length === 0) {
       setSubmitError(
-        "Enter at least one complete U.S. phone number (10 digits).",
+        "Enter at least one complete, valid U.S. phone number to run a check.",
       );
       return;
     }
@@ -157,8 +176,10 @@ export function CheckFunnelClient() {
       return;
     }
 
-    const unique = new Set(normalized);
-    if (unique.size !== normalized.length) {
+    const e164List = validRows.map((r) => normalizeUsPhoneToE164(r.digits)!);
+
+    const unique = new Set(e164List);
+    if (unique.size !== e164List.length) {
       setSubmitError("Duplicate numbers detected.");
       return;
     }
@@ -169,7 +190,10 @@ export function CheckFunnelClient() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone_numbers: normalized }),
+        body: JSON.stringify({
+          phone_numbers: e164List,
+          phone_displays: validRows.map((r) => formatUsPhoneMask(r.digits)),
+        }),
       });
       const body = (await res.json().catch(() => ({}))) as { error?: string };
 
@@ -293,14 +317,18 @@ export function CheckFunnelClient() {
                 {stepOneMeta.heading}
               </h2>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                U.S. numbers only. Formatting is added as you type; we send
-                digits-only to the server.
+                U.S. numbers only. Formatting is added as you type; the server stores
+                a normalized +1-form number and optionally your masked display string.
               </p>
             </div>
 
             <ul className="flex flex-col gap-3">
               {phoneRows.map((row, index) => {
                 const dup = duplicateRowIds.has(row.id);
+                const validityHint = dup ? null : rowValidityHint(row.digits);
+                const alertText = dup
+                  ? "Duplicate number — change or remove this row."
+                  : validityHint;
                 const inputId = `check-phone-${row.id}`;
                 return (
                   <li key={row.id} className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:gap-2">
@@ -314,14 +342,17 @@ export function CheckFunnelClient() {
                         inputMode="numeric"
                         autoComplete="tel-national"
                         placeholder="(555) 555-5555"
-                        aria-invalid={dup}
+                        aria-invalid={alertText !== null}
                         value={formatUsPhoneMask(row.digits)}
                         onChange={(e) => changeRowDigits(row.id, e.target.value)}
                         className="font-mono"
                       />
-                      {dup ? (
-                        <p className="text-destructive mt-1 text-xs" role="alert">
-                          Duplicate number — change or remove this row.
+                      {alertText !== null ? (
+                        <p
+                          className="text-destructive mt-1 text-xs"
+                          role="alert"
+                        >
+                          {alertText}
                         </p>
                       ) : null}
                     </div>
@@ -372,7 +403,8 @@ export function CheckFunnelClient() {
               disabled={
                 checkSubmitting ||
                 duplicateRowIds.size > 0 ||
-                !phoneRows.some((r) => normalizeNanp10Key(r.digits) !== null)
+                phoneRows.some((r) => rowValidityHint(r.digits) !== null) ||
+                !phoneRows.some((r) => normalizeUsPhoneToE164(r.digits) !== null)
               }
               onClick={() => void runCheckSubmit()}
             >

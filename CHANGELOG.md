@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-05-15 (Phase 4.4 — normalization + persistence on `/check`)
+
+- **§4.4 phone normalization:** Added `normalizeUsPhoneToE164` (NANP first-digit checks) with Vitests in [`us-phone.test.ts`](src/lib/check/us-phone.test.ts). [`CheckFunnelClient`](src/components/check/check-funnel-client.tsx) shows inline errors for incomplete lengths and invalid area/exchange patterns; duplicate detection uses validated E.164 keys.
+- **§4.4 submit + storage:** [`POST /api/check/submit`](src/app/api/check/submit/route.ts) accepts `phone_displays` aligned with `phone_numbers`, replaces `claim_subjects` for the draft claim with `phone_number_normalized` (E.164) and optional `phone_number` (masked display), and returns `claim_id` when rows are written. Rate limits still apply before writes.
+
 ## 2026-05-15 (Phase 4.3 — phone entry on `/check`)
 
 - **§4.3 number UX:** Masked U.S. NANP inputs (10 digits), **Add number** / **Remove** rows, cap **`CHECK_MAX_PHONE_ROWS` = 10**, client duplicate row highlighting, and **Run check** sending digits-only `phone_numbers` to [`POST /api/check/submit`](src/app/api/check/submit/route.ts) with server-side normalize + dedupe ([`us-phone.ts`](src/lib/check/us-phone.ts), Vitest [`us-phone.test.ts`](src/lib/check/us-phone.test.ts)). [`CheckOutcomePanel`](src/components/check-outcome-panel.tsx) listens for `rb-check-submitted` to refresh status. No DB migration (persistence is §4.5).
