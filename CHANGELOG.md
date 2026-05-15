@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-15 (Phase 4.3 — phone entry on `/check`)
+
+- **§4.3 number UX:** Masked U.S. NANP inputs (10 digits), **Add number** / **Remove** rows, cap **`CHECK_MAX_PHONE_ROWS` = 10**, client duplicate row highlighting, and **Run check** sending digits-only `phone_numbers` to [`POST /api/check/submit`](src/app/api/check/submit/route.ts) with server-side normalize + dedupe ([`us-phone.ts`](src/lib/check/us-phone.ts), Vitest [`us-phone.test.ts`](src/lib/check/us-phone.test.ts)). [`CheckOutcomePanel`](src/components/check-outcome-panel.tsx) listens for `rb-check-submitted` to refresh status. No DB migration (persistence is §4.5).
+
 ## 2026-05-15 (Phase 4.2 — evidence checklist on `/check`)
 
 - **§4.2 checklist + gating:** Six PRD §10-style items with checkboxes, supportive non-guarantee copy, and **Continue to enter numbers** enabled when all are checked **or** the user acknowledges **continue anyway** ([`CheckFunnelClient`](src/components/check/check-funnel-client.tsx), [`evidence-checklist-items.ts`](src/lib/check/evidence-checklist-items.ts), [`evidence-checklist-gate.ts`](src/lib/check/evidence-checklist-gate.ts), Vitest [`evidence-checklist.test.ts`](src/lib/check/evidence-checklist.test.ts)). Reveal Step 1 placeholder until §4.3. Optional `claim_events` / `evidence_checklist_ack` insert not wired (anonymous funnel + RLS).

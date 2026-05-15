@@ -23,8 +23,17 @@ export type CheckFlowStep = (typeof CHECK_FLOW_STEPS)[number];
 
 export type CheckFlowStepId = CheckFlowStep["id"];
 
-/** Active step for v0.1 `/check` until §4.3 number entry ships. */
+/** Active step for server-rendered demos (funnel step is client-driven in `CheckFunnelClient`). */
 export const CHECK_DEFAULT_ACTIVE_STEP_ID = 0 satisfies CheckFlowStepId;
+
+/** Max rows in Step 1 — Enter numbers (task_manager §4.3.2 abuse guard). */
+export const CHECK_MAX_PHONE_ROWS = 10;
+
+/**
+ * After a successful `POST /api/check/submit` from the funnel, dispatch
+ * `new Event(RB_CHECK_SUBMITTED_EVENT)` so `CheckOutcomePanel` can refetch gate status.
+ */
+export const RB_CHECK_SUBMITTED_EVENT = "rb-check-submitted";
 
 /** Intro copy framing step zero (PRD §10). */
 export const CHECK_STEP_ZERO_INTRO =

@@ -7,6 +7,7 @@ import { AccountWall } from "@/components/account-wall";
 import { EmailCaptureModal } from "@/components/email-capture-modal";
 import { Button } from "@/components/ui/button";
 import type { EmailCaptureReason } from "@/lib/claims/email-capture-trigger";
+import { RB_CHECK_SUBMITTED_EVENT } from "@/lib/check/constants";
 import { RATE_LIMIT_USER_MESSAGE } from "@/lib/rate-limit/constants";
 
 type GateStatusResponse = {
@@ -57,6 +58,16 @@ export function CheckOutcomePanel({ showRetryHint }: CheckOutcomePanelProps) {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    const onSubmitted = () => {
+      void refresh();
+    };
+    window.addEventListener(RB_CHECK_SUBMITTED_EVENT, onSubmitted);
+    return () => {
+      window.removeEventListener(RB_CHECK_SUBMITTED_EVENT, onSubmitted);
+    };
+  }, [refresh]);
 
   useEffect(() => {
     let cancelled = false;

@@ -492,14 +492,14 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 4.3 Number input UX
 
-- [ ] **4.3.1** Input mask or lib for US phone numbers; strip formatting before API.
-- [ ] **4.3.2** “Add number” adds row; “Remove” per row; max count policy (e.g. 10) to prevent abuse.
-- [ ] **4.3.3** Duplicate number detection client-side and server-side.
+- [x] **4.3.1** Input mask or lib for US phone numbers; strip formatting before API. <!-- done: `formatUsPhoneMask` + `extractUsPhoneDigits` in src/lib/check/us-phone.ts; Step 1 inputs in src/components/check/check-funnel-client.tsx; JSON body uses digit strings -->
+- [x] **4.3.2** “Add number” adds row; “Remove” per row; max count policy (e.g. 10) to prevent abuse. <!-- done: CHECK_MAX_PHONE_ROWS = 10 in src/lib/check/constants.ts -->
+- [x] **4.3.3** Duplicate number detection client-side and server-side. <!-- done: computeDuplicateRowIds in check-funnel-client.tsx; parseAndDedupePhoneNumberPayload in us-phone.ts + POST /api/check/submit -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 4.4 Normalization and validation
 
