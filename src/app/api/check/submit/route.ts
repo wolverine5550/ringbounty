@@ -5,7 +5,7 @@ import {
   isValidAnonymousSessionId,
 } from "@/lib/anonymous-session";
 import { CHECK_MAX_PHONE_ROWS } from "@/lib/check/constants";
-import { runStubChecksForPhoneList } from "@/lib/check/parallel-check-pipeline-stub";
+import { runSpamChecksForPhoneList } from "@/lib/spam/spam-check-pipeline";
 import {
   parseAndDedupePhoneNumberPayload,
   type DedupedPhoneEntry,
@@ -144,8 +144,9 @@ async function replaceClaimSubjectsForPhones(
  * order as the listed rows (matches `phone_numbers`). Use these for `/results`, `/summary`,
  * and `/qualify/[id]?claim=…` when the product wires client navigation.
  *
- * §4.6 — After persistence, stub provider checks run **in parallel per number** and per
- * provider (`Promise.allSettled`); failures attach `error_code` and are logged server-side.
+ * §4.6 / §5.4 — After persistence, Nomorobo + Twilio spam checks run **in parallel per number**
+ * (`Promise.allSettled`); outcomes persist to `claim_subjects` + `claim_events`. Provider HTTP
+ * is skipped when env flags/keys are off. Failures attach `error_code` and are logged server-side.
  * Response may include **`number_checks`** with per-provider outcomes (partial failure is
  * still HTTP 200 when persistence succeeded).
  *
@@ -215,7 +216,7 @@ export async function POST(request: NextRequest) {
 
     let claimId: string | undefined;
     let claimSubjectIds: string[] | undefined;
-    let numberChecks: Awaited<ReturnType<typeof runStubChecksForPhoneList>> | undefined;
+    let numberChecks: Awaited<ReturnType<typeof runSpamChecksForPhoneList>> | undefined;
     if (phonePayload && phonePayload.length > 0) {
       const persisted = await replaceClaimSubjectsForPhones(
         admin,
@@ -224,18 +225,18 @@ export async function POST(request: NextRequest) {
       );
       claimId = persisted.claimId;
       claimSubjectIds = persisted.subjectIds;
-      numberChecks = await runStubChecksForPhoneList(
-        phonePayload.map((e, i) => ({
+      numberChecks = await runSpamChecksForPhoneList(admin, {
+        claimId: persisted.claimId,
+        phones: phonePayload.map((e, i) => ({
           phoneNumberNormalized: e.phoneNumberNormalized,
           subjectId: persisted.subjectIds[i] ?? null,
         })),
-      );
+      });
     }
 
     return NextResponse.json({
       ok: true,
-      message:
-        "Check submission recorded. Full provider pipeline completes in Phase 5.",
+      message: "Check submission recorded.",
       ...(claimId ? { claim_id: claimId } : {}),
       ...(claimSubjectIds !== undefined && claimSubjectIds.length > 0
         ? { claim_subject_ids: claimSubjectIds }

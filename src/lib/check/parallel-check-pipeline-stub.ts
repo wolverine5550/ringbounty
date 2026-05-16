@@ -1,7 +1,7 @@
 /**
- * §4.6 — Parallel per-number checks with `Promise.allSettled`.
- * Phase 5 replaces stub providers with real clients: **Nomorobo** (§5.3, primary) and **Twilio** (§5.2).
- * This module keeps the response shape (per provider + per number) stable for UI and tests.
+ * §4.6 — Parallel per-number checks with `Promise.allSettled` (stub providers for tests).
+ * Production submit uses {@link runSpamChecksForPhoneList} in `src/lib/spam/spam-check-pipeline.ts` (§5.4).
+ * Response shape (`NumberCheckSummary`) is shared with the real pipeline.
  */
 
 export const CHECK_PIPELINE_STUB_PROVIDER_IDS = [

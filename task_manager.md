@@ -587,14 +587,14 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 5.4 Orchestrator
 
-- [ ] **5.4.1** Implement `runSpamChecks(normalizedPhone)` running enabled providers in `Promise.allSettled`.
-- [ ] **5.4.2** Merge logic per PRD §7 Step 1: `is_known_spammer`, `confidence_score = max`, `complaint_count = sum`, `category = first non-null OR precedence rule` (document rule).
-- [ ] **5.4.3** Write merged outcome to `claim_subjects` columns + `claim_events` rows (`spam_db_match` keys).
+- [x] **5.4.1** Implement `runSpamChecks(normalizedPhone)` running enabled providers in `Promise.allSettled`. <!-- done: src/lib/spam/run-spam-checks.ts, run-spam-checks.test.ts -->
+- [x] **5.4.2** Merge logic per PRD §7 Step 1: `is_known_spammer`, `confidence_score = max`, `complaint_count = sum`, `category = first non-null OR precedence rule` (document rule). <!-- done: src/lib/spam/merge-spam-results.ts (Nomorobo-first category/company; OR isSpam; max/sum), merge-spam-results.test.ts -->
+- [x] **5.4.3** Write merged outcome to `claim_subjects` columns + `claim_events` rows (`spam_db_match` keys). <!-- done: src/lib/spam/persist-spam-check-outcome.ts; wired from src/lib/spam/spam-check-pipeline.ts → POST /api/check/submit -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 5.5 Exempt category handling
 

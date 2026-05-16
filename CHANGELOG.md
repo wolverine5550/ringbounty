@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-05-16 (Phase 5.4 — spam orchestrator + persistence)
+
+- **§5.4 orchestrator:** [`run-spam-checks.ts`](src/lib/spam/run-spam-checks.ts) runs Nomorobo + Twilio in `Promise.allSettled` (no HTTP when flags/keys off). [`merge-spam-results.ts`](src/lib/spam/merge-spam-results.ts) applies PRD §7 merge (OR `isSpam`, max score, sum complaints, Nomorobo-first category/company, `spam_db_source`).
+- **§5.4 persistence:** [`persist-spam-check-outcome.ts`](src/lib/spam/persist-spam-check-outcome.ts) writes `claim_subjects` spam columns + `claim_events` (`spam_db_match` keys + per-provider `provider_raw`). [`spam-check-pipeline.ts`](src/lib/spam/spam-check-pipeline.ts) wired into [`POST /api/check/submit`](src/app/api/check/submit/route.ts). Vitest: merge, run, persist, pipeline tests.
+
 ## 2026-05-16 (Phase 5.3 — Nomorobo primary + provider stack)
 
 - **Architecture:** v0.1 spam Step 1 is **Nomorobo Enterprise (primary)** + **Twilio Lookup v2 (secondary)** per [PRD §7](prd.md). YouMail removed from scope. Merge: OR `is_spam`, max score, sum complaints; category prefers Nomorobo.
