@@ -650,12 +650,14 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 6.2 Federal DNC (attestation + eligibility — not registry API by default)
 
-- [ ] **6.2.0** **Legal:** Confirm with counsel that automated National Registry access (FTC SAN or vendor e.g. RealPhoneValidation) is **not** permitted for claim-scoring / letters given [FTC Q&A #13](https://www.ftc.gov/business-guidance/resources/qa-telemarketers-sellers-about-dnc-provisions-tsr-0). If blocked, §6.2 is attestation-only (see spike doc).
-- [ ] **6.2.1** Qualification UX: **gate** — user must explicitly attest National DNC yes/no + registration date before proceeding; link [donotcall.gov](https://www.donotcall.gov) + copy re FTC confirmation email date ([`federal-dnc-attestation.ts`](src/lib/constants/federal-dnc-attestation.ts)) → persist `dnc_check_results` / `claim_events` (`source: user_input`).
-- [ ] **6.2.2** Compute `federal_dnc_eligible` from attested `federal_dnc_registration_date` + `earliest_call_date` (31-day rule) via [`federal-dnc-eligibility.ts`](src/lib/dnc/federal-dnc-eligibility.ts); recompute when qualification provides dates; wire [`resolveFederalDncMatrixSignal`](src/lib/scoring/federal-dnc-matrix-signal.ts) with `attestedByUser`.
+- [ ] **6.2.0** **Legal:** Confirm with counsel that automated National Registry access (FTC SAN or vendor e.g. RealPhoneValidation) is **not** permitted for claim-scoring / letters given [FTC Q&A #13](https://www.ftc.gov/business-guidance/resources/qa-telemarketers-sellers-about-dnc-provisions-tsr-0). **Product assumption (spike):** attestation-only until counsel approves otherwise — do not ship registry API.
+- [x] **6.2.1** Qualification UX: **gate** — user must explicitly attest National DNC yes/no + registration date before proceeding; link [donotcall.gov](https://www.donotcall.gov) + copy re FTC confirmation email date ([`federal-dnc-attestation.ts`](src/lib/constants/federal-dnc-attestation.ts)) → persist `dnc_check_results` / `claim_events` (`source: user_input`). <!-- done: src/components/qualify/federal-dnc-attestation-form.tsx, src/app/(post-check)/qualify/[claimSubjectId]/page.tsx, src/app/api/qualify/federal-dnc/route.ts, src/lib/dnc/federal-dnc-attestation-gate.ts, src/lib/dnc/persist-federal-dnc-attestation.ts -->
+- [x] **6.2.2** Compute `federal_dnc_eligible` from attested `federal_dnc_registration_date` + `earliest_call_date` (31-day rule) via [`federal-dnc-eligibility.ts`](src/lib/dnc/federal-dnc-eligibility.ts); recompute when qualification provides dates; wire [`resolveFederalDncMatrixSignal`](src/lib/scoring/federal-dnc-matrix-signal.ts) with `attestedByUser`. <!-- done: persist + src/lib/dnc/recompute-federal-dnc-eligibility.ts (call from Phase 7 Q10); eligible null until earliest_call_date -->
 - [ ] **6.2.3** *(Only if 6.2.0 approves)* Server-only registry client; map vendor response into `dnc_check_results` — **not** planned for v0.1.
-- [ ] **6.2.4** **Optional evidence:** Let user upload a screenshot of their FTC donotcall.gov registration confirmation email (shows registration date, e.g. ending in …7907 on October 17, 2007). **Not required** to proceed past the attestation gate; store path on claim/subject metadata or Supabase Storage + `claim_events` reference; supportive copy only (not legal verification by RingBounty).
+- [x] **6.2.4** **Optional evidence:** Let user upload a screenshot of their FTC donotcall.gov registration confirmation email (shows registration date, e.g. ending in …7907 on October 17, 2007). **Not required** to proceed past the attestation gate; store path on claim/subject metadata or Supabase Storage + `claim_events` reference; supportive copy only (not legal verification by RingBounty). <!-- done: supabase/migrations/20260516193000_federal_dnc_evidence_storage.sql (claim-evidence bucket), src/lib/dnc/federal-dnc-evidence.ts, upload-federal-dnc-evidence.ts, multipart POST /api/qualify/federal-dnc, federal-dnc-attestation-form.tsx -->
 
+**§6.2 — Bridge to Phase 7 (call dates)**
+- When implementing Phase 7 call dates (§7.4), call [`recomputeFederalDncEligibility`](src/lib/dnc/recompute-federal-dnc-eligibility.ts) with the attestation already stored in `dnc_check_results`, **or** pass `earliest_call_date` on [`POST /api/qualify/federal-dnc`](src/app/api/qualify/federal-dnc/route.ts). Wire that hook when starting §7.4 (Q10 most recent call date — use as earliest-call proxy until a dedicated earliest-call field exists).
 
 **Docs — this subsection**
 - [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md Phase 6.1–6.2 federal DNC table -->
@@ -752,7 +754,7 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 - [ ] **7.4.1** Q8 total call count control (slider buckets or numeric input per PRD).
 - [ ] **7.4.2** Q9 post-stop count (conditional).
-- [ ] **7.4.3** Q10 most recent call date (date picker); used for SOL.
+- [ ] **7.4.3** Q10 most recent call date (date picker); used for SOL. **§6.2 hook:** on save, call [`recomputeFederalDncEligibility`](src/lib/dnc/recompute-federal-dnc-eligibility.ts) with stored federal DNC attestation + this date as `earliestCallDate` (or pass `earliest_call_date` on federal-dnc POST if attestation and call date are submitted together).
 - [ ] **7.4.4** Q11–Q12 time-of-day violations counts.
 
 

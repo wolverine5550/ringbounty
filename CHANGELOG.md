@@ -1,11 +1,16 @@
 # Changelog
 
-## 2026-05-16 (Phase 6.1–6.2 — federal DNC manual attestation)
+## 2026-05-16 (Phase 6.2 — federal DNC attestation wired)
 
-- **§6.1 spike:** [`docs/spikes/20260516190000-federal-dnc-access.md`](docs/spikes/20260516190000-federal-dnc-access.md) — FTC [`dnc-complaints`](https://www.ftc.gov/developer/api/v0/endpoints/do-not-call-dnc-reported-calls-data-api) is complaint data, not registry lookup; National Registry API/vendor scrub (e.g. RealPhoneValidation + SAN) **not** used for claim scoring ([FTC Q&A #13](https://www.ftc.gov/business-guidance/resources/qa-telemarketers-sellers-about-dnc-provisions-tsr-0)).
+- **§6.2.1 qualify gate:** [`FederalDncAttestationForm`](src/components/qualify/federal-dnc-attestation-form.tsx) on [`/qualify/[claimSubjectId]`](src/app/(post-check)/qualify/[claimSubjectId]/page.tsx) — yes/no + registration date, donotcall.gov self-check copy, gate validation ([`federal-dnc-attestation-gate.ts`](src/lib/dnc/federal-dnc-attestation-gate.ts)). [`POST /api/qualify/federal-dnc`](src/app/api/qualify/federal-dnc/route.ts) persists to `dnc_check_results` + `claim_events` (`source: user_input`).
+- **§6.2.2 eligibility:** [`persist-federal-dnc-attestation.ts`](src/lib/dnc/persist-federal-dnc-attestation.ts) computes `federal_dnc_eligible` when `earliest_call_date` is provided; otherwise null until Phase 7 call-date step. [`recompute-federal-dnc-eligibility.ts`](src/lib/dnc/recompute-federal-dnc-eligibility.ts) for recomputation. Matrix +25 via [`resolveFederalDncMatrixSignal`](src/lib/scoring/federal-dnc-matrix-signal.ts) with `attestedByUser`.
+- **§6.2.4 optional screenshot:** Private `claim-evidence` Storage bucket ([`20260516193000_federal_dnc_evidence_storage.sql`](supabase/migrations/20260516193000_federal_dnc_evidence_storage.sql)); optional upload on qualify form → path on `claim_subjects.metadata` + `claim_events` (`federal_dnc_confirmation_screenshot_path`). Not required to proceed; not legal verification.
+- **§6.2.0 / §6.2.3:** Registry API/vendor scrub remains **blocked** pending counsel ([spike doc](docs/spikes/20260516190000-federal-dnc-access.md)).
+
+## 2026-05-16 (Phase 6.1 — federal DNC spike + scoring guard)
+
+- **§6.1 spike:** [`docs/spikes/20260516190000-federal-dnc-access.md`](docs/spikes/20260516190000-federal-dnc-access.md) — FTC [`dnc-complaints`](https://www.ftc.gov/developer/api/v0/endpoints/do-not-call-dnc-reported-calls-data-api) is complaint data, not registry lookup; National Registry API/vendor scrub **not** used for claim scoring ([FTC Q&A #13](https://www.ftc.gov/business-guidance/resources/qa-telemarketers-sellers-about-dnc-provisions-tsr-0)).
 - **§6.1.3 `/check`:** [`FEDERAL_DNC_UNAVAILABLE_USER_MESSAGE`](src/lib/constants/federal-dnc-unavailable.ts); `POST /api/check/submit` returns `federal_dnc` summary. No fabricated registry positives in scoring.
-- **§6.2 attestation (product lock):** User must explicitly attest National DNC yes/no + registration date **before** continuing qualification; self-check at [donotcall.gov](https://www.donotcall.gov) (FTC confirmation email includes date + 31-day effective period). Helpers: [`federal-dnc-attestation.ts`](src/lib/constants/federal-dnc-attestation.ts), [`federal-dnc-eligibility.ts`](src/lib/dnc/federal-dnc-eligibility.ts), [`federal-dnc-matrix-signal.ts`](src/lib/scoring/federal-dnc-matrix-signal.ts) (`attestedByUser` → +25 when eligible). Qualification UI + persistence **not wired yet**.
-- **Planned §6.2:** Optional upload of FTC confirmation email **screenshot** (evidence only; not required to proceed) — see `task_manager.md` §6.2.4.
 
 ## 2026-05-16 (Phase 5.7 — FDCPA / debt collection)
 
