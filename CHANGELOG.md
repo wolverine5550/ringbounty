@@ -1,17 +1,35 @@
 # Changelog
 
+## 2026-05-16 (Phase 5.3 — Nomorobo primary + provider stack)
+
+- **Architecture:** v0.1 spam Step 1 is **Nomorobo Enterprise (primary)** + **Twilio Lookup v2 (secondary)** per [PRD §7](prd.md). YouMail removed from scope. Merge: OR `is_spam`, max score, sum complaints; category prefers Nomorobo.
+- **§5.3 Nomorobo:** [`nomorobo-spam-provider.ts`](src/lib/spam/nomorobo-spam-provider.ts) — `GET /v2/check`, `X-API-Key`, maps `risk_score`, `number_of_calls`, `reported_category`, `reported_name` → [`SpamCheckResult`](src/lib/spam/types.ts). Vitest: [`nomorobo-spam-provider.test.ts`](src/lib/spam/nomorobo-spam-provider.test.ts).
+- **Flags / stubs:** `SPAM_PROVIDER_NOMOROBO_ENABLED` replaces `SPAM_PROVIDER_YOUMAIL_ENABLED`; pipeline stubs `nomorobo_stub` + `twilio_stub`. [`claimEvent.ts`](src/lib/constants/claimEvent.ts) source `nomorobo`. `.env.example`: `NOMOROBO_API_KEY`.
+
+## 2026-05-16 (Phase 5.2 — Twilio Lookup v2 migration)
+
+- **§5.2 refactor:** [`twilio-lookup-spam-provider.ts`](src/lib/spam/twilio-lookup-spam-provider.ts) now calls **Lookup v2** (`GET …/v2/PhoneNumbers/{E.164}?Fields=phone_number_quality_score,caller_name,line_type_intelligence`). Maps `phone_number_quality_score` → `score` / `isSpam` (threshold [`TWILIO_QUALITY_SPAM_THRESHOLD`](src/lib/spam/twilio-lookup-spam-provider.ts) = 80), CNAM → `companyName`, line type → `category`. Vitest updated. Replaces v1 `nomorobo_spamscore` add-on path.
+
+## 2026-05-16 (Spam providers — architecture note)
+
+- Superseded by **Nomorobo primary + Twilio secondary** entry above (YouMail no longer planned).
+
+## 2026-05-15 (Phase 5.2 — Twilio Lookup spam adapter)
+
+- **§5.2 Twilio REST (superseded):** Initial adapter used Lookup **v1** add-on; migrated to v2 on 2026-05-16 (see entry above).
+
 ## 2026-05-15 (Phase 5 — Twilio-first spam path)
 
 - **Integration note:** Phase 5’s first spam / reputation wire path is **Twilio REST** (§5.2). Env flag [`SPAM_PROVIDER_TWILIO_ENABLED`](src/lib/spam/provider-flags.ts) toggles that adapter; the stub pipeline uses `twilio_stub`. [`CLAIM_EVENT_SOURCE_VALUES`](src/lib/constants/claimEvent.ts) uses `twilio` as the `claim_events.source` for Twilio API–backed events.
 
 ## 2026-05-15 (Phase 5.1 — spam types + provider env flags)
 
-- **§5.1 contracts:** [`SpamCheckResult`](src/lib/spam/types.ts) and [`SpamCheckProvider`](src/lib/spam/types.ts) define the adapter surface for **Twilio REST** (spam / reputation — §5.2) and YouMail (§5.3–§5.4). Server env toggles [`SPAM_PROVIDER_TWILIO_ENABLED`](src/lib/spam/provider-flags.ts) / [`SPAM_PROVIDER_YOUMAIL_ENABLED`](src/lib/spam/provider-flags.ts) via [`getSpamProviderFeatureFlags`](src/lib/spam/provider-flags.ts) (`true` / `false` / `1` / `yes`; unset = off). Vitest: [`provider-flags.test.ts`](src/lib/spam/provider-flags.test.ts). `.env.example` documents the keys.
+- **§5.1 contracts:** [`SpamCheckResult`](src/lib/spam/types.ts) and [`SpamCheckProvider`](src/lib/spam/types.ts) define the adapter surface for Nomorobo (§5.3) and Twilio (§5.2). Env toggles via [`getSpamProviderFeatureFlags`](src/lib/spam/provider-flags.ts). Vitest: [`provider-flags.test.ts`](src/lib/spam/provider-flags.test.ts).
 
 ## 2026-05-15 (Phase 4.6 — loading, partial failures, retry, structured logs)
 
 - **§4.6 `/check` UX + API:** While [`POST /api/check/submit`](src/app/api/check/submit/route.ts) runs, [`CheckFunnelClient`](src/components/check/check-funnel-client.tsx) shows per-number skeleton rows. Successful phone submits extend JSON with **`number_checks`** — parallel stub “providers” per number ([`parallel-check-pipeline-stub.ts`](src/lib/check/parallel-check-pipeline-stub.ts), Vitest [`parallel-check-pipeline-stub.test.ts`](src/lib/check/parallel-check-pipeline-stub.test.ts)); one failing provider still returns others. **Retry with backoff** (cap 8s) after consecutive submit failures; provider / pipeline failures log **`error_code`** via structured `console.error` JSON (`check_provider_failure`, `check_number_pipeline_failure`, `check_submit_unhandled`).
-- **§4.6 follow-ups:** Stubs **always succeed in production** until you optionally add env-driven failure for staging. **Phase 5** replaces **`runStubChecksForPhoneList`** with real **Twilio** + YouMail adapters but **can keep the same `number_checks` shape**. Per-number progress is skeleton until the single response returns (**not streaming** until SSE or split requests).
+- **§4.6 follow-ups:** Stubs **always succeed in production** until you optionally add env-driven failure for staging. **Phase 5** replaces **`runStubChecksForPhoneList`** with **Nomorobo** + **Twilio** adapters but **can keep the same `number_checks` shape**. Per-number progress is skeleton until the single response returns (**not streaming** until SSE or split requests).
 
 ## 2026-05-15 (Phase 4.5 — persist subjects + submit response)
 

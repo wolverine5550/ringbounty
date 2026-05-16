@@ -2,18 +2,20 @@
  * Phase 5.1 — Feature flags for spam providers (server-side env).
  * Reads boolean-ish strings from `process.env`; adapters in §5.2–§5.4 consult these before HTTP calls.
  *
- * The first spam / reputation integration uses **Twilio’s REST API** (see §5.2).
+ * v0.1 stack: **Nomorobo** (primary, §5.3) + **Twilio Lookup v2** (secondary corroboration, §5.2).
  */
 
 /** Env keys wired in `.env.example` / hosting dashboards (boolean strings, e.g. `true` / `false`). */
+export const SPAM_PROVIDER_NOMOROBO_ENV_KEY =
+  "SPAM_PROVIDER_NOMOROBO_ENABLED" as const;
 export const SPAM_PROVIDER_TWILIO_ENV_KEY =
   "SPAM_PROVIDER_TWILIO_ENABLED" as const;
-export const SPAM_PROVIDER_YOUMAIL_ENV_KEY =
-  "SPAM_PROVIDER_YOUMAIL_ENABLED" as const;
 
 export type SpamProviderFeatureFlags = {
+  /** Primary — Nomorobo Enterprise `GET /v2/check`. */
+  nomoroboEnabled: boolean;
+  /** Secondary — Twilio Lookup v2 quality / CNAM / line type. */
   twilioEnabled: boolean;
-  youmailEnabled: boolean;
 };
 
 /**
@@ -41,7 +43,7 @@ export function getSpamProviderFeatureFlags(
   env: SpamProviderEnv = process.env,
 ): SpamProviderFeatureFlags {
   return {
+    nomoroboEnabled: parseBooleanEnv(env[SPAM_PROVIDER_NOMOROBO_ENV_KEY]),
     twilioEnabled: parseBooleanEnv(env[SPAM_PROVIDER_TWILIO_ENV_KEY]),
-    youmailEnabled: parseBooleanEnv(env[SPAM_PROVIDER_YOUMAIL_ENV_KEY]),
   };
 }

@@ -21,14 +21,16 @@ describe("parallel-check-pipeline-stub", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     const rows = await runStubChecksForPhoneList(
       [{ phoneNumberNormalized: "+12125550199", subjectId: "sub-1" }],
-      { failProviderId: "youmail_stub" },
+      { failProviderId: "nomorobo_stub" },
     );
     expect(rows).toHaveLength(1);
     expect(rows[0]?.had_provider_failure).toBe(true);
-    const youmail = rows[0]?.providers.find((p) => p.provider_id === "youmail_stub");
-    expect(youmail?.status).toBe("error");
-    if (youmail && youmail.status === "error") {
-      expect(youmail.error_code).toBe("STUB_PROVIDER_UNAVAILABLE");
+    const nomorobo = rows[0]?.providers.find(
+      (p) => p.provider_id === "nomorobo_stub",
+    );
+    expect(nomorobo?.status).toBe("error");
+    if (nomorobo && nomorobo.status === "error") {
+      expect(nomorobo.error_code).toBe("STUB_PROVIDER_UNAVAILABLE");
     }
     const twilio = rows[0]?.providers.find((p) => p.provider_id === "twilio_stub");
     expect(twilio?.status).toBe("ok");

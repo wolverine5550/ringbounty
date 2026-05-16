@@ -1,7 +1,7 @@
 /**
  * Phase 5.1 — Shared contract for pluggable spam / reputation providers.
- * Primary MVP path: **Twilio REST** for reputation / spam signals (§5.2); YouMail remains a
- * separate adapter (§5.3). Map vendor responses into
+ * v0.1 stack: **Nomorobo Enterprise** (primary spam DB, §5.3) + **Twilio Lookup v2**
+ * (secondary corroboration, §5.2). Map vendor responses into
  * `SpamCheckResult` so merge logic and storage stay provider-agnostic.
  */
 
@@ -19,7 +19,7 @@ export interface SpamCheckResult {
   companyName: string | null;
   /** Full vendor payload (or a safe subset) for audit / `claim_events`; keep JSON-serializable when possible. */
   raw: unknown;
-  /** Stable id for this integration (e.g. `twilio`, `youmail`); used in logs and merged rows. */
+  /** Stable id for this integration (e.g. `nomorobo`, `twilio`); used in logs and merged rows. */
   providerId: string;
 }
 

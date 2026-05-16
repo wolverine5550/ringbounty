@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   getSpamProviderFeatureFlags,
   parseBooleanEnv,
+  SPAM_PROVIDER_NOMOROBO_ENV_KEY,
   SPAM_PROVIDER_TWILIO_ENV_KEY,
-  SPAM_PROVIDER_YOUMAIL_ENV_KEY,
 } from "./provider-flags";
 
 describe("parseBooleanEnv", () => {
@@ -33,16 +33,16 @@ describe("parseBooleanEnv", () => {
 describe("getSpamProviderFeatureFlags", () => {
   it("reads both env keys from a supplied env object", () => {
     const flags = getSpamProviderFeatureFlags({
-      [SPAM_PROVIDER_TWILIO_ENV_KEY]: "true",
-      [SPAM_PROVIDER_YOUMAIL_ENV_KEY]: "0",
+      [SPAM_PROVIDER_NOMOROBO_ENV_KEY]: "true",
+      [SPAM_PROVIDER_TWILIO_ENV_KEY]: "0",
     });
-    expect(flags.twilioEnabled).toBe(true);
-    expect(flags.youmailEnabled).toBe(false);
+    expect(flags.nomoroboEnabled).toBe(true);
+    expect(flags.twilioEnabled).toBe(false);
   });
 
   it("defaults both off when keys absent", () => {
     const flags = getSpamProviderFeatureFlags({});
+    expect(flags.nomoroboEnabled).toBe(false);
     expect(flags.twilioEnabled).toBe(false);
-    expect(flags.youmailEnabled).toBe(false);
   });
 });

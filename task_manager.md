@@ -15,7 +15,7 @@ Living checklist for building RingBounty from `prd.md` and product decisions.
 | Cell vs residential (TCPA subsection) | **Explicit user attestation** only — do not infer from carrier or metadata alone. |
 | Demand amount in letter | **User-selectable** option (e.g. conservative / realistic / maximum) with disclaimers; product does not recommend which to choose. |
 | Federal DNC / FTC access | **Unknown** — treat as spike; do not assume a specific API until validated. |
-| Spam / reputation (Twilio API + YouMail) | **Undecided** — design for **pluggable providers** and possible **single-provider MVP**. First path: **Twilio REST** (§5.2). |
+| Spam / reputation (Nomorobo + Twilio) | **Decided** — **Nomorobo Enterprise** primary (`GET /v2/check`); **Twilio Lookup v2** secondary (§5.2). YouMail **not** in v0.1. |
 | OpenCorporates | **Undecided budget** — define caps and fallback UX before heavy usage. |
 | Stripe bundles | **Undecided** — choose one Checkout pattern during payments milestone. |
 | Stripe Tax | **In scope for v0.1** — enable/configure as part of payments work. |
@@ -67,7 +67,7 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 - [ ] **0.2.1** Add `.env.example` at repo root with `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 - [ ] **0.2.2** Add server-only placeholders: `SUPABASE_SECRET_KEY` (preferred; legacy `SUPABASE_SERVICE_ROLE_KEY` fallback), `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`.
 - [ ] **0.2.3** Add `OPENROUTER_API_KEY` (or chosen AI gateway) placeholder.
-- [ ] **0.2.4** Add optional: `TWILIO_*` (spam / reputation via **Twilio REST** per §5.2), `YOUMAIL_API_KEY`, `OPENCORPORATES_API_KEY`, `FTC_DNC_*` (or vendor-specific names once spike completes).
+- [ ] **0.2.4** Add optional: `NOMOROBO_API_KEY` (§5.3), `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` (§5.2 Lookup), `OPENCORPORATES_API_KEY`, `FTC_DNC_*` (or vendor-specific names once spike completes).
 - [ ] **0.2.5** Document in `README.md` which vars are client-exposed (`NEXT_PUBLIC_*`) vs server-only.
 - [ ] **0.2.6** Ensure `.env.local` remains gitignored; confirm no keys committed.
 
@@ -542,42 +542,48 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ## Phase 5 — Spam / exempt pipeline (pluggable)
 
-**Bridge from §4.6:** Replace stub `runStubChecksForPhoneList` with **Twilio REST** + YouMail clients (orchestration per §5.4). Preserve **`number_checks`** (or evolve it minimally) unless product changes the API contract.
+**Bridge from §4.6:** Replace stub `runStubChecksForPhoneList` with **Nomorobo** (primary) + **Twilio Lookup v2** (secondary) via orchestration (§5.4). Preserve **`number_checks`** (or evolve it minimally) unless product changes the API contract.
 
 ### 5.1 Types and configuration
 
 - [x] **5.1.1** Define `SpamCheckResult` interface: `isSpam`, `score`, `complaints`, `category`, `companyName`, `raw`, `providerId`. <!-- done: src/lib/spam/types.ts -->
 - [x] **5.1.2** Define `SpamCheckProvider` interface: `check(phone: string): Promise<SpamCheckResult>`. <!-- done: src/lib/spam/types.ts -->
-- [x] **5.1.3** Env-driven flags: `SPAM_PROVIDER_TWILIO_ENABLED`, `SPAM_PROVIDER_YOUMAIL_ENABLED` (boolean strings). <!-- done: src/lib/spam/provider-flags.ts + src/lib/spam/provider-flags.test.ts; `.env.example` -->
+- [x] **5.1.3** Env-driven flags: `SPAM_PROVIDER_NOMOROBO_ENABLED`, `SPAM_PROVIDER_TWILIO_ENABLED` (boolean strings). <!-- done: src/lib/spam/provider-flags.ts + src/lib/spam/provider-flags.test.ts; `.env.example` -->
 
 
 **Docs — this subsection**
 - [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md — planned integrations -->
 - [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
-### 5.2 Twilio adapter (spam / reputation)
+### 5.2 Twilio adapter (secondary — phone intelligence + corroboration)
 
-> **Wire protocol:** Implement against **Twilio’s REST API** for spam and reputation lookups (Twilio product docs + this checklist).
+> **Wire protocol:** [**Twilio Lookup v2**](https://www.twilio.com/docs/lookup/v2-api) — `Fields=phone_number_quality_score,caller_name,line_type_intelligence` (see [PRD §7](prd.md)). **Secondary** to Nomorobo (§5.3).
 
-- [ ] **5.2.1** Read API docs; implement HTTP client with timeout (e.g. 5s) and typed response mapping.
-- [ ] **5.2.2** Map response fields into `SpamCheckResult`; store **full** raw JSON in `claim_events` or `metadata` per PRD.
-- [ ] **5.2.3** Unit tests with fixture JSON for spam / non-spam / error responses.
-- [ ] **5.2.4** Feature flag: when key missing, adapter returns `isSpam: false` with `raw: { skipped: true }` or skip orchestration step cleanly.
-
-
-**Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
-
-### 5.3 YouMail adapter
-
-- [ ] **5.3.1** Same structure as 5.2.x for YouMail-specific schema.
-- [ ] **5.3.2** Fixture tests and error handling parity with the Twilio adapter (§5.2).
+- [x] **5.2.1** Read API docs; implement HTTP client with timeout (e.g. 5s) and typed response mapping. <!-- done: `src/lib/spam/twilio-lookup-spam-provider.ts`; originally v1, migrated in 5.2.5 -->
+- [x] **5.2.2** Map response fields into `SpamCheckResult`; store **full** raw JSON in `claim_events` or `metadata` per PRD. <!-- done: `mapTwilioLookupV2JsonToSpamCheckResult` + `raw: body`; **persistence** still §5.4 -->
+- [x] **5.2.3** Unit tests with fixture JSON for spam / non-spam / error responses. <!-- done: `src/lib/spam/twilio-lookup-spam-provider.test.ts` -->
+- [x] **5.2.4** Feature flag: when key missing, adapter returns `isSpam: false` with `raw: { skipped: true }` or skip orchestration step cleanly. <!-- done: `skippedResult` when `!enabled` or missing sid/token; orchestration §5.4 -->
+- [x] **5.2.5** **Migrate to Lookup v2** (replace v1 `nomorobo_spamscore` add-on path). <!-- done: v2 base URL + `TWILIO_LOOKUP_V2_FIELDS`; Vitest updated -->
+- [x] **5.2.6** Document **quality score → `isSpam`** threshold (`TWILIO_QUALITY_SPAM_THRESHOLD` = 80, PRD §8 high-confidence band) in code + tests. <!-- done: `twilio-lookup-spam-provider.ts` + tests -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md planned integrations -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md Phase 5.2 + v2 migration entry -->
+
+### 5.3 Nomorobo adapter (primary — spam / robocall reputation)
+
+> **Wire protocol:** Nomorobo Enterprise **`GET https://api.nomorobo.com/v2/check`** (`X-API-Key`). Docs: `docs/Nomorobo Enterprise API Documentation.pdf`, [nomorobo.com/api](https://www.nomorobo.com/api/).
+
+- [x] **5.3.0** **Spike:** Review Enterprise PDF + public API page; confirm `From` / optional `To`, `risk_score`, `number_of_calls`, `reported_category`, `reported_name`. <!-- done: docs/Nomorobo Enterprise API Documentation.pdf -->
+- [x] **5.3.1** Implement `nomorobo-spam-provider.ts`: HTTP client (5s timeout), map `/check` JSON → `SpamCheckResult`, skip when flag off or key missing. <!-- done: src/lib/spam/nomorobo-spam-provider.ts -->
+- [x] **5.3.2** Fixture tests (high risk / low risk / HTTP error / skip paths). <!-- done: src/lib/spam/nomorobo-spam-provider.test.ts -->
+- [x] **5.3.3** Map `risk_score` → `isSpam` (threshold 80), `number_of_calls` → `complaints`, `reported_category` → `call_category`, `reported_name` → `companyName`; store full `raw`. <!-- done: mapNomoroboCheckJsonToSpamCheckResult -->
+
+
+**Docs — this subsection**
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 5.4 Orchestrator
 
@@ -1273,7 +1279,7 @@ Track resolutions here by checking items off and adding `<!-- done: decision rec
 ### Integrations and compliance
 
 - [ ] **Federal DNC / FTC** — Access method still unknown; legal review of ToS for any vendor or government system.
-- [ ] **Twilio spam lookup vs YouMail** — One for MVP vs both at launch; pricing and rate limits; storage of raw responses under Twilio / YouMail ToS (§5.2 / §5.3).
+- [ ] **Nomorobo + Twilio at launch** — Both enabled by default when keys present? Pricing / rate limits; storage of raw responses under Nomorobo / Twilio ToS (§5.2 / §5.3).
 - [ ] **OpenCorporates** — Pricing tier, monthly cap, behavior when cap hit (queue vs fail vs manual-only).
 - [ ] **State DNC APIs** — Per-state reality (API vs scrape vs none); order of rollout.
 - [ ] **FTC consumer complaint lookup** — Allowed use for company identification; implementation approach.
