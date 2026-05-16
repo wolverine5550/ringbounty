@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-05-16 (Phase 6.1–6.2 — federal DNC manual attestation)
+
+- **§6.1 spike:** [`docs/spikes/20260516190000-federal-dnc-access.md`](docs/spikes/20260516190000-federal-dnc-access.md) — FTC [`dnc-complaints`](https://www.ftc.gov/developer/api/v0/endpoints/do-not-call-dnc-reported-calls-data-api) is complaint data, not registry lookup; National Registry API/vendor scrub (e.g. RealPhoneValidation + SAN) **not** used for claim scoring ([FTC Q&A #13](https://www.ftc.gov/business-guidance/resources/qa-telemarketers-sellers-about-dnc-provisions-tsr-0)).
+- **§6.1.3 `/check`:** [`FEDERAL_DNC_UNAVAILABLE_USER_MESSAGE`](src/lib/constants/federal-dnc-unavailable.ts); `POST /api/check/submit` returns `federal_dnc` summary. No fabricated registry positives in scoring.
+- **§6.2 attestation (product lock):** User must explicitly attest National DNC yes/no + registration date **before** continuing qualification; self-check at [donotcall.gov](https://www.donotcall.gov) (FTC confirmation email includes date + 31-day effective period). Helpers: [`federal-dnc-attestation.ts`](src/lib/constants/federal-dnc-attestation.ts), [`federal-dnc-eligibility.ts`](src/lib/dnc/federal-dnc-eligibility.ts), [`federal-dnc-matrix-signal.ts`](src/lib/scoring/federal-dnc-matrix-signal.ts) (`attestedByUser` → +25 when eligible). Qualification UI + persistence **not wired yet**.
+- **Planned §6.2:** Optional upload of FTC confirmation email **screenshot** (evidence only; not required to proceed) — see `task_manager.md` §6.2.4.
+
 ## 2026-05-16 (Phase 5.7 — FDCPA / debt collection)
 
 - **§5.7.1 UX + block:** Debt-collection category shows [`FDCPA_DEBT_COLLECTION_USER_MESSAGE`](src/lib/constants/fdcpa-debt-collection.ts) on `/check` (`number_checks[].is_debt_collection`). TCPA letter path blocked via `claim_events` key `tcpa_letter_blocked` = `fdcpa_debt_collection` and [`isTcpaLetterBlockedForCallCategory`](src/lib/constants/fdcpa-debt-collection.ts) for Phase 6.

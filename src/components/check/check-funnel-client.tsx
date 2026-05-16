@@ -27,6 +27,7 @@ import {
 import type { NumberCheckSummary } from "@/lib/check/parallel-check-pipeline-stub";
 import { EXEMPT_TCPA_USER_MESSAGE } from "@/lib/constants/exempt-categories";
 import { FDCPA_DEBT_COLLECTION_USER_MESSAGE } from "@/lib/constants/fdcpa-debt-collection";
+import { FEDERAL_DNC_UNAVAILABLE_USER_MESSAGE } from "@/lib/constants/federal-dnc-unavailable";
 import { NO_SPAM_HIT_USER_MESSAGE } from "@/lib/constants/no-spam-hit";
 import { RATE_LIMIT_USER_MESSAGE } from "@/lib/rate-limit/constants";
 
@@ -122,6 +123,9 @@ export function CheckFunnelClient() {
   const [retryWaiting, setRetryWaiting] = useState(false);
   const [submitFailureCount, setSubmitFailureCount] = useState(0);
   const [numberChecks, setNumberChecks] = useState<NumberCheckSummary[] | null>(
+    null,
+  );
+  const [federalDncMessage, setFederalDncMessage] = useState<string | null>(
     null,
   );
   const stepOneRef = useRef<HTMLElement | null>(null);
@@ -226,6 +230,7 @@ export function CheckFunnelClient() {
 
     setCheckSubmitting(true);
     setNumberChecks(null);
+    setFederalDncMessage(null);
     try {
       const res = await fetch("/api/check/submit", {
         method: "POST",
@@ -241,6 +246,7 @@ export function CheckFunnelClient() {
         claim_id?: string;
         claim_subject_ids?: string[];
         number_checks?: NumberCheckSummary[];
+        federal_dnc?: { user_message?: string };
       };
 
       if (res.status === 429) {
@@ -263,6 +269,15 @@ export function CheckFunnelClient() {
         ? body.number_checks
         : null;
       setNumberChecks(checks ?? []);
+
+      const dncMsg = body.federal_dnc?.user_message?.trim();
+      setFederalDncMessage(
+        checks && checks.length > 0
+          ? dncMsg && dncMsg.length > 0
+            ? dncMsg
+            : FEDERAL_DNC_UNAVAILABLE_USER_MESSAGE
+          : null,
+      );
 
       if (checks?.some((row) => row.had_provider_failure)) {
         setSubmitError(
@@ -497,6 +512,15 @@ export function CheckFunnelClient() {
                   ))}
                 </ul>
               </div>
+            ) : null}
+
+            {federalDncMessage ? (
+              <p
+                className="text-muted-foreground text-xs leading-relaxed"
+                role="status"
+              >
+                {federalDncMessage}
+              </p>
             ) : null}
 
             {numberChecks !== null && numberChecks.length > 0 ? (

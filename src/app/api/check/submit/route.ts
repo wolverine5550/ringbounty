@@ -5,6 +5,7 @@ import {
   isValidAnonymousSessionId,
 } from "@/lib/anonymous-session";
 import { CHECK_MAX_PHONE_ROWS } from "@/lib/check/constants";
+import { getFederalDncCheckSummaryForClient } from "@/lib/dnc/federal-dnc-access";
 import { runSpamChecksForPhoneList } from "@/lib/spam/spam-check-pipeline";
 import {
   parseAndDedupePhoneNumberPayload,
@@ -242,7 +243,10 @@ export async function POST(request: NextRequest) {
         ? { claim_subject_ids: claimSubjectIds }
         : {}),
       ...(numberChecks !== undefined && numberChecks.length > 0
-        ? { number_checks: numberChecks }
+        ? {
+            number_checks: numberChecks,
+            federal_dnc: getFederalDncCheckSummaryForClient(),
+          }
         : {}),
     });
   } catch (e) {

@@ -14,7 +14,7 @@ Living checklist for building RingBounty from `prd.md` and product decisions.
 | Refunds | **Not in scope for now** — no refund policy in product until decided. |
 | Cell vs residential (TCPA subsection) | **Explicit user attestation** only — do not infer from carrier or metadata alone. |
 | Demand amount in letter | **User-selectable** option (e.g. conservative / realistic / maximum) with disclaimers; product does not recommend which to choose. |
-| Federal DNC / FTC access | **Unknown** — treat as spike; do not assume a specific API until validated. |
+| Federal DNC / FTC access | **Manual attestation** (qualification) — user attests yes/no + registration date after self-check at [donotcall.gov](https://www.donotcall.gov) (FTC confirmation email has date); optional screenshot of that email (§6.2.4). **No** Registry API/SAN/vendor scrub unless counsel approves ([Q&A #13](https://www.ftc.gov/business-guidance/resources/qa-telemarketers-sellers-about-dnc-provisions-tsr-0)). Spike: [`docs/spikes/20260516190000-federal-dnc-access.md`](docs/spikes/20260516190000-federal-dnc-access.md). |
 | Spam / reputation (Nomorobo + Twilio) | **Decided** — **Nomorobo Enterprise** primary (`GET /v2/check`); **Twilio Lookup v2** secondary (§5.2). YouMail **not** in v0.1. |
 | OpenCorporates | **Undecided budget** — define caps and fallback UX before heavy usage. |
 | Stripe bundles | **Undecided** — choose one Checkout pattern during payments milestone. |
@@ -639,25 +639,27 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 6.1 Federal DNC spike
 
-- [ ] **6.1.1** Research permissible access path (direct FTC, reseller, manual attestation-only MVP).
-- [ ] **6.1.2** Document decision in Open questions section + dated note in repo `docs/` if helpful.
-- [ ] **6.1.3** If unavailable: UI copy “Federal DNC check unavailable”; scoring must not fabricate positives.
+- [x] **6.1.1** Research permissible access path (direct FTC, reseller, manual attestation-only MVP). <!-- done: docs/spikes/20260516190000-federal-dnc-access.md — FTC dnc-complaints ≠ registry; SAN telemarketer path N/A for v0.1; vendor TBD §6.2; v0.1 manual attestation -->
+- [x] **6.1.2** Document decision in Open questions section + dated note in repo `docs/` if helpful. <!-- done: docs/spikes/20260516190000-federal-dnc-access.md; Open questions Integrations below -->
+- [x] **6.1.3** If unavailable: UI copy “Federal DNC check unavailable”; scoring must not fabricate positives. <!-- done: src/lib/constants/federal-dnc-unavailable.ts; check-funnel-client.tsx; submit federal_dnc JSON; src/lib/scoring/federal-dnc-matrix-signal.ts (+ tests) -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
-### 6.2 Federal DNC integration (when unblocked)
+### 6.2 Federal DNC (attestation + eligibility — not registry API by default)
 
-- [ ] **6.2.1** Server-only client; map response into `dnc_check_results` columns.
-- [ ] **6.2.2** Parse `federal_dnc_registration_date`; compute `federal_dnc_eligible` using `earliest_call_date` from user input or placeholder until qualification done.
-- [ ] **6.2.3** Recompute eligibility when qualification provides `earliest_call_date` (event-driven re-run).
+- [ ] **6.2.0** **Legal:** Confirm with counsel that automated National Registry access (FTC SAN or vendor e.g. RealPhoneValidation) is **not** permitted for claim-scoring / letters given [FTC Q&A #13](https://www.ftc.gov/business-guidance/resources/qa-telemarketers-sellers-about-dnc-provisions-tsr-0). If blocked, §6.2 is attestation-only (see spike doc).
+- [ ] **6.2.1** Qualification UX: **gate** — user must explicitly attest National DNC yes/no + registration date before proceeding; link [donotcall.gov](https://www.donotcall.gov) + copy re FTC confirmation email date ([`federal-dnc-attestation.ts`](src/lib/constants/federal-dnc-attestation.ts)) → persist `dnc_check_results` / `claim_events` (`source: user_input`).
+- [ ] **6.2.2** Compute `federal_dnc_eligible` from attested `federal_dnc_registration_date` + `earliest_call_date` (31-day rule) via [`federal-dnc-eligibility.ts`](src/lib/dnc/federal-dnc-eligibility.ts); recompute when qualification provides dates; wire [`resolveFederalDncMatrixSignal`](src/lib/scoring/federal-dnc-matrix-signal.ts) with `attestedByUser`.
+- [ ] **6.2.3** *(Only if 6.2.0 approves)* Server-only registry client; map vendor response into `dnc_check_results` — **not** planned for v0.1.
+- [ ] **6.2.4** **Optional evidence:** Let user upload a screenshot of their FTC donotcall.gov registration confirmation email (shows registration date, e.g. ending in …7907 on October 17, 2007). **Not required** to proceed past the attestation gate; store path on claim/subject metadata or Supabase Storage + `claim_events` reference; supportive copy only (not legal verification by RingBounty).
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md Phase 6.1–6.2 federal DNC table -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md 2026-05-16 Phase 6.1–6.2 -->
 
 ### 6.3 State DNC (defer to v0.2 if needed; scaffold optional)
 
@@ -1284,7 +1286,7 @@ Track resolutions here by checking items off and adding `<!-- done: decision rec
 
 ### Integrations and compliance
 
-- [ ] **Federal DNC / FTC** — Access method still unknown; legal review of ToS for any vendor or government system.
+- [x] **Federal DNC / FTC** — **Attestation-only** for registry status (no SAN/vendor scrub for claim scoring unless counsel approves). FTC registry access certified only for TSR / preventing telemarketing calls ([Q&A #13](https://www.ftc.gov/business-guidance/resources/qa-telemarketers-sellers-about-dnc-provisions-tsr-0)); RealPhoneValidation-style APIs still require SAN and same purpose limits. Spike: [`docs/spikes/20260516190000-federal-dnc-access.md`](docs/spikes/20260516190000-federal-dnc-access.md).
 - [ ] **Nomorobo + Twilio at launch** — Both enabled by default when keys present? Pricing / rate limits; storage of raw responses under Nomorobo / Twilio ToS (§5.2 / §5.3).
 - [ ] **OpenCorporates** — Pricing tier, monthly cap, behavior when cap hit (queue vs fail vs manual-only).
 - [ ] **State DNC APIs** — Per-state reality (API vs scrape vs none); order of rollout.

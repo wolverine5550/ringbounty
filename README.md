@@ -120,6 +120,20 @@ Marketing UI: [`src/components/marketing/`](src/components/marketing/). Unauthen
 
 **§5.7 assumptions (carry until Phase 6.6):** Debt collection is detected via the same §5.5 category aliases (`Debt Collector`, `debt_collector`, etc.). TCPA letter blocking is written to `claim_events` now; Phase 6.6 `canPurchaseLetter` should also use [`isTcpaLetterBlockedForCallCategory`](src/lib/constants/fdcpa-debt-collection.ts). Waitlist source `debt_collection_interest` appears only when every subject is exempt and debt-collection; mixed exempt claims still use `exempt_only`.
 
+**Phase 6.1–6.2 — federal DNC (manual attestation only):**
+
+| Topic | Decision |
+|-------|----------|
+| **Registry API / vendor scrub** | **Not used** — FTC [Q&A #13](https://www.ftc.gov/business-guidance/resources/qa-telemarketers-sellers-about-dnc-provisions-tsr-0) limits National Registry access to TSR compliance / preventing telemarketing calls, not consumer claim scoring. No FTC SAN, no RealPhoneValidation-style scrub for v0.1. See [`docs/spikes/20260516190000-federal-dnc-access.md`](docs/spikes/20260516190000-federal-dnc-access.md). |
+| **FTC `dnc-complaints` API** | Complaint data only — **not** registry lookup. |
+| **`/check`** | [`FEDERAL_DNC_UNAVAILABLE_USER_MESSAGE`](src/lib/constants/federal-dnc-unavailable.ts); submit JSON includes `federal_dnc` (status unavailable). No automated +25. |
+| **Qualification (§6.2)** | User must **explicitly attest** whether the **phone that received the calls** is on the National Registry **before** continuing. Self-check at [donotcall.gov](https://www.donotcall.gov); FTC confirmation email includes registration date (e.g. *“registered … on October 17, 2007 … 31 days from your registration date”*). User enters yes/no + date → `dnc_check_results` / `claim_events` with `source: user_input`. Copy: [`federal-dnc-attestation.ts`](src/lib/constants/federal-dnc-attestation.ts). |
+| **31-day rule** | [`computeFederalDncEligibleFromDates`](src/lib/dnc/federal-dnc-eligibility.ts) — eligible when registration is ≥ 31 days before earliest call. |
+| **Scoring** | PRD +25 only when `attestedByUser` + eligible ([`federal-dnc-matrix-signal.ts`](src/lib/scoring/federal-dnc-matrix-signal.ts)). |
+| **Optional evidence (planned §6.2)** | User may upload a **screenshot** of FTC donotcall.gov confirmation email — supports attestation, **not required** to proceed. |
+
+Applies to the **consumer’s receiving number**, not spammer numbers entered on `/check`.
+
 Set **`SUPABASE_SECRET_KEY`** (`sb_secret_…` from [Settings → API Keys](https://supabase.com/dashboard/project/nktlhjjeqwpubzlvjpjv/settings/api-keys)) in `.env.local` (server-only; never commit) for the anonymous API and merge path. Supabase [recommends secret keys](https://supabase.com/docs/guides/api/api-keys) over the legacy JWT `service_role` key (browser-blocked, easier rotation). Legacy **`SUPABASE_SERVICE_ROLE_KEY`** still works as a fallback. Without either key, `POST /api/claims/anonymous` responds **503** and merge is skipped.
 
 **Finding the cookie in DevTools:** Application → Cookies → **`http://localhost:3000`** (match your dev port). `rb_anonymous_sid` is **HttpOnly** (visible in DevTools, not in `document.cookie`). After visiting `/check`, you should also see Network → **`anonymous`** (`POST /api/session/anonymous`, 200).
@@ -152,7 +166,7 @@ These are reserved for upcoming work—do not commit real secrets:
 - `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` — **Twilio Lookup v2** secondary corroboration (`Fields=phone_number_quality_score,caller_name,line_type_intelligence`; [PRD §7](prd.md), [Lookup v2](https://www.twilio.com/docs/lookup/v2-api), [`twilio-lookup-spam-provider.ts`](src/lib/spam/twilio-lookup-spam-provider.ts)). Enable with `SPAM_PROVIDER_TWILIO_ENABLED`.
 - `SPAM_PROVIDER_NOMOROBO_ENABLED`, `SPAM_PROVIDER_TWILIO_ENABLED` — boolean strings (`true` / `false` / `1` / `yes`) toggling each adapter in the Phase 5 orchestrator; see [`src/lib/spam/provider-flags.ts`](src/lib/spam/provider-flags.ts). Defaults to off when unset.
 - `OPENCORPORATES_API_KEY` — optional business-entity lookup.
-- `FTC_DNC_*` (or vendor-specific names once chosen) — federal DNC / compliance integrations (spike TBD).
+- `FEDERAL_DNC_AUTOMATED_ENABLED` — **leave off** unless counsel approves registry API access (not planned for v0.1 attestation path). Do not use FTC `dnc-complaints` for `federal_dnc_*` fields.
 
 ## Supabase project (RingBounty)
 
