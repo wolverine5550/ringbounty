@@ -22,6 +22,9 @@ export type NumberCheckSummary = {
   providers: ProviderCheckOutcome[];
   /** True if any provider returned `error` or threw (outer `allSettled` rejection). */
   had_provider_failure: boolean;
+  /** PRD §6 — set when merged `call_category` is TCPA-exempt (§5.5). */
+  is_exempt?: boolean;
+  call_category?: string | null;
 };
 
 export type RunStubPipelineOptions = {

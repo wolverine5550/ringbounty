@@ -69,4 +69,55 @@ describe("persistSpamCheckOutcome", () => {
     expect(rows.some((r) => r.key === "is_known_spammer")).toBe(true);
     expect(rows.some((r) => r.key === "provider_raw")).toBe(true);
   });
+
+  it("sets is_exempt and exempt_reason when merged category is exempt", async () => {
+    const updateEq = vi.fn().mockResolvedValue({ error: null });
+    const insert = vi.fn().mockResolvedValue({ error: null });
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: { metadata: null },
+      error: null,
+    });
+    const selectEq = vi.fn().mockReturnValue({ maybeSingle });
+    const update = vi.fn().mockReturnValue({ eq: updateEq });
+    const select = vi.fn().mockReturnValue({ eq: selectEq });
+
+    const admin = createMockSupabaseClient();
+    vi.mocked(admin.from).mockImplementation((table: string) => {
+      if (table === "claim_subjects") {
+        return { select, update } as ReturnType<typeof admin.from>;
+      }
+      if (table === "claim_events") {
+        return { insert } as ReturnType<typeof admin.from>;
+      }
+      return { select, update, insert } as ReturnType<typeof admin.from>;
+    });
+
+    const merged = await persistSpamCheckOutcome(admin, {
+      claimId: "claim-1",
+      claimSubjectId: "subject-1",
+      providerOutcomes: [
+        {
+          status: "ok",
+          result: {
+            isSpam: false,
+            score: 10,
+            complaints: null,
+            category: "charity",
+            companyName: null,
+            raw: {},
+            providerId: "nomorobo",
+          },
+        },
+      ],
+    });
+
+    expect(merged.isExempt).toBe(true);
+    expect(merged.exemptReason).toBe("tcpa_exempt_charity");
+    const patch = update.mock.calls[0]?.[0] as {
+      is_exempt?: boolean;
+      exempt_reason?: string | null;
+    };
+    expect(patch.is_exempt).toBe(true);
+    expect(patch.exempt_reason).toBe("tcpa_exempt_charity");
+  });
 });

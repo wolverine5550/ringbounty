@@ -81,6 +81,15 @@ describe("mergeSpamCheckResults", () => {
     expect(merged.callCategory).toBe("nonfixedvoip");
   });
 
+  it("flags political category as TCPA-exempt (PRD §6)", () => {
+    const merged = mergeSpamCheckResults([
+      result({ providerId: "nomorobo", category: "political" }),
+      result({ providerId: "twilio", category: "mobile" }),
+    ]);
+    expect(merged.isExempt).toBe(true);
+    expect(merged.exemptReason).toBe("tcpa_exempt_political");
+  });
+
   it("ignores skipped providers for spam OR and source", () => {
     const merged = mergeSpamCheckResults([
       result({

@@ -25,6 +25,7 @@ import {
   normalizeUsPhoneToE164,
 } from "@/lib/check/us-phone";
 import type { NumberCheckSummary } from "@/lib/check/parallel-check-pipeline-stub";
+import { EXEMPT_TCPA_USER_MESSAGE } from "@/lib/constants/exempt-categories";
 import { RATE_LIMIT_USER_MESSAGE } from "@/lib/rate-limit/constants";
 
 const PROVIDER_CHECK_LABEL: Record<string, string> = {
@@ -508,6 +509,14 @@ export function CheckFunnelClient() {
                       <p className="font-mono text-xs">
                         {row.phone_number_normalized}
                       </p>
+                      {row.is_exempt ? (
+                        <p
+                          className="text-muted-foreground mt-2 text-xs leading-relaxed"
+                          role="status"
+                        >
+                          {EXEMPT_TCPA_USER_MESSAGE}
+                        </p>
+                      ) : null}
                       <ul className="mt-2 flex flex-col gap-1.5">
                         {row.providers.map((p) => (
                           <li

@@ -89,8 +89,9 @@ export async function runSpamChecksForPhoneList(
         runOptions,
       );
 
+      let merged = null;
       if (p.subjectId) {
-        await persistSpamCheckOutcome(admin, {
+        merged = await persistSpamCheckOutcome(admin, {
           claimId: params.claimId,
           claimSubjectId: p.subjectId,
           providerOutcomes,
@@ -111,6 +112,12 @@ export async function runSpamChecksForPhoneList(
         claim_subject_id: p.subjectId,
         providers,
         had_provider_failure,
+        ...(merged
+          ? {
+              is_exempt: merged.isExempt,
+              call_category: merged.callCategory,
+            }
+          : {}),
       } satisfies NumberCheckSummary;
     }),
   );

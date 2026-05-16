@@ -10,6 +10,8 @@ vi.mock("./persist-spam-check-outcome", () => ({
   persistSpamCheckOutcome: vi.fn().mockResolvedValue({
     isKnownSpammer: false,
     spamDbSource: "none",
+    isExempt: true,
+    callCategory: "political",
   }),
 }));
 
@@ -52,5 +54,7 @@ describe("runSpamChecksForPhoneList", () => {
     expect(outcomes).toHaveLength(1);
     expect(outcomes[0]?.providers).toHaveLength(2);
     expect(outcomes[0]?.had_provider_failure).toBe(false);
+    expect(outcomes[0]?.is_exempt).toBe(true);
+    expect(outcomes[0]?.call_category).toBe("political");
   });
 });

@@ -598,14 +598,14 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 5.5 Exempt category handling
 
-- [ ] **5.5.1** Constant `EXEMPT_CATEGORIES` aligned with PRD §6 table.
-- [ ] **5.5.2** If merged `category` in exempt set: set `is_exempt = true`, `exempt_reason`, skip DNC/RA for that subject per PRD.
-- [ ] **5.5.3** UI string: neutral message that TCPA may not apply; excluded from estimate (PRD §6).
+- [x] **5.5.1** Constant `EXEMPT_CATEGORIES` aligned with PRD §6 table. <!-- done: src/lib/constants/exempt-categories.ts (+ exempt-categories.test.ts); EBR excluded (qualification-only) -->
+- [x] **5.5.2** If merged `category` in exempt set: set `is_exempt = true`, `exempt_reason`, skip DNC/RA for that subject per PRD. <!-- done: resolveExemptFromCallCategory in merge-spam-results.ts; persist is_exempt/exempt_reason in persist-spam-check-outcome.ts; downstream Phase 6 should gate on is_exempt -->
+- [x] **5.5.3** UI string: neutral message that TCPA may not apply; excluded from estimate (PRD §6). <!-- done: EXEMPT_TCPA_USER_MESSAGE in exempt-categories.ts; per-number display in check-funnel-client.tsx; number_checks.is_exempt from spam-check-pipeline.ts -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 5.6 Non-exempt “no spam hit” path
 

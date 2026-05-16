@@ -10,6 +10,8 @@
  * - `spamDbSource` — which provider(s) contributed a spam hit (`nomorobo` | `twilio` | `both` | `none`)
  */
 
+import { resolveExemptFromCallCategory } from "@/lib/constants/exempt-categories";
+
 import type { SpamCheckResult } from "./types";
 
 /** Allowed `claim_subjects.spam_db_source` values (prd.md `claim_subjects` DDL). */
@@ -30,6 +32,9 @@ export type MergedSpamCheckOutcome = {
   companyName: string | null;
   companyIdentified: boolean;
   spamDbSource: SpamDbSource;
+  /** PRD §6 — merged category is a TCPA-exempt type (DNC / RA skipped downstream). */
+  isExempt: boolean;
+  exemptReason: string | null;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -121,6 +126,7 @@ export function mergeSpamCheckResults(
   const companyName = pickNomoroboFirst(nomorobo, twilio, "companyName");
   const companyIdentified =
     typeof companyName === "string" && companyName.trim() !== "";
+  const exempt = resolveExemptFromCallCategory(callCategory);
 
   return {
     isKnownSpammer,
@@ -130,5 +136,7 @@ export function mergeSpamCheckResults(
     companyName,
     companyIdentified,
     spamDbSource: resolveSpamDbSource(results),
+    isExempt: exempt.isExempt,
+    exemptReason: exempt.exemptReason,
   };
 }

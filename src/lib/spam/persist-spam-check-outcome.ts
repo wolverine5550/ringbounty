@@ -171,6 +171,8 @@ export async function persistSpamCheckOutcome(
     call_category: merged.callCategory,
     company_name: merged.companyName,
     company_identified: merged.companyIdentified,
+    is_exempt: merged.isExempt,
+    exempt_reason: merged.exemptReason,
     metadata,
   };
 

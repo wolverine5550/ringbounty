@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-16 (Phase 5.5 — exempt call categories)
+
+- **§5.5 exempt handling:** [`exempt-categories.ts`](src/lib/constants/exempt-categories.ts) defines `EXEMPT_CATEGORIES` (PRD §6: political, charity, survey, healthcare, debt collection, emergency; EBR excluded). After spam merge, exempt rows set `claim_subjects.is_exempt` + `exempt_reason`; `number_checks` includes `is_exempt` / `call_category`. [`CheckFunnelClient`](src/components/check/check-funnel-client.tsx) shows PRD neutral TCPA-exempt copy per number. Vitest: exempt-categories, merge, persist, pipeline.
+
 ## 2026-05-16 (Phase 5.4 — spam orchestrator + persistence)
 
 - **§5.4 orchestrator:** [`run-spam-checks.ts`](src/lib/spam/run-spam-checks.ts) runs Nomorobo + Twilio in `Promise.allSettled` (no HTTP when flags/keys off). [`merge-spam-results.ts`](src/lib/spam/merge-spam-results.ts) applies PRD §7 merge (OR `isSpam`, max score, sum complaints, Nomorobo-first category/company, `spam_db_source`).
