@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-05-16 (Phase 5.6 — non-exempt no spam hit)
+
+- **§5.6 UX:** Non-exempt numbers with no spam-database hit show [`NO_SPAM_HIT_USER_MESSAGE`](src/lib/constants/no-spam-hit.ts) on `/check` (soft warning; qualification still allowed). Submit JSON adds `number_checks[].is_known_spammer`.
+- **§5.6 scoring inputs:** [`spam-db-matrix-signal.ts`](src/lib/scoring/spam-db-matrix-signal.ts) maps merged spam to PRD §8 tiers (`high` +30, `low` +15, `none` +0). Persisted on `claim_events` (`spam_db_matrix_tier`, `spam_db_matrix_points`). Vitest: spam-db-matrix-signal, persist, pipeline.
+
 ## 2026-05-16 (Phase 5.5 — exempt call categories)
 
 - **§5.5 exempt handling:** [`exempt-categories.ts`](src/lib/constants/exempt-categories.ts) defines `EXEMPT_CATEGORIES` (PRD §6: political, charity, survey, healthcare, debt collection, emergency; EBR excluded). After spam merge, exempt rows set `claim_subjects.is_exempt` + `exempt_reason`; `number_checks` includes `is_exempt` / `call_category`. [`CheckFunnelClient`](src/components/check/check-funnel-client.tsx) shows PRD neutral TCPA-exempt copy per number. Vitest: exempt-categories, merge, persist, pipeline.

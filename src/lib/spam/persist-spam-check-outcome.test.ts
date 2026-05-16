@@ -67,6 +67,8 @@ describe("persistSpamCheckOutcome", () => {
     expect(insert).toHaveBeenCalled();
     const rows = insert.mock.calls[0]?.[0] as Array<{ key: string | null }>;
     expect(rows.some((r) => r.key === "is_known_spammer")).toBe(true);
+    expect(rows.some((r) => r.key === "spam_db_matrix_tier")).toBe(true);
+    expect(rows.some((r) => r.key === "spam_db_matrix_points")).toBe(true);
     expect(rows.some((r) => r.key === "provider_raw")).toBe(true);
   });
 

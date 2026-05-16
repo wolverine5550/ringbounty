@@ -26,6 +26,7 @@ import {
 } from "@/lib/check/us-phone";
 import type { NumberCheckSummary } from "@/lib/check/parallel-check-pipeline-stub";
 import { EXEMPT_TCPA_USER_MESSAGE } from "@/lib/constants/exempt-categories";
+import { NO_SPAM_HIT_USER_MESSAGE } from "@/lib/constants/no-spam-hit";
 import { RATE_LIMIT_USER_MESSAGE } from "@/lib/rate-limit/constants";
 
 const PROVIDER_CHECK_LABEL: Record<string, string> = {
@@ -515,6 +516,13 @@ export function CheckFunnelClient() {
                           role="status"
                         >
                           {EXEMPT_TCPA_USER_MESSAGE}
+                        </p>
+                      ) : row.is_known_spammer === false ? (
+                        <p
+                          className="text-muted-foreground mt-2 text-xs leading-relaxed"
+                          role="status"
+                        >
+                          {NO_SPAM_HIT_USER_MESSAGE}
                         </p>
                       ) : null}
                       <ul className="mt-2 flex flex-col gap-1.5">

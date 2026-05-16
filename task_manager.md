@@ -609,13 +609,13 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 5.6 Non-exempt “no spam hit” path
 
-- [ ] **5.6.1** Define UX: still allow qualification **or** soft warning — align with PRD “graceful empty state”.
-- [ ] **5.6.2** Adjust scoring inputs when no DB match (matrix uses low-confidence or zero points).
+- [x] **5.6.1** Define UX: still allow qualification **or** soft warning — align with PRD “graceful empty state”. <!-- done: soft warning only (qualification allowed) — NO_SPAM_HIT_USER_MESSAGE in src/lib/constants/no-spam-hit.ts; check-funnel-client.tsx when is_known_spammer === false && !is_exempt; no account-wall change -->
+- [x] **5.6.2** Adjust scoring inputs when no DB match (matrix uses low-confidence or zero points). <!-- done: src/lib/scoring/spam-db-matrix-signal.ts (+ test); claim_events spam_db_matrix_tier/points in persist-spam-check-outcome.ts -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
 ### 5.7 FDCPA / debt collection note
 

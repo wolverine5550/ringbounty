@@ -56,5 +56,6 @@ describe("runSpamChecksForPhoneList", () => {
     expect(outcomes[0]?.had_provider_failure).toBe(false);
     expect(outcomes[0]?.is_exempt).toBe(true);
     expect(outcomes[0]?.call_category).toBe("political");
+    expect(outcomes[0]?.is_known_spammer).toBe(false);
   });
 });

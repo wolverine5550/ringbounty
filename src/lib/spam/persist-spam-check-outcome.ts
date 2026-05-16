@@ -6,6 +6,8 @@ import type { ClaimEventSource } from "@/lib/constants/claimEvent";
 import type { Database, Json } from "@/types/database";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { resolveSpamDbMatrixSignal } from "@/lib/scoring/spam-db-matrix-signal";
+
 import {
   mergeSpamCheckResults,
   type MergedSpamCheckOutcome,
@@ -115,6 +117,24 @@ function buildMergedClaimEventRows(
       source,
     });
   }
+
+  const matrix = resolveSpamDbMatrixSignal(merged);
+  rows.push(
+    {
+      claim_id: claimId,
+      event_type: SPAM_DB_MATCH_EVENT,
+      key: "spam_db_matrix_tier",
+      value: matrix.tier,
+      source,
+    },
+    {
+      claim_id: claimId,
+      event_type: SPAM_DB_MATCH_EVENT,
+      key: "spam_db_matrix_points",
+      value: String(matrix.points),
+      source,
+    },
+  );
 
   return rows;
 }

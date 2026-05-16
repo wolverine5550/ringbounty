@@ -116,6 +116,7 @@ export async function runSpamChecksForPhoneList(
           ? {
               is_exempt: merged.isExempt,
               call_category: merged.callCategory,
+              is_known_spammer: merged.isKnownSpammer,
             }
           : {}),
       } satisfies NumberCheckSummary;
