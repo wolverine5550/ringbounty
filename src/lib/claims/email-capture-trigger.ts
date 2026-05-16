@@ -1,9 +1,12 @@
+import { isDebtCollectionCallCategory } from "@/lib/constants/fdcpa-debt-collection";
+
 import type { ClaimQuerySnapshot } from "./successful-query";
 
-/** Reasons the email-capture UI may appear (§2.8.4). */
+/** Reasons the email-capture UI may appear (§2.8.4 + §5.7.2). */
 export const EMAIL_CAPTURE_REASONS = [
   "ineligible_check",
   "exempt_only",
+  "debt_collection_interest",
 ] as const;
 
 export type EmailCaptureReason = (typeof EMAIL_CAPTURE_REASONS)[number];
@@ -28,10 +31,16 @@ export function getEmailCaptureTrigger(
   }
 
   const subjects = snapshot.subjects;
-  if (
-    subjects.length > 0 &&
-    subjects.every((row) => row.is_exempt)
-  ) {
+  if (subjects.length > 0 && subjects.every((row) => row.is_exempt)) {
+    const allDebtCollection = subjects.every((row) =>
+      isDebtCollectionCallCategory(row.call_category),
+    );
+    if (allDebtCollection) {
+      return {
+        showEmailCapture: true,
+        emailCaptureReason: "debt_collection_interest",
+      };
+    }
     return {
       showEmailCapture: true,
       emailCaptureReason: "exempt_only",

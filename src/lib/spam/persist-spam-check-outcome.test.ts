@@ -122,4 +122,58 @@ describe("persistSpamCheckOutcome", () => {
     expect(patch.is_exempt).toBe(true);
     expect(patch.exempt_reason).toBe("tcpa_exempt_charity");
   });
+
+  it("records tcpa_letter_blocked for debt collection category", async () => {
+    const updateEq = vi.fn().mockResolvedValue({ error: null });
+    const insert = vi.fn().mockResolvedValue({ error: null });
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: { metadata: null },
+      error: null,
+    });
+    const selectEq = vi.fn().mockReturnValue({ maybeSingle });
+    const update = vi.fn().mockReturnValue({ eq: updateEq });
+    const select = vi.fn().mockReturnValue({ eq: selectEq });
+
+    const admin = createMockSupabaseClient();
+    vi.mocked(admin.from).mockImplementation((table: string) => {
+      if (table === "claim_subjects") {
+        return { select, update } as ReturnType<typeof admin.from>;
+      }
+      if (table === "claim_events") {
+        return { insert } as ReturnType<typeof admin.from>;
+      }
+      return { select, update, insert } as ReturnType<typeof admin.from>;
+    });
+
+    await persistSpamCheckOutcome(admin, {
+      claimId: "claim-1",
+      claimSubjectId: "subject-1",
+      providerOutcomes: [
+        {
+          status: "ok",
+          result: {
+            isSpam: false,
+            score: 20,
+            complaints: null,
+            category: "Debt Collector",
+            companyName: "Collector Inc",
+            raw: {},
+            providerId: "nomorobo",
+          },
+        },
+      ],
+    });
+
+    expect(insert).toHaveBeenCalled();
+    const rows = insert.mock.calls[0]?.[0] as Array<{
+      key: string | null;
+      value: string | null;
+    }>;
+    expect(
+      rows.some(
+        (r) =>
+          r.key === "tcpa_letter_blocked" && r.value === "fdcpa_debt_collection",
+      ),
+    ).toBe(true);
+  });
 });

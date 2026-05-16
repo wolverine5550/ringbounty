@@ -619,13 +619,19 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 5.7 FDCPA / debt collection note
 
-- [ ] **5.7.1** If category indicates debt collection, show informational callout: FDCPA may apply; TCPA letter not generated for that subject (or block TCPA path).
-- [ ] **5.7.2** Do not promise future product; optional email capture for vertical interest.
+- [x] **5.7.1** If category indicates debt collection, show informational callout: FDCPA may apply; TCPA letter not generated for that subject (or block TCPA path). <!-- done: src/lib/constants/fdcpa-debt-collection.ts (+ test); check-funnel-client.tsx when is_debt_collection; persist claim_events tcpa_letter_blocked; spam-check-pipeline is_debt_collection -->
+- [x] **5.7.2** Do not promise future product; optional email capture for vertical interest. <!-- done: debt_collection_interest in email-capture-trigger.ts, email-capture-modal.tsx, waitlist constants + migration 20260516183000_waitlist_debt_collection_interest.sql -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
+
+**Assumptions / risks (Phase 5.7 — carry until Phase 6.6 / product lock):**
+
+- **Category resolution:** Debt collection detection uses the same §5.5 aliases as exempt handling (`Debt Collector`, `debt_collector`, etc.) via [`resolveExemptCategory`](src/lib/constants/exempt-categories.ts) / [`isDebtCollectionCallCategory`](src/lib/constants/fdcpa-debt-collection.ts).
+- **TCPA letter block:** Blocking is persisted on `claim_events` (`tcpa_letter_blocked = fdcpa_debt_collection`) now; Phase **6.6** `canPurchaseLetter` must also call [`isTcpaLetterBlockedForCallCategory`](src/lib/constants/fdcpa-debt-collection.ts).
+- **Email capture:** `debt_collection_interest` only when **every** subject is exempt **and** debt-collection category; mixed exempt claims still use `exempt_only`.
 
 ---
 
@@ -691,7 +697,7 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 6.6 Block letter generation rules
 
-- [ ] **6.6.1** Central function `canPurchaseLetter(claim, subject): { ok: boolean; reasons: string[] }`.
+- [ ] **6.6.1** Central function `canPurchaseLetter(claim, subject): { ok: boolean; reasons: string[] }`. <!-- §5.7: also call isTcpaLetterBlockedForCallCategory (fdcpa-debt-collection.ts) + claim_events tcpa_letter_blocked -->
 - [ ] **6.6.2** Enforce on server before Stripe Checkout creation (never UI-only).
 - [ ] **6.6.3** Unit tests for: exempt, unidentified company, ineligible strength.
 

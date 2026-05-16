@@ -6,6 +6,10 @@ import type { ClaimEventSource } from "@/lib/constants/claimEvent";
 import type { Database, Json } from "@/types/database";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import {
+  isTcpaLetterBlockedForCallCategory,
+  TCPA_LETTER_BLOCKED_FDCPA_DEBT,
+} from "@/lib/constants/fdcpa-debt-collection";
 import { resolveSpamDbMatrixSignal } from "@/lib/scoring/spam-db-matrix-signal";
 
 import {
@@ -114,6 +118,16 @@ function buildMergedClaimEventRows(
       event_type: SPAM_DB_MATCH_EVENT,
       key: "company_name",
       value: merged.companyName,
+      source,
+    });
+  }
+
+  if (isTcpaLetterBlockedForCallCategory(merged.callCategory)) {
+    rows.push({
+      claim_id: claimId,
+      event_type: SPAM_DB_MATCH_EVENT,
+      key: "tcpa_letter_blocked",
+      value: TCPA_LETTER_BLOCKED_FDCPA_DEBT,
       source,
     });
   }

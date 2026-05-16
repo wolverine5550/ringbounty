@@ -2,6 +2,7 @@
 export const WAITLIST_SOURCES = [
   "ineligible_check",
   "exempt_only",
+  "debt_collection_interest",
   "notify_me_cta",
   "blocked_flow",
 ] as const;

@@ -8,6 +8,7 @@ import type {
   NumberCheckSummary,
   ProviderCheckOutcome,
 } from "@/lib/check/parallel-check-pipeline-stub";
+import { isDebtCollectionCallCategory } from "@/lib/constants/fdcpa-debt-collection";
 import type { Database } from "@/types/database";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -117,6 +118,9 @@ export async function runSpamChecksForPhoneList(
               is_exempt: merged.isExempt,
               call_category: merged.callCategory,
               is_known_spammer: merged.isKnownSpammer,
+              is_debt_collection: isDebtCollectionCallCategory(
+                merged.callCategory,
+              ),
             }
           : {}),
       } satisfies NumberCheckSummary;

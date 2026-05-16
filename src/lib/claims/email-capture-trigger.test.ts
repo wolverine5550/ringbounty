@@ -35,7 +35,7 @@ describe("getEmailCaptureTrigger", () => {
     });
   });
 
-  it("shows capture when all subjects are exempt", () => {
+  it("shows debt-collection interest capture when all exempt subjects are debt collection", () => {
     expect(
       getEmailCaptureTrigger(
         snap({
@@ -43,6 +43,25 @@ describe("getEmailCaptureTrigger", () => {
             {
               is_exempt: true,
               call_category: "debt_collector",
+              spam_db_complaint_count: null,
+            },
+          ],
+        }),
+      ),
+    ).toEqual({
+      showEmailCapture: true,
+      emailCaptureReason: "debt_collection_interest",
+    });
+  });
+
+  it("shows exempt_only capture when all subjects are exempt but not all debt collection", () => {
+    expect(
+      getEmailCaptureTrigger(
+        snap({
+          subjects: [
+            {
+              is_exempt: true,
+              call_category: "political",
               spam_db_complaint_count: null,
             },
           ],

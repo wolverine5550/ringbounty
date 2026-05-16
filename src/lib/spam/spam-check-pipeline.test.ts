@@ -11,7 +11,7 @@ vi.mock("./persist-spam-check-outcome", () => ({
     isKnownSpammer: false,
     spamDbSource: "none",
     isExempt: true,
-    callCategory: "political",
+    callCategory: "debt_collector",
   }),
 }));
 
@@ -55,7 +55,8 @@ describe("runSpamChecksForPhoneList", () => {
     expect(outcomes[0]?.providers).toHaveLength(2);
     expect(outcomes[0]?.had_provider_failure).toBe(false);
     expect(outcomes[0]?.is_exempt).toBe(true);
-    expect(outcomes[0]?.call_category).toBe("political");
+    expect(outcomes[0]?.call_category).toBe("debt_collector");
     expect(outcomes[0]?.is_known_spammer).toBe(false);
+    expect(outcomes[0]?.is_debt_collection).toBe(true);
   });
 });

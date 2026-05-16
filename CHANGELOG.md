@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-05-16 (Phase 5.7 — FDCPA / debt collection)
+
+- **§5.7.1 UX + block:** Debt-collection category shows [`FDCPA_DEBT_COLLECTION_USER_MESSAGE`](src/lib/constants/fdcpa-debt-collection.ts) on `/check` (`number_checks[].is_debt_collection`). TCPA letter path blocked via `claim_events` key `tcpa_letter_blocked` = `fdcpa_debt_collection` and [`isTcpaLetterBlockedForCallCategory`](src/lib/constants/fdcpa-debt-collection.ts) for Phase 6.
+- **§5.7.2 email:** All-exempt debt-collection claims trigger waitlist source `debt_collection_interest` ([`email-capture-trigger.ts`](src/lib/claims/email-capture-trigger.ts)); modal copy avoids product promises. Migration [`20260516183000_waitlist_debt_collection_interest.sql`](supabase/migrations/20260516183000_waitlist_debt_collection_interest.sql). Vitest: fdcpa-debt-collection, email-capture-trigger, persist, pipeline.
+- **Assumptions (carry forward):** Debt collection resolves via §5.5 category aliases only; TCPA letter blocking is on `claim_events` now — Phase 6.6 `canPurchaseLetter` should call `isTcpaLetterBlockedForCallCategory()`; `debt_collection_interest` email capture only when all subjects are debt-collection exempt (mixed exempt → `exempt_only`).
+
 ## 2026-05-16 (Phase 5.6 — non-exempt no spam hit)
 
 - **§5.6 UX:** Non-exempt numbers with no spam-database hit show [`NO_SPAM_HIT_USER_MESSAGE`](src/lib/constants/no-spam-hit.ts) on `/check` (soft warning; qualification still allowed). Submit JSON adds `number_checks[].is_known_spammer`.

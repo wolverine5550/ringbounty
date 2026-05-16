@@ -27,6 +27,8 @@ export type NumberCheckSummary = {
   call_category?: string | null;
   /** PRD §7 — OR of provider spam flags after merge (§5.4). */
   is_known_spammer?: boolean;
+  /** Phase 5.7 — merged category is debt collection (FDCPA note; TCPA letter blocked). */
+  is_debt_collection?: boolean;
 };
 
 export type RunStubPipelineOptions = {
