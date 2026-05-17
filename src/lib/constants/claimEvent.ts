@@ -21,15 +21,19 @@ export type ClaimEventType = (typeof CLAIM_EVENT_TYPE_VALUES)[number];
  *
  * `nomorobo` — primary spam / robocall reputation ([Nomorobo Enterprise API](https://www.nomorobo.com/api/), §5.3).
  * `twilio` — secondary phone intelligence via **Twilio Lookup v2** (§5.2).
+ * `whitepages` — reverse phone company enrichment when spam merge has no name (§6.4.2).
+ * `voicemail_transcription` — company extracted from uploaded voicemail audio (§7.5.4).
  *
  * @see prd.md section 5 (`claim_events` DDL and example rows)
  */
 export const CLAIM_EVENT_SOURCE_VALUES = [
   "user_input",
+  "voicemail_transcription",
   "ftc_api",
   "state_api",
   "nomorobo",
   "twilio",
+  "whitepages",
   "opencorporates",
   "openrouter",
   "system",

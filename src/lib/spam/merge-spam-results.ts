@@ -24,13 +24,27 @@ export const SPAM_DB_SOURCE_VALUES = [
 
 export type SpamDbSource = (typeof SPAM_DB_SOURCE_VALUES)[number];
 
+/**
+ * Source for letter-grade `company_name` (§6.4 — only high-trust automated sources).
+ * Twilio CNAM / Whitepages stay in `companyNameHint*` or metadata, not here.
+ */
+export type CompanyNameSource = "nomorobo" | null;
+
+/** Low-trust display hints (do not set `company_identified`). */
+export type CompanyNameHintSource = "twilio" | "whitepages" | null;
+
 export type MergedSpamCheckOutcome = {
   isKnownSpammer: boolean;
   confidenceScore: number | null;
   complaintCount: number | null;
   callCategory: string | null;
+  /** Set only when {@link companyIdentified} (Nomorobo `reported_name` in v0.1). */
   companyName: string | null;
+  companyNameSource: CompanyNameSource;
   companyIdentified: boolean;
+  /** CNAM / enrichment hints — not used for letter defendant without Q13 (§7.5). */
+  companyNameHint: string | null;
+  companyNameHintSource: CompanyNameHintSource;
   spamDbSource: SpamDbSource;
   /** PRD §6 — merged category is a TCPA-exempt type (DNC / RA skipped downstream). */
   isExempt: boolean;
@@ -83,6 +97,14 @@ function pickNomoroboFirst(
   return twilio?.[key] ?? null;
 }
 
+/** Nomorobo-only — sole automated source for `company_identified` in v0.1. */
+export function resolveCompanyNameSource(
+  nomorobo: SpamCheckResult | undefined,
+): CompanyNameSource {
+  const nomo = nomorobo?.companyName?.trim();
+  return nomo ? "nomorobo" : null;
+}
+
 /**
  * Which provider(s) materially flagged spam among **non-skipped** results.
  * When neither flags spam, returns `none` even if APIs returned scores/categories.
@@ -123,9 +145,16 @@ export function mergeSpamCheckResults(
     active.map((r) => r.complaints),
   );
   const callCategory = pickNomoroboFirst(nomorobo, twilio, "category");
-  const companyName = pickNomoroboFirst(nomorobo, twilio, "companyName");
-  const companyIdentified =
-    typeof companyName === "string" && companyName.trim() !== "";
+  const nomoroboCompany = nomorobo?.companyName?.trim() || null;
+  const companyIdentified = nomoroboCompany !== null && nomoroboCompany !== "";
+  const companyName = companyIdentified ? nomoroboCompany : null;
+  const companyNameSource = resolveCompanyNameSource(nomorobo);
+  const twilioCnam = twilio?.companyName?.trim() || null;
+  const companyNameHint =
+    !companyIdentified && twilioCnam ? twilioCnam : null;
+  const companyNameHintSource: CompanyNameHintSource = companyNameHint
+    ? "twilio"
+    : null;
   const exempt = resolveExemptFromCallCategory(callCategory);
 
   return {
@@ -134,7 +163,10 @@ export function mergeSpamCheckResults(
     complaintCount,
     callCategory,
     companyName,
+    companyNameSource,
     companyIdentified,
+    companyNameHint,
+    companyNameHintSource,
     spamDbSource: resolveSpamDbSource(results),
     isExempt: exempt.isExempt,
     exemptReason: exempt.exemptReason,

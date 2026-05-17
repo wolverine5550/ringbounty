@@ -676,19 +676,29 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 6.4 Company identification
 
-- [ ] **6.4.1** If spam merge yields `company_name`: set `company_identified = true`, store source on subject or events.
-- [ ] **6.4.2** If not identified: optional FTC consumer complaint API / scraper spike — behind flag; respect ToS.
-- [ ] **6.4.3** If still unknown: set claim subject flag `company_identified = false`; set claim `status` or internal `letter_eligible = false`.
-- [ ] **6.4.4** UI prompt Q13 path with blocking message for letter pay (PRD §7 Step 2).
+- [x] **6.4.0** **Policy (locked v0.1):** [`docs/company-identification-strategy.md`](docs/company-identification-strategy.md) — only **Nomorobo** + **user Q13** set `company_identified`; Twilio CNAM + Whitepages are **hints** only; spoofing → Q13/voicemail are the real unlock. <!-- done: strategy doc + merge-spam-results.ts, enrich-merged-company-from-lookup.ts, check-funnel-client.tsx -->
+- [x] **6.4.1** If spam merge yields Nomorobo `reported_name`: set `company_identified = true`, `company_name`, `company_name_source=nomorobo` on subject + `claim_events`. Twilio CNAM → `company_name_hint` only (not identified). <!-- done: merge-spam-results.ts, persist-spam-check-outcome.ts -->
+- [x] **6.4.2** If not identified: optional enrichment — **Whitepages** (flag-gated, hint only); **FTC complaints** spike deferred (bulk ETL only). <!-- Whitepages: docs/spikes/20260516220000-whitepages-company-lookup.md; FTC: docs/spikes/20260516210000-ftc-complaints-company-lookup.md -->
+- [x] **6.4.3** If still unknown: `company_identified = false`; `claim_events.tcpa_letter_blocked = company_unidentified`. <!-- done: company-identification.ts -->
+- [x] **6.4.4** `/check` UX: unidentified copy + CNAM/Whitepages hint line when present; letter path needs Q13 (§7.5). <!-- done: check-funnel-client.tsx -->
+- [ ] **6.4.5** **Bake-off (product):** 30–50 real spam numbers — Nomorobo vs trial **YouMail** (if miss rate high); document in `docs/` before re-adding YouMail to PRD.
+- [ ] **6.4.6** **Twilio VOIP / line type:** Persist `line_type_intelligence` on `claim_events` for claim-strength scoring (Lookup v2 already called; not CNAM for company ID).
+- [ ] **6.4.7** **FTC bulk index (v1):** Offline ingest consumer complaint data → phone→name lookup table (not live `dnc-complaints` API).
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md Phase 6.4 + strategy link -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md Phase 6.4 + policy lock -->
+
+**Assumptions / risks (Phase 6.4 — carry forward):**
+
+- **CNAM / Whitepages** must not unlock letter purchase without Q13 until counsel approves higher-trust automation.
+- **Next engineering priority:** §**7.5.4** voicemail upload (v0.1 web), §**7.5.1** Q13 + §**7.5.1b** soft OpenCorporates verify, §**6.6** `canPurchaseLetter`.
+- **YouMail / TrueCaller / Google enrichment:** deferred until bake-off or v1; see strategy doc.
 
 ### 6.5 Registered agent lookup
 
-- [ ] **6.5.1** OpenCorporates client: search by `company_name` + `user.state`; handle pagination/errors.
+- [ ] **6.5.1** OpenCorporates client: search by `company_name` + `user.state`; handle pagination/errors. <!-- partial: §7.5.1b soft search in opencorporates-soft-verify.ts; extend for RA in 6.5 -->
 - [ ] **6.5.2** If not found in-state: national search fallback (Delaware, etc.).
 - [ ] **6.5.3** Persist `registered_agent_name`, `registered_agent_address`, `registered_agent_lookup_source`.
 - [ ] **6.5.4** If not found: UI “manual lookup required” + link to static SOS guide for user’s state (top 10 states content task).
@@ -764,13 +774,16 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 7.5 Screen 4 — Company identification assist
 
-- [ ] **7.5.1** Q13 free text; on submit update `claim_subjects.company_name` and `company_identified`.
+- [ ] **7.5.3** **Spike (priority):** Voicemail → company ID — [`docs/spikes/20260516230000-voicemail-company-identification.md`](docs/spikes/20260516230000-voicemail-company-identification.md). Highest-trust source; v0.1 web file upload (no native app).
+- [ ] **7.5.4** **Implement voicemail path (v0.1 web):** “Do you have a voicemail?” → upload mp3/m4a/wav → OpenRouter Whisper → extract `company_name`, callback #, product → if name: `company_identified = true`, `source: voicemail_transcription` on `claim_events`. Storage + qualify UI + API.
+- [ ] **7.5.1** Q13 — when voicemail missing / no extraction: company name + context (pitch, callback #). On submit: [`persistUserCompanyIdentification`](src/lib/company/persist-user-company-identification.ts) → `company_identified = true`, `source: user_input`, clear company letter block.
+- [ ] **7.5.1b** **Soft OpenCorporates verify after Q13** (not a hard gate): if `user_input` → [`softVerifyCompanyNameWithOpenCorporates`](src/lib/company/opencorporates-soft-verify.ts) → `claim_events.company_name_verification_status` = `user_input_verified` \| `user_input_unverified`. **Letter allowed either way**; show [`COMPANY_NAME_UNVERIFIED_WARNING`](src/lib/constants/company-name-verification.ts) when unverified. Env: `OPENCORPORATES_API_TOKEN`. <!-- scaffold done; wire on Q13 API route in 7.5.1 -->
 - [ ] **7.5.2** Q14 evidence yes/no → `claim_events` for future letter/evidence package.
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README §7.5 voicemail + Q13 verify -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG §7.5 plan -->
 
 ### 7.6 Cell vs residential attestation
 

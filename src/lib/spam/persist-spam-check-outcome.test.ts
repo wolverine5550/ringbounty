@@ -65,11 +65,76 @@ describe("persistSpamCheckOutcome", () => {
     expect(merged.spamDbSource).toBe("nomorobo");
     expect(updateEq).toHaveBeenCalled();
     expect(insert).toHaveBeenCalled();
-    const rows = insert.mock.calls[0]?.[0] as Array<{ key: string | null }>;
+    const rows = insert.mock.calls[0]?.[0] as Array<{
+      key: string | null;
+      value: string | null;
+    }>;
     expect(rows.some((r) => r.key === "is_known_spammer")).toBe(true);
     expect(rows.some((r) => r.key === "spam_db_matrix_tier")).toBe(true);
     expect(rows.some((r) => r.key === "spam_db_matrix_points")).toBe(true);
     expect(rows.some((r) => r.key === "provider_raw")).toBe(true);
+    expect(rows.some((r) => r.key === "company_identified")).toBe(true);
+    expect(
+      rows.some(
+        (r) => r.key === "company_name_source" && r.value === "nomorobo",
+      ),
+    ).toBe(true);
+  });
+
+  it("records tcpa_letter_blocked when company not identified", async () => {
+    const updateEq = vi.fn().mockResolvedValue({ error: null });
+    const insert = vi.fn().mockResolvedValue({ error: null });
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: { metadata: null },
+      error: null,
+    });
+    const selectEq = vi.fn().mockReturnValue({ maybeSingle });
+    const update = vi.fn().mockReturnValue({ eq: updateEq });
+    const select = vi.fn().mockReturnValue({ eq: selectEq });
+
+    const admin = createMockSupabaseClient();
+    vi.mocked(admin.from).mockImplementation((table: string) => {
+      if (table === "claim_subjects") {
+        return { select, update } as ReturnType<typeof admin.from>;
+      }
+      if (table === "claim_events") {
+        return { insert } as ReturnType<typeof admin.from>;
+      }
+      return { select, update, insert } as ReturnType<typeof admin.from>;
+    });
+
+    await persistSpamCheckOutcome(admin, {
+      claimId: "claim-1",
+      claimSubjectId: "subject-1",
+      providerOutcomes: [
+        {
+          status: "ok",
+          result: {
+            isSpam: false,
+            score: null,
+            complaints: null,
+            category: null,
+            companyName: null,
+            raw: {},
+            providerId: "nomorobo",
+          },
+        },
+      ],
+    });
+
+    const rows = insert.mock.calls[0]?.[0] as Array<{
+      key: string | null;
+      value: string | null;
+    }>;
+    expect(
+      rows.some(
+        (r) =>
+          r.key === "tcpa_letter_blocked" && r.value === "company_unidentified",
+      ),
+    ).toBe(true);
+    expect(
+      rows.some((r) => r.key === "company_identified" && r.value === "false"),
+    ).toBe(true);
   });
 
   it("sets is_exempt and exempt_reason when merged category is exempt", async () => {

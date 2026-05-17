@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-05-16 (Phase 7.5 — Q13 soft verify + voicemail plan)
+
+- **§7.5.1b OpenCorporates soft validation (scaffold):** After Q13 `user_input`, [`softVerifyCompanyNameWithOpenCorporates`](src/lib/company/opencorporates-soft-verify.ts) sets `claim_events.company_name_verification_status` to `user_input_verified` or `user_input_unverified`. Letter generation **allowed either way**; UI shows [`COMPANY_NAME_UNVERIFIED_WARNING`](src/lib/constants/company-name-verification.ts) when unverified. [`persist-user-company-identification.ts`](src/lib/company/persist-user-company-identification.ts) — wire on Q13 route (§7.5.1). Env: `OPENCORPORATES_API_TOKEN`.
+- **§7.5.3–7.5.4 Voicemail (priority):** Spike [`docs/spikes/20260516230000-voicemail-company-identification.md`](docs/spikes/20260516230000-voicemail-company-identification.md) — upload audio on qualify → OpenRouter Whisper → extract company; `source: voicemail_transcription`, `company_identified = true` when name extracted. Moved up from v1; v0.1 web file upload.
+- **Strategy:** [`docs/company-identification-strategy.md`](docs/company-identification-strategy.md) — voicemail before Q13 in pipeline; `claim_events.source` adds `voicemail_transcription`.
+
+## 2026-05-16 (Phase 6.4 — company ID policy lock)
+
+- **Strategy:** [`docs/company-identification-strategy.md`](docs/company-identification-strategy.md) — v0.1 trust rules after spoofing/CNAM review.
+- **Code:** Only **Nomorobo** sets `company_identified` + `company_name`. Twilio CNAM and Whitepages → `company_name_hint` / metadata (not letter-grade). `/check` shows unverified caller-ID hint when present.
+- **Deferred:** YouMail bake-off, FTC bulk index, TrueCaller, voicemail extraction — tracked in `task_manager.md` §6.4.5–6.4.7 and §7.5.3.
+
+## 2026-05-16 (Phase 6.4 — company identification)
+
+- **§6.4.1 provider merge:** [`merge-spam-results.ts`](src/lib/spam/merge-spam-results.ts) adds `companyNameSource` (`nomorobo` \| `twilio` \| `whitepages`). [`persist-spam-check-outcome.ts`](src/lib/spam/persist-spam-check-outcome.ts) writes `company_identified` + `company_name_source` on `claim_events` and subject columns (already set from §5.4).
+- **§6.4.2 Whitepages Pro:** [`whitepages-company-lookup.ts`](src/lib/company/whitepages-company-lookup.ts) — reverse phone [`GET /v2/person`](https://api.whitepages.com/docs/documentation/person-search/reverse-phone-lookup) after spam merge when `WHITEPAGES_COMPANY_LOOKUP_ENABLED` + `WHITEPAGES_API_KEY`. Orchestration: [`enrich-merged-company-from-lookup.ts`](src/lib/company/enrich-merged-company-from-lookup.ts). Spike: [`docs/spikes/20260516220000-whitepages-company-lookup.md`](docs/spikes/20260516220000-whitepages-company-lookup.md). `claim_events.source` includes `whitepages`.
+- **§6.4.2 FTC spike:** [`docs/spikes/20260516210000-ftc-complaints-company-lookup.md`](docs/spikes/20260516210000-ftc-complaints-company-lookup.md) — dnc-complaints API cannot query by caller number; stub [`ftc-complaints-company-lookup.ts`](src/lib/company/ftc-complaints-company-lookup.ts) (default off).
+- **§6.4.3 letter block:** When company still unknown and not exempt, `claim_events.tcpa_letter_blocked = company_unidentified` ([`company-identification.ts`](src/lib/constants/company-identification.ts)).
+- **§6.4.4 `/check` UX:** Unidentified-company copy + optional “Company identified: …” when merge succeeds; submit `number_checks` includes `company_identified` / `company_name`.
+
 ## 2026-05-16 (Phase 6.3 — state DNC scaffold)
 
 - **§6.3.1 constants:** [`state-dnc-registries.ts`](src/lib/constants/state-dnc-registries.ts) — eleven PRD §7 Step 4 states (IN, TX, WY, CO, LA, MS, MO, OK, OR, PA, TN).

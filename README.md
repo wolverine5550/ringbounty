@@ -143,6 +143,21 @@ Marketing UI: [`src/components/marketing/`](src/components/marketing/). Unauthen
 | **`/check`** | Submit JSON includes `state_dnc` (generic “coming soon” copy; state-specific after profile is set). |
 | **Future** | [`StateDncProvider`](src/lib/dnc/state-dnc-provider.ts) interface for §13.7 per-state APIs. |
 
+**Phase 6.4 — company identification:**
+
+**Locked policy:** [`docs/company-identification-strategy.md`](docs/company-identification-strategy.md) — spoofed robocall numbers often cannot be mapped to a legal defendant from the number alone; **Q13 + future voicemail** are the reliable path.
+
+| Topic | Decision |
+|-------|----------|
+| **`company_identified = true`** | **Nomorobo `reported_name` only** (automated), or **user Q13** (`user_input`, §7.5.1 — not built yet). |
+| **Twilio Lookup v2** | Spam score + line type / VOIP (carrier intelligence). **CNAM → `company_name_hint` only** — does not set `company_identified`. |
+| **Whitepages (§6.4.2)** | Optional after spam merge (`WHITEPAGES_*` env). [`GET /v2/person?phone=…`](https://api.whitepages.com/docs/documentation/person-search/reverse-phone-lookup) → **hint only**, not `company_identified`. Spike: [`docs/spikes/20260516220000-whitepages-company-lookup.md`](docs/spikes/20260516220000-whitepages-company-lookup.md). |
+| **FTC complaints** | **Deferred** (bulk index v1, not live API). [`docs/spikes/20260516210000-ftc-complaints-company-lookup.md`](docs/spikes/20260516210000-ftc-complaints-company-lookup.md). |
+| **Letter block (§6.4.3)** | `tcpa_letter_blocked = company_unidentified` until identified; enforce in §6.6 `canPurchaseLetter`. |
+| **`/check` (§6.4.4)** | Unidentified copy, “Company identified” when Nomorobo hits, **unverified CNAM/hint** line when `company_name_hint` present. |
+| **Qualify §7.5 (planned)** | **Voicemail upload first** (mp3/m4a/wav → OpenRouter → `voicemail_transcription`) — spike [`docs/spikes/20260516230000-voicemail-company-identification.md`](docs/spikes/20260516230000-voicemail-company-identification.md). **Q13** free-text company + [`persistUserCompanyIdentification`](src/lib/company/persist-user-company-identification.ts). **Soft verify:** OpenCorporates on Q13 name → `user_input_verified` / `user_input_unverified` — letter **allowed either way**; warning [`COMPANY_NAME_UNVERIFIED_WARNING`](src/lib/constants/company-name-verification.ts) if unverified. |
+| **Next** | §7.5.4 voicemail implement, §7.5.1 Q13 UI/API, §6.6 `canPurchaseLetter`, `OPENCORPORATES_API_TOKEN` in `.env.local`. |
+
 Applies to the **consumer’s receiving number**, not spammer numbers entered on `/check`.
 
 Set **`SUPABASE_SECRET_KEY`** (`sb_secret_…` from [Settings → API Keys](https://supabase.com/dashboard/project/nktlhjjeqwpubzlvjpjv/settings/api-keys)) in `.env.local` (server-only; never commit) for the anonymous API and merge path. Supabase [recommends secret keys](https://supabase.com/docs/guides/api/api-keys) over the legacy JWT `service_role` key (browser-blocked, easier rotation). Legacy **`SUPABASE_SERVICE_ROLE_KEY`** still works as a fallback. Without either key, `POST /api/claims/anonymous` responds **503** and merge is skipped.

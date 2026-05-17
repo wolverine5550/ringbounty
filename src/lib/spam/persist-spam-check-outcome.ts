@@ -7,9 +7,14 @@ import type { Database, Json } from "@/types/database";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import {
+  isTcpaLetterBlockedForUnidentifiedCompany,
+  TCPA_LETTER_BLOCKED_COMPANY_UNIDENTIFIED,
+} from "@/lib/constants/company-identification";
+import {
   isTcpaLetterBlockedForCallCategory,
   TCPA_LETTER_BLOCKED_FDCPA_DEBT,
 } from "@/lib/constants/fdcpa-debt-collection";
+import { enrichMergedCompanyFromLookup } from "@/lib/company/enrich-merged-company-from-lookup";
 import { resolveSpamDbMatrixSignal } from "@/lib/scoring/spam-db-matrix-signal";
 
 import {
@@ -28,8 +33,11 @@ export type PersistSpamCheckOutcomeParams = {
   claimId: string;
   claimSubjectId: string;
   providerOutcomes: ProviderRunOutcome[];
+  /** E.164 — used for §6.4.2 Whitepages when spam merge has no company. */
+  phoneNumberNormalized?: string;
   /** When omitted, merged from successful provider rows. */
   merged?: MergedSpamCheckOutcome;
+  env?: Record<string, string | undefined>;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -122,6 +130,52 @@ function buildMergedClaimEventRows(
     });
   }
 
+  rows.push({
+    claim_id: claimId,
+    event_type: SPAM_DB_MATCH_EVENT,
+    key: "company_identified",
+    value: String(merged.companyIdentified),
+    source,
+  });
+
+  if (merged.companyNameSource !== null) {
+    rows.push({
+      claim_id: claimId,
+      event_type: SPAM_DB_MATCH_EVENT,
+      key: "company_name_source",
+      value: merged.companyNameSource,
+      source: merged.companyNameSource,
+    });
+  }
+
+  if (merged.companyNameHint) {
+    rows.push({
+      claim_id: claimId,
+      event_type: SPAM_DB_MATCH_EVENT,
+      key: "company_name_hint",
+      value: merged.companyNameHint,
+      source:
+        merged.companyNameHintSource === "whitepages"
+          ? "whitepages"
+          : "twilio",
+    });
+  }
+
+  if (
+    isTcpaLetterBlockedForUnidentifiedCompany({
+      companyIdentified: merged.companyIdentified,
+      isExempt: merged.isExempt,
+    })
+  ) {
+    rows.push({
+      claim_id: claimId,
+      event_type: SPAM_DB_MATCH_EVENT,
+      key: "tcpa_letter_blocked",
+      value: TCPA_LETTER_BLOCKED_COMPANY_UNIDENTIFIED,
+      source: "system",
+    });
+  }
+
   if (isTcpaLetterBlockedForCallCategory(merged.callCategory)) {
     rows.push({
       claim_id: claimId,
@@ -174,8 +228,19 @@ export async function persistSpamCheckOutcome(
   params: PersistSpamCheckOutcomeParams,
 ): Promise<MergedSpamCheckOutcome> {
   const okResults = collectOkSpamResults(params.providerOutcomes);
-  const merged =
-    params.merged ?? mergeSpamCheckResults(okResults);
+  let merged = params.merged ?? mergeSpamCheckResults(okResults);
+
+  let whitepagesProviderRaw: Json | null = null;
+  let whitepagesMetadataPatch: Record<string, Json> = {};
+  if (params.phoneNumberNormalized) {
+    const enriched = await enrichMergedCompanyFromLookup(merged, {
+      phoneNumberNormalized: params.phoneNumberNormalized,
+      env: params.env,
+    });
+    merged = enriched.merged;
+    whitepagesProviderRaw = enriched.whitepagesProviderRaw;
+    whitepagesMetadataPatch = enriched.metadataPatch;
+  }
 
   const { data: existing, error: loadError } = await admin
     .from("claim_subjects")
@@ -191,6 +256,7 @@ export async function persistSpamCheckOutcome(
   const metadata: Json = {
     ...priorMeta,
     ...buildProviderMetadata(okResults),
+    ...whitepagesMetadataPatch,
   };
 
   const subjectPatch: Database["public"]["Tables"]["claim_subjects"]["Update"] = {
@@ -223,6 +289,16 @@ export async function persistSpamCheckOutcome(
     ...buildPerProviderClaimEventRows(params.claimId, okResults),
     ...buildMergedClaimEventRows(params.claimId, merged),
   ];
+
+  if (whitepagesProviderRaw !== null) {
+    eventRows.push({
+      claim_id: params.claimId,
+      event_type: SPAM_DB_MATCH_EVENT,
+      key: "provider_raw",
+      value: safeJsonStringify(whitepagesProviderRaw),
+      source: "whitepages",
+    });
+  }
 
   if (eventRows.length > 0) {
     const { error: insertError } = await admin

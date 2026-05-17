@@ -70,7 +70,20 @@ describe("mergeSpamCheckResults", () => {
     ]);
     expect(merged.callCategory).toBe("telemarketer");
     expect(merged.companyName).toBe("Acme Corp");
+    expect(merged.companyNameSource).toBe("nomorobo");
     expect(merged.companyIdentified).toBe(true);
+  });
+
+  it("stores Twilio CNAM as hint only when Nomorobo has no name (§6.4 policy)", () => {
+    const merged = mergeSpamCheckResults([
+      result({ providerId: "nomorobo", companyName: null }),
+      result({ providerId: "twilio", companyName: "Caller ID LLC" }),
+    ]);
+    expect(merged.companyName).toBeNull();
+    expect(merged.companyIdentified).toBe(false);
+    expect(merged.companyNameHint).toBe("Caller ID LLC");
+    expect(merged.companyNameHintSource).toBe("twilio");
+    expect(merged.companyNameSource).toBeNull();
   });
 
   it("falls back to Twilio category when Nomorobo has none", () => {

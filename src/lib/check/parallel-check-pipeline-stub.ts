@@ -29,6 +29,11 @@ export type NumberCheckSummary = {
   is_known_spammer?: boolean;
   /** Phase 5.7 — merged category is debt collection (FDCPA note; TCPA letter blocked). */
   is_debt_collection?: boolean;
+  /** Phase 6.4 — spam merge resolved a company name for this caller number. */
+  company_identified?: boolean;
+  company_name?: string | null;
+  /** Twilio CNAM / Whitepages — not letter-grade identification (§6.4). */
+  company_name_hint?: string | null;
 };
 
 export type RunStubPipelineOptions = {

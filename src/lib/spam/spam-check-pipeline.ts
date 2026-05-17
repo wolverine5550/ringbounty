@@ -95,6 +95,7 @@ export async function runSpamChecksForPhoneList(
         merged = await persistSpamCheckOutcome(admin, {
           claimId: params.claimId,
           claimSubjectId: p.subjectId,
+          phoneNumberNormalized: p.phoneNumberNormalized,
           providerOutcomes,
         });
       }
@@ -121,6 +122,9 @@ export async function runSpamChecksForPhoneList(
               is_debt_collection: isDebtCollectionCallCategory(
                 merged.callCategory,
               ),
+              company_identified: merged.companyIdentified,
+              company_name: merged.companyName,
+              company_name_hint: merged.companyNameHint,
             }
           : {}),
       } satisfies NumberCheckSummary;

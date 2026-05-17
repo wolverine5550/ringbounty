@@ -28,6 +28,10 @@ import type { NumberCheckSummary } from "@/lib/check/parallel-check-pipeline-stu
 import { EXEMPT_TCPA_USER_MESSAGE } from "@/lib/constants/exempt-categories";
 import { FDCPA_DEBT_COLLECTION_USER_MESSAGE } from "@/lib/constants/fdcpa-debt-collection";
 import { FEDERAL_DNC_UNAVAILABLE_USER_MESSAGE } from "@/lib/constants/federal-dnc-unavailable";
+import {
+  COMPANY_CNAM_HINT_PREFIX,
+  COMPANY_UNIDENTIFIED_CHECK_MESSAGE,
+} from "@/lib/constants/company-identification";
 import { NO_SPAM_HIT_USER_MESSAGE } from "@/lib/constants/no-spam-hit";
 import { RATE_LIMIT_USER_MESSAGE } from "@/lib/rate-limit/constants";
 
@@ -555,6 +559,30 @@ export function CheckFunnelClient() {
                           role="status"
                         >
                           {NO_SPAM_HIT_USER_MESSAGE}
+                        </p>
+                      ) : row.company_identified === false ? (
+                        <p
+                          className="text-muted-foreground mt-2 text-xs leading-relaxed"
+                          role="status"
+                        >
+                          {COMPANY_UNIDENTIFIED_CHECK_MESSAGE}
+                        </p>
+                      ) : null}
+                      {row.company_identified === true && row.company_name ? (
+                        <p className="text-muted-foreground mt-2 text-xs">
+                          Company identified:{" "}
+                          <span className="text-foreground font-medium">
+                            {row.company_name}
+                          </span>
+                        </p>
+                      ) : row.company_name_hint ? (
+                        <p className="text-muted-foreground mt-2 text-xs leading-relaxed">
+                          {COMPANY_CNAM_HINT_PREFIX}{" "}
+                          <span className="text-foreground font-medium">
+                            {row.company_name_hint}
+                          </span>
+                          . This is not verified — you will still confirm the
+                          company during qualification.
                         </p>
                       ) : null}
                       <ul className="mt-2 flex flex-col gap-1.5">
