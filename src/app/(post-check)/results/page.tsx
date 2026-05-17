@@ -1,8 +1,12 @@
 import { AttorneyReferralCta } from "@/components/results/attorney-referral-cta";
+import { EmailCaptureModal } from "@/components/email-capture-modal";
+import { ResultsIneligiblePanel } from "@/components/results/results-ineligible-panel";
+import { ResultsStrengthHeader } from "@/components/results/results-strength-header";
+import { ResultsSubjectCard } from "@/components/results/results-subject-card";
+import { ResultsValuationPanel } from "@/components/results/results-valuation-panel";
 import { SolWarningBanner } from "@/components/results/sol-warning-banner";
 import { enforcePostCheckAccess } from "@/lib/claims/enforce-post-check-access";
-import { loadResultsAttorneyReferral } from "@/lib/claims/load-results-attorney-referral";
-import { loadSolFlags } from "@/lib/scoring/load-sol-flags";
+import { loadResultsPageContext } from "@/lib/claims/load-results-page-context";
 import { RESULTS_PATH } from "@/lib/claims/gated-routes";
 import { createClient } from "@/lib/supabase/server";
 
@@ -11,7 +15,7 @@ type ResultsPageProps = {
 };
 
 /**
- * Post-qualify results (Phase 7.7 / 8). §7.7.2: primary surface after wizard completion.
+ * Post-qualify results (Phase 7.7 / 8.4). Strength, valuation, and attorney CTA.
  */
 export default async function ResultsPage({ searchParams }: ResultsPageProps) {
   const { claim: claimId } = await searchParams;
@@ -25,36 +29,65 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const referralContext =
+  const results =
     claimId && user?.id
-      ? await loadResultsAttorneyReferral(supabase, {
+      ? await loadResultsPageContext(supabase, {
           claimId,
           userId: user.id,
         })
       : null;
-
-  const solFlags =
-    claimId && user?.id ? await loadSolFlags(supabase, claimId) : null;
 
   return (
     <div className="mx-auto flex min-h-svh max-w-lg flex-col gap-6 p-8">
       <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold tracking-tight">Your results</h1>
         <p className="text-muted-foreground text-sm">
-          Claim strength and dollar estimates ship in Phase 8. You have finished
-          qualification for this claim.
+          Informational claim strength and statutory estimate ranges based on your
+          qualification answers. This is not legal advice.
         </p>
       </header>
 
-      {solFlags ? <SolWarningBanner sol={solFlags} /> : null}
-
-      {referralContext ? (
-        <AttorneyReferralCta context={referralContext} />
-      ) : (
+      {!results ? (
         <p className="text-muted-foreground text-sm">
           Open results with a claim id (for example after completing qualify) to see
-          attorney referral options.
+          your claim summary.
         </p>
+      ) : (
+        <>
+          {results.sol ? <SolWarningBanner sol={results.sol} /> : null}
+
+          <ResultsStrengthHeader display={results.strengthDisplay} />
+
+          {results.valuation ? (
+            <ResultsValuationPanel valuation={results.valuation} />
+          ) : null}
+
+          <section className="flex flex-col gap-3">
+            <h2 className="text-sm font-medium">Numbers on this claim</h2>
+            {results.subjects.map((subject) => (
+              <ResultsSubjectCard key={subject.subjectId} subject={subject} />
+            ))}
+          </section>
+
+          {results.effectiveClaimStrength === "ineligible" ? (
+            <ResultsIneligiblePanel
+              claimId={results.claimId}
+              reasons={results.ineligibleReasons}
+              showEmailCapture={results.showEmailCapture}
+              emailCaptureReason={results.emailCaptureReason}
+            />
+          ) : (
+            <>
+              {results.showEmailCapture && results.emailCaptureReason ? (
+                <EmailCaptureModal
+                  claimId={results.claimId}
+                  reason={results.emailCaptureReason}
+                />
+              ) : null}
+              <AttorneyReferralCta context={results} />
+            </>
+          )}
+        </>
       )}
     </div>
   );

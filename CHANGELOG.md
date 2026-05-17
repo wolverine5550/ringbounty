@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-17 (Phase 8.4 — Results UI)
+
+- **§8.4:** [`/results`](src/app/(post-check)/results/page.tsx) — per-subject cards ([`ResultsSubjectCard`](src/components/results/results-subject-card.tsx): spam/DNC summaries, exempt + strength badges), claim-level strength header ([`ResultsStrengthHeader`](src/components/results/results-strength-header.tsx)), three-scenario valuation ([`ResultsValuationPanel`](src/components/results/results-valuation-panel.tsx)), ineligible panel + email capture ([`ResultsIneligiblePanel`](src/components/results/results-ineligible-panel.tsx)), attorney CTA with weak-strength acknowledgement ([`AttorneyReferralCta`](src/components/results/attorney-referral-cta.tsx)). Runtime scoring via [`loadResultsPageContext`](src/lib/claims/load-results-page-context.ts) (matrix + valuation until §8.5 persist). Vitest: `aggregate-claim-strength.test.ts`, `subject-evidence-summaries.test.ts`.
+
 ## 2026-05-17 (Phase 8.3 — Valuation engine)
 
 - **§8.3:** PRD §11 three-scenario valuation — [`computeViolationCounts`](src/lib/scoring/compute-violation-counts.ts) (`standard` / `willful` / `time` from Q8–Q12 + Screen 2 stop), [`computeValuation`](src/lib/scoring/compute-valuation.ts) (conservative low/high, realistic, maximum in integer cents; `formatUsdFromCents`). SOL addendum via [`buildValuationDisplayCaveat`](src/lib/scoring/compute-valuation.ts) when `likelyTimeBarred`. Vitest: [`compute-valuation.test.ts`](src/lib/scoring/compute-valuation.test.ts). Persist + `/results` UI → §8.4–8.5.

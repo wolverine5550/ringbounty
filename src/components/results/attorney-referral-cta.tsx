@@ -1,4 +1,10 @@
+"use client";
+
+import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   ATTORNEY_REFERRAL_CTA_LABEL,
   ATTORNEY_REFERRAL_REASON_CLAIM_INELIGIBLE,
@@ -6,7 +12,8 @@ import {
   ATTORNEY_REFERRAL_REASON_EXEMPT,
   ATTORNEY_REFERRAL_REASON_FDCPA_DEBT_COLLECTION,
 } from "@/lib/constants/attorney-referral";
-import type { ResultsAttorneyReferralContext } from "@/lib/claims/load-results-attorney-referral";
+import { RESULTS_WEAK_STRENGTH_ACK_LABEL } from "@/lib/constants/results-strength";
+import type { ResultsPageContext } from "@/lib/claims/load-results-page-context";
 
 const BLOCK_REASON_LABELS: Record<string, string> = {
   [ATTORNEY_REFERRAL_REASON_EXEMPT]: "This number is marked exempt from TCPA screening.",
@@ -19,21 +26,49 @@ const BLOCK_REASON_LABELS: Record<string, string> = {
 };
 
 export type AttorneyReferralCtaProps = {
-  context: ResultsAttorneyReferralContext;
+  context: Pick<
+    ResultsPageContext,
+    "claimId" | "subjects" | "anyCanRefer" | "effectiveClaimStrength"
+  >;
 };
 
 /**
- * Phase 7.7.2 — Attorney CTA on `/results` when {@link canReferToAttorney} passes (§6.6).
+ * Phase 8.4.5 — Attorney CTA on `/results` when {@link canReferToAttorney} passes (§6.6).
+ * Weak strength requires acknowledgement before enabling the CTA (§8.4.3).
  * Full expectation flow wires in Phase 13.1.
  */
 export function AttorneyReferralCta({ context }: AttorneyReferralCtaProps) {
+  const requiresWeakAck = context.effectiveClaimStrength === "weak";
+  const [weakAcknowledged, setWeakAcknowledged] = useState(false);
+
+  const ctaDisabled =
+    !context.anyCanRefer || (requiresWeakAck && !weakAcknowledged);
+
   return (
     <section className="flex flex-col gap-4 rounded-lg border p-4">
       <h2 className="text-sm font-medium">Attorney referral</h2>
 
       {context.anyCanRefer ? (
-        <div className="flex flex-col gap-2">
-          <Button type="button" disabled aria-describedby="attorney-cta-note">
+        <div className="flex flex-col gap-3">
+          {requiresWeakAck ? (
+            <div className="flex items-start gap-2 rounded-md border border-orange-500/30 bg-orange-500/5 p-3">
+              <Checkbox
+                id="weak-strength-ack"
+                checked={weakAcknowledged}
+                onCheckedChange={(checked) =>
+                  setWeakAcknowledged(checked === true)
+                }
+              />
+              <Label
+                htmlFor="weak-strength-ack"
+                className="text-sm leading-snug font-normal"
+              >
+                {RESULTS_WEAK_STRENGTH_ACK_LABEL}
+              </Label>
+            </div>
+          ) : null}
+
+          <Button type="button" disabled={ctaDisabled} aria-describedby="attorney-cta-note">
             {ATTORNEY_REFERRAL_CTA_LABEL}
           </Button>
           <p className="text-muted-foreground text-xs" id="attorney-cta-note">
@@ -43,7 +78,8 @@ export function AttorneyReferralCta({ context }: AttorneyReferralCtaProps) {
         </div>
       ) : (
         <p className="text-muted-foreground text-sm">
-          Attorney referral is not available for this claim based on your answers.
+          Attorney referral is not available for every number on this claim. See
+          details below.
         </p>
       )}
 

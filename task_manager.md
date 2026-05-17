@@ -884,16 +884,16 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 8.4 Results UI (`/results`) — strength / probability + attorney CTA
 
-- [ ] **8.4.1** Per subject card: spam summary, DNC summary, exempt badge, strength badge.
-- [ ] **8.4.2** Three-scenario dollar display with labels; mandatory caveat paragraph under numbers (PRD §11) — **informational estimates**, not a recommended demand.
-- [ ] **8.4.3** Strength-specific UI: green/yellow/orange/red; plain-language **“likelihood you have something worth discussing with an attorney”** copy (lawyer-reviewed); weak → checkbox acknowledgement before attorney CTA.
-- [ ] **8.4.4** Ineligible: hide attorney CTA; show reasons bullet list; offer email capture (Phase 2.8).
-- [ ] **8.4.5** Eligible (`canReferToAttorney`): primary CTA **“Connect with an attorney — free”** → Phase 13.1 flow (expectation screen + `leads` insert).
+- [x] **8.4.1** Per subject card: spam summary, DNC summary, exempt badge, strength badge. <!-- done: `ResultsSubjectCard`, `subject-evidence-summaries.ts`, `load-results-page-context.ts` -->
+- [x] **8.4.2** Three-scenario dollar display with labels; mandatory caveat paragraph under numbers (PRD §11) — **informational estimates**, not a recommended demand. <!-- done: `ResultsValuationPanel`, `results-strength.ts` labels -->
+- [x] **8.4.3** Strength-specific UI: green/yellow/orange/red; plain-language **“likelihood you have something worth discussing with an attorney”** copy (lawyer-reviewed); weak → checkbox acknowledgement before attorney CTA. <!-- done: `ResultsStrengthHeader`, `results-strength.ts` (placeholder copy), `AttorneyReferralCta` weak ack -->
+- [x] **8.4.4** Ineligible: hide attorney CTA; show reasons bullet list; offer email capture (Phase 2.8). <!-- done: `ResultsIneligiblePanel` + `EmailCaptureModal` -->
+- [x] **8.4.5** Eligible (`canReferToAttorney`): primary CTA **“Connect with an attorney — free”** → Phase 13.1 flow (expectation screen + `leads` insert). <!-- done: `AttorneyReferralCta` (disabled until §13.1); runtime strength via `load-results-page-context.ts` -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README §8.4 -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG 2026-05-17 §8.4 -->
 
 ### 8.5 Persist outputs
 
