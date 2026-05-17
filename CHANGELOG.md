@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-17 (Phase 7.2 — Screen 1 consent / EBR)
+
+- **§7.2:** Step 1 on [`/qualify/[claimSubjectId]?step=1`](src/app/(post-check)/qualify/[claimSubjectId]/page.tsx) — Q1–Q3 yes/no ([`Screen1ConsentForm`](src/components/qualify/screen-1-consent-form.tsx), copy [`qualify-screen-1.ts`](src/lib/constants/qualify-screen-1.ts)). [`POST /api/qualify/screen-1`](src/app/api/qualify/screen-1/route.ts) persists `qualification_answer` keys `gave_direct_consent`, `third_party_consent_possible`, `has_existing_relationship` ([`screen-1-consent.ts`](src/lib/qualify/screen-1-consent.ts)). When Q1 or Q3 is Yes, EBR explainer modal + `ebr_strength_adjustment_*` claim events for scoring / attorney evidence summary.
+
 ## 2026-05-17 (Phase 7.1 — qualify routing and step state)
 
 - **§7.1:** [`/qualify/[claimSubjectId]`](src/app/(post-check)/qualify/[claimSubjectId]/page.tsx) loads subject + owned claim ([`load-qualify-context.ts`](src/lib/qualify/load-qualify-context.ts)); 404 on invalid UUID, wrong `?claim=`, or non-owner. Federal DNC pre-gate, then wizard screens **1–4** via `?step=`; auto-redirect to `?step=1` after attestation. Resume from `claim_events` key `qualify_step_resume` ([`qualify-step.ts`](src/lib/qualify/qualify-step.ts)). Placeholder chrome: [`qualify-wizard-shell.tsx`](src/components/qualify/qualify-wizard-shell.tsx) until §7.2–7.5 forms ship.

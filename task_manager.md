@@ -772,15 +772,15 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 7.2 Screen 1 — Consent / EBR
 
-- [ ] **7.2.1** Q1 UI + store `qualification_answer` / `gave_direct_consent` boolean.
-- [ ] **7.2.2** Q2 third-party consent UI + storage.
-- [ ] **7.2.3** Q3 ongoing relationship UI + storage.
-- [ ] **7.2.4** If yes to Q1 or Q3: show PRD explainer modal; write `claim_events` note for attorney evidence package / scoring context (not letter generation).
+- [x] **7.2.1** Q1 UI + store `qualification_answer` / `gave_direct_consent` boolean. <!-- done: `screen-1-consent-form.tsx`, `screen-1-consent.ts`, `POST /api/qualify/screen-1` -->
+- [x] **7.2.2** Q2 third-party consent UI + storage. <!-- done: key `third_party_consent_possible` -->
+- [x] **7.2.3** Q3 ongoing relationship UI + storage. <!-- done: key `has_existing_relationship` -->
+- [x] **7.2.4** If yes to Q1 or Q3: show PRD explainer modal; write `claim_events` note for attorney evidence package / scoring context (not letter generation). <!-- done: EBR overlay + `ebr_strength_adjustment_*` events; copy `qualify-screen-1.ts` -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README §7.2 -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG 2026-05-17 §7.2 -->
 
 ### 7.3 Screen 2 — Stop request / willful
 
