@@ -8,6 +8,7 @@
 export const CLAIM_EVENT_TYPE_VALUES = [
   "dnc_check",
   "spam_db_match",
+  "registered_agent_lookup",
   "qualification_answer",
   "value_calculated",
   "evidence_checklist_ack",

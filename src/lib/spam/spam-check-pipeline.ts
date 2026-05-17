@@ -26,6 +26,9 @@ export type RunSpamChecksForPhoneListParams = {
   phones: { phoneNumberNormalized: string; subjectId: string | null }[];
   providers?: SpamCheckProvider[];
   env?: Record<string, string | undefined>;
+  /** §6.5 — `public.users.state` when known (enables in-state OpenCorporates search). */
+  userStateCode?: string | null;
+  anonymousSessionId?: string | null;
 };
 
 function providerOutcomeToApi(
@@ -97,6 +100,9 @@ export async function runSpamChecksForPhoneList(
           claimSubjectId: p.subjectId,
           phoneNumberNormalized: p.phoneNumberNormalized,
           providerOutcomes,
+          userStateCode: params.userStateCode,
+          anonymousSessionId: params.anonymousSessionId,
+          env: params.env,
         });
       }
 
@@ -125,6 +131,17 @@ export async function runSpamChecksForPhoneList(
               company_identified: merged.companyIdentified,
               company_name: merged.companyName,
               company_name_hint: merged.companyNameHint,
+              ...(merged.registeredAgentFound !== undefined
+                ? {
+                    registered_agent_found: merged.registeredAgentFound,
+                    registered_agent_name: merged.registeredAgentName ?? null,
+                    registered_agent_manual_lookup_required:
+                      merged.registeredAgentManualLookupRequired,
+                    registered_agent_rate_limited:
+                      merged.registeredAgentRateLimited,
+                    user_state_code: params.userStateCode ?? null,
+                  }
+                : {}),
             }
           : {}),
       } satisfies NumberCheckSummary;

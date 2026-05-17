@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-05-16 (Phase 6.5 — registered agent lookup)
+
+- **§6.5 OpenCorporates RA lookup:** Shared client [`opencorporates-api.ts`](src/lib/company/opencorporates-api.ts); [`lookupRegisteredAgentViaOpenCorporates`](src/lib/company/lookup-registered-agent-opencorporates.ts) searches by `company_name` + `users.state` (`jurisdiction_code=us_XX`), then national fallbacks (`us_de`, `us_nv`, `us_wy`, then `country_code=us`). Company detail → registered-agent officer → optional officer detail for address.
+- **§6.5.3 persist:** [`persistRegisteredAgentLookup`](src/lib/company/persist-registered-agent-lookup.ts) writes `claim_subjects.registered_agent_*` + `claim_events` (`registered_agent_lookup`). Wired from [`persist-spam-check-outcome.ts`](src/lib/spam/persist-spam-check-outcome.ts) when `company_identified` + `userStateCode`, and [`persist-user-company-identification.ts`](src/lib/company/persist-user-company-identification.ts) after Q13.
+- **§6.5.4–6.5.5 UX:** `/check` shows registered agent, manual SOS link ([`registered-agent-lookup.ts`](src/lib/constants/registered-agent-lookup.ts)), or rate-limit copy. Per-session budget via `consume_rate_limit` action `opencorporates_lookup` (6/hour). Env: `OPENCORPORATES_API_TOKEN`.
+
 ## 2026-05-16 (Phase 7.5 — Q13 soft verify + voicemail plan)
 
 - **§7.5.1b OpenCorporates soft validation (scaffold):** After Q13 `user_input`, [`softVerifyCompanyNameWithOpenCorporates`](src/lib/company/opencorporates-soft-verify.ts) sets `claim_events.company_name_verification_status` to `user_input_verified` or `user_input_unverified`. Letter generation **allowed either way**; UI shows [`COMPANY_NAME_UNVERIFIED_WARNING`](src/lib/constants/company-name-verification.ts) when unverified. [`persist-user-company-identification.ts`](src/lib/company/persist-user-company-identification.ts) — wire on Q13 route (§7.5.1). Env: `OPENCORPORATES_API_TOKEN`.

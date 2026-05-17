@@ -156,7 +156,19 @@ Marketing UI: [`src/components/marketing/`](src/components/marketing/). Unauthen
 | **Letter block (§6.4.3)** | `tcpa_letter_blocked = company_unidentified` until identified; enforce in §6.6 `canPurchaseLetter`. |
 | **`/check` (§6.4.4)** | Unidentified copy, “Company identified” when Nomorobo hits, **unverified CNAM/hint** line when `company_name_hint` present. |
 | **Qualify §7.5 (planned)** | **Voicemail upload first** (mp3/m4a/wav → OpenRouter → `voicemail_transcription`) — spike [`docs/spikes/20260516230000-voicemail-company-identification.md`](docs/spikes/20260516230000-voicemail-company-identification.md). **Q13** free-text company + [`persistUserCompanyIdentification`](src/lib/company/persist-user-company-identification.ts). **Soft verify:** OpenCorporates on Q13 name → `user_input_verified` / `user_input_unverified` — letter **allowed either way**; warning [`COMPANY_NAME_UNVERIFIED_WARNING`](src/lib/constants/company-name-verification.ts) if unverified. |
-| **Next** | §7.5.4 voicemail implement, §7.5.1 Q13 UI/API, §6.6 `canPurchaseLetter`, `OPENCORPORATES_API_TOKEN` in `.env.local`. |
+| **Next** | §7.5.4 voicemail implement, §7.5.1 Q13 UI/API, §6.6 `canPurchaseLetter`. |
+
+**Phase 6.5 — registered agent lookup:**
+
+| Topic | Decision |
+|-------|----------|
+| **When** | After `company_identified` + `company_name` when `users.state` is known (spam persist or Q13). Anonymous `/check` skips OpenCorporates until profile state exists. |
+| **API** | [OpenCorporates v0.4](https://api.opencorporates.com/documentation/API-Reference) — company search → company detail → agent officer. |
+| **Fallback** | In-state search, then `us_de` / `us_nv` / `us_wy`, then US-wide. |
+| **Persist** | `registered_agent_name`, `registered_agent_address`, `registered_agent_lookup_source` on `claim_subjects`. |
+| **Manual** | SOS business-search links per top states — [`registered-agent-lookup.ts`](src/lib/constants/registered-agent-lookup.ts). |
+| **Rate limit** | 6 lookups per anonymous session per hour (`opencorporates_lookup`). |
+| **Env** | `OPENCORPORATES_API_TOKEN` in `.env.local`. |
 
 Applies to the **consumer’s receiving number**, not spammer numbers entered on `/check`.
 
@@ -191,7 +203,7 @@ These are reserved for upcoming work—do not commit real secrets:
 - `NOMOROBO_API_KEY` — **Nomorobo Enterprise** primary spam / robocall lookup (`GET https://api.nomorobo.com/v2/check`, `X-API-Key`). See [`nomorobo-spam-provider.ts`](src/lib/spam/nomorobo-spam-provider.ts), `docs/Nomorobo Enterprise API Documentation.pdf`, [Nomorobo API](https://www.nomorobo.com/api/). Enable with `SPAM_PROVIDER_NOMOROBO_ENABLED`.
 - `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` — **Twilio Lookup v2** secondary corroboration (`Fields=phone_number_quality_score,caller_name,line_type_intelligence`; [PRD §7](prd.md), [Lookup v2](https://www.twilio.com/docs/lookup/v2-api), [`twilio-lookup-spam-provider.ts`](src/lib/spam/twilio-lookup-spam-provider.ts)). Enable with `SPAM_PROVIDER_TWILIO_ENABLED`.
 - `SPAM_PROVIDER_NOMOROBO_ENABLED`, `SPAM_PROVIDER_TWILIO_ENABLED` — boolean strings (`true` / `false` / `1` / `yes`) toggling each adapter in the Phase 5 orchestrator; see [`src/lib/spam/provider-flags.ts`](src/lib/spam/provider-flags.ts). Defaults to off when unset.
-- `OPENCORPORATES_API_KEY` — optional business-entity lookup.
+- `OPENCORPORATES_API_TOKEN` — company search + registered agent lookup (§6.5, §7.5.1b soft verify).
 - `FEDERAL_DNC_AUTOMATED_ENABLED` — **leave off** unless counsel approves registry API access (not planned for v0.1 attestation path). Do not use FTC `dnc-complaints` for `federal_dnc_*` fields.
 
 ## Supabase project (RingBounty)

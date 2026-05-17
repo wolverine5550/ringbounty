@@ -34,6 +34,13 @@ export type NumberCheckSummary = {
   company_name?: string | null;
   /** Twilio CNAM / Whitepages — not letter-grade identification (§6.4). */
   company_name_hint?: string | null;
+  /** Phase 6.5 — OpenCorporates registered agent when lookup ran. */
+  registered_agent_found?: boolean;
+  registered_agent_name?: string | null;
+  registered_agent_manual_lookup_required?: boolean;
+  registered_agent_rate_limited?: boolean;
+  /** USPS code for SOS manual-lookup link (§6.5.4). */
+  user_state_code?: string | null;
 };
 
 export type RunStubPipelineOptions = {

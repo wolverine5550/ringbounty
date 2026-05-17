@@ -698,16 +698,16 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 6.5 Registered agent lookup
 
-- [ ] **6.5.1** OpenCorporates client: search by `company_name` + `user.state`; handle pagination/errors. <!-- partial: §7.5.1b soft search in opencorporates-soft-verify.ts; extend for RA in 6.5 -->
-- [ ] **6.5.2** If not found in-state: national search fallback (Delaware, etc.).
-- [ ] **6.5.3** Persist `registered_agent_name`, `registered_agent_address`, `registered_agent_lookup_source`.
-- [ ] **6.5.4** If not found: UI “manual lookup required” + link to static SOS guide for user’s state (top 10 states content task).
-- [ ] **6.5.5** Rate limit OpenCorporates calls per session; surface “try again later” when budget exceeded (Open questions).
+- [x] **6.5.1** OpenCorporates client: search by `company_name` + `user.state`; handle pagination/errors. <!-- done: `src/lib/company/opencorporates-api.ts`, `lookup-registered-agent-opencorporates.ts`; soft verify refactored in `opencorporates-soft-verify.ts` -->
+- [x] **6.5.2** If not found in-state: national search fallback (Delaware, etc.). <!-- done: `OPENCORPORATES_NATIONAL_FALLBACK_JURISDICTIONS` us_de, us_nv, us_wy + country_code=us -->
+- [x] **6.5.3** Persist `registered_agent_name`, `registered_agent_address`, `registered_agent_lookup_source`. <!-- done: `persist-registered-agent-lookup.ts`, wired in `persist-spam-check-outcome.ts`, `persist-user-company-identification.ts` -->
+- [x] **6.5.4** If not found: UI “manual lookup required” + link to static SOS guide for user’s state (top 10 states content task). <!-- done: `registered-agent-lookup.ts`, `check-funnel-client.tsx` -->
+- [x] **6.5.5** Rate limit OpenCorporates calls per session; surface “try again later” when budget exceeded (Open questions). <!-- done: `assert-opencorporates-lookup-allowed.ts`, `rate-limit/constants.ts` (6/session/hour) -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md Phase 6.5 -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md Phase 6.5 -->
 
 ### 6.6 Block letter generation rules
 

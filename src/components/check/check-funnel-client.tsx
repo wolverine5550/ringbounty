@@ -33,6 +33,11 @@ import {
   COMPANY_UNIDENTIFIED_CHECK_MESSAGE,
 } from "@/lib/constants/company-identification";
 import { NO_SPAM_HIT_USER_MESSAGE } from "@/lib/constants/no-spam-hit";
+import {
+  getStateSosBusinessSearchUrl,
+  OPENCORPORATES_RATE_LIMIT_USER_MESSAGE,
+  REGISTERED_AGENT_MANUAL_LOOKUP_MESSAGE,
+} from "@/lib/constants/registered-agent-lookup";
 import { RATE_LIMIT_USER_MESSAGE } from "@/lib/rate-limit/constants";
 
 const PROVIDER_CHECK_LABEL: Record<string, string> = {
@@ -575,7 +580,42 @@ export function CheckFunnelClient() {
                             {row.company_name}
                           </span>
                         </p>
-                      ) : row.company_name_hint ? (
+                      ) : null}
+                      {row.registered_agent_rate_limited ? (
+                        <p
+                          className="text-muted-foreground mt-2 text-xs leading-relaxed"
+                          role="status"
+                        >
+                          {OPENCORPORATES_RATE_LIMIT_USER_MESSAGE}
+                        </p>
+                      ) : row.registered_agent_found &&
+                        row.registered_agent_name ? (
+                        <p className="text-muted-foreground mt-2 text-xs">
+                          Registered agent:{" "}
+                          <span className="text-foreground font-medium">
+                            {row.registered_agent_name}
+                          </span>
+                        </p>
+                      ) : row.registered_agent_manual_lookup_required ? (
+                        <p
+                          className="text-muted-foreground mt-2 text-xs leading-relaxed"
+                          role="status"
+                        >
+                          {REGISTERED_AGENT_MANUAL_LOOKUP_MESSAGE}{" "}
+                          <a
+                            href={getStateSosBusinessSearchUrl(
+                              row.user_state_code,
+                            )}
+                            className="text-primary underline underline-offset-2"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Look up on your state&apos;s business registry
+                          </a>
+                          .
+                        </p>
+                      ) : null}
+                      {row.company_name_hint ? (
                         <p className="text-muted-foreground mt-2 text-xs leading-relaxed">
                           {COMPANY_CNAM_HINT_PREFIX}{" "}
                           <span className="text-foreground font-medium">

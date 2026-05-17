@@ -15,6 +15,7 @@ import {
   TCPA_LETTER_BLOCKED_FDCPA_DEBT,
 } from "@/lib/constants/fdcpa-debt-collection";
 import { enrichMergedCompanyFromLookup } from "@/lib/company/enrich-merged-company-from-lookup";
+import { persistRegisteredAgentLookup } from "@/lib/company/persist-registered-agent-lookup";
 import { resolveSpamDbMatrixSignal } from "@/lib/scoring/spam-db-matrix-signal";
 
 import {
@@ -35,9 +36,20 @@ export type PersistSpamCheckOutcomeParams = {
   providerOutcomes: ProviderRunOutcome[];
   /** E.164 — used for §6.4.2 Whitepages when spam merge has no company. */
   phoneNumberNormalized?: string;
+  /** `public.users.state` — required for §6.5 in-state OpenCorporates search. */
+  userStateCode?: string | null;
+  /** §6.5.5 — anonymous session id for OpenCorporates rate limit. */
+  anonymousSessionId?: string | null;
   /** When omitted, merged from successful provider rows. */
   merged?: MergedSpamCheckOutcome;
   env?: Record<string, string | undefined>;
+};
+
+export type PersistSpamCheckOutcomeResult = MergedSpamCheckOutcome & {
+  registeredAgentFound?: boolean;
+  registeredAgentName?: string | null;
+  registeredAgentManualLookupRequired?: boolean;
+  registeredAgentRateLimited?: boolean;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -226,7 +238,7 @@ function buildPerProviderClaimEventRows(
 export async function persistSpamCheckOutcome(
   admin: SupabaseClient<Database>,
   params: PersistSpamCheckOutcomeParams,
-): Promise<MergedSpamCheckOutcome> {
+): Promise<PersistSpamCheckOutcomeResult> {
   const okResults = collectOkSpamResults(params.providerOutcomes);
   let merged = params.merged ?? mergeSpamCheckResults(okResults);
 
@@ -309,5 +321,40 @@ export async function persistSpamCheckOutcome(
     }
   }
 
-  return merged;
+  let registeredAgentFound: boolean | undefined;
+  let registeredAgentName: string | null | undefined;
+  let registeredAgentManualLookupRequired: boolean | undefined;
+  let registeredAgentRateLimited: boolean | undefined;
+
+  if (
+    merged.companyIdentified &&
+    merged.companyName &&
+    !merged.isExempt &&
+    params.userStateCode
+  ) {
+    const ra = await persistRegisteredAgentLookup(admin, {
+      claimId: params.claimId,
+      claimSubjectId: params.claimSubjectId,
+      companyName: merged.companyName,
+      userStateCode: params.userStateCode,
+      anonymousSessionId: params.anonymousSessionId,
+      lookup: { env: params.env },
+    });
+    registeredAgentFound = ra.found;
+    registeredAgentName = ra.registeredAgentName;
+    registeredAgentManualLookupRequired = ra.manualLookupRequired;
+    registeredAgentRateLimited = ra.rateLimited;
+  }
+
+  return {
+    ...merged,
+    ...(registeredAgentFound !== undefined ? { registeredAgentFound } : {}),
+    ...(registeredAgentName !== undefined ? { registeredAgentName } : {}),
+    ...(registeredAgentManualLookupRequired !== undefined
+      ? { registeredAgentManualLookupRequired }
+      : {}),
+    ...(registeredAgentRateLimited !== undefined
+      ? { registeredAgentRateLimited }
+      : {}),
+  };
 }

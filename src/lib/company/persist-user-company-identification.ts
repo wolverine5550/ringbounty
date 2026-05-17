@@ -11,6 +11,7 @@ import { TCPA_LETTER_BLOCKED_COMPANY_UNIDENTIFIED } from "@/lib/constants/compan
 import type { Database } from "@/types/database";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { persistRegisteredAgentLookup } from "./persist-registered-agent-lookup";
 import {
   softVerifyCompanyNameWithOpenCorporates,
   type OpenCorporatesSoftVerifyOptions,
@@ -24,12 +25,16 @@ export type PersistUserCompanyIdentificationParams = {
   claimSubjectId: string;
   companyName: string;
   userStateCode?: string | null;
+  anonymousSessionId?: string | null;
   openCorporates?: OpenCorporatesSoftVerifyOptions;
 };
 
 export type PersistUserCompanyIdentificationResult = {
   verificationStatus: CompanyNameVerificationStatus;
   showUnverifiedWarning: boolean;
+  registeredAgentFound: boolean;
+  registeredAgentManualLookupRequired: boolean;
+  registeredAgentRateLimited: boolean;
 };
 
 /**
@@ -121,9 +126,21 @@ export async function persistUserCompanyIdentification(
     throw insertError;
   }
 
+  const ra = await persistRegisteredAgentLookup(admin, {
+    claimId: params.claimId,
+    claimSubjectId: params.claimSubjectId,
+    companyName,
+    userStateCode: params.userStateCode,
+    anonymousSessionId: params.anonymousSessionId,
+    lookup: params.openCorporates,
+  });
+
   return {
     verificationStatus: verification.status,
     showUnverifiedWarning: verification.status === "user_input_unverified",
+    registeredAgentFound: ra.found,
+    registeredAgentManualLookupRequired: ra.manualLookupRequired,
+    registeredAgentRateLimited: ra.rateLimited,
   };
 }
 
