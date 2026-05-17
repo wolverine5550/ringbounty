@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-17 (Phase 7.3 — Screen 2 stop request / willful)
+
+- **§7.3:** Step 2 on [`/qualify/[claimSubjectId]?step=2`](src/app/(post-check)/qualify/[claimSubjectId]/page.tsx) — Q4 branches to Q5–Q7 when user asked company to stop ([`Screen2StopRequestForm`](src/components/qualify/screen-2-stop-request-form.tsx), copy [`qualify-screen-2.ts`](src/lib/constants/qualify-screen-2.ts)). [`POST /api/qualify/screen-2`](src/app/api/qualify/screen-2/route.ts) persists `qualification_answer` keys `stop_request_made`, `stop_request_method`, `stop_request_date`, `calls_after_stop_request` and updates `dnc_check_results.internal_dnc_*` ([`screen-2-stop-request.ts`](src/lib/qualify/screen-2-stop-request.ts)).
+
 ## 2026-05-17 (Phase 7.2 — Screen 1 consent / EBR)
 
 - **§7.2:** Step 1 on [`/qualify/[claimSubjectId]?step=1`](src/app/(post-check)/qualify/[claimSubjectId]/page.tsx) — Q1–Q3 yes/no ([`Screen1ConsentForm`](src/components/qualify/screen-1-consent-form.tsx), copy [`qualify-screen-1.ts`](src/lib/constants/qualify-screen-1.ts)). [`POST /api/qualify/screen-1`](src/app/api/qualify/screen-1/route.ts) persists `qualification_answer` keys `gave_direct_consent`, `third_party_consent_possible`, `has_existing_relationship` ([`screen-1-consent.ts`](src/lib/qualify/screen-1-consent.ts)). When Q1 or Q3 is Yes, EBR explainer modal + `ebr_strength_adjustment_*` claim events for scoring / attorney evidence summary.

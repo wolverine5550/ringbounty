@@ -784,16 +784,16 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 7.3 Screen 2 — Stop request / willful
 
-- [ ] **7.3.1** Q4 yes/no → branch.
-- [ ] **7.3.2** Q5 method enum mapped to PRD strings (`verbal`, `text_stop`, etc.).
-- [ ] **7.3.3** Q6 date picker with validation (not future).
-- [ ] **7.3.4** Q7 post-stop calls yes/no.
-- [ ] **7.3.5** Write `internal_dnc_*` fields into `dnc_check_results` row and/or `claim_events` consistently.
+- [x] **7.3.1** Q4 yes/no → branch. <!-- done: `screen-2-stop-request-form.tsx` — No skips Q5–Q7 -->
+- [x] **7.3.2** Q5 method enum mapped to PRD strings (`verbal`, `text_stop`, etc.). <!-- done: `qualify-screen-2.ts` STOP_REQUEST_METHOD_OPTIONS -->
+- [x] **7.3.3** Q6 date picker with validation (not future). <!-- done: `parseStopRequestDate`, input `max=today` -->
+- [x] **7.3.4** Q7 post-stop calls yes/no. <!-- done: `calls_after_stop_request` claim_events -->
+- [x] **7.3.5** Write `internal_dnc_*` fields into `dnc_check_results` row and/or `claim_events` consistently. <!-- done: `screen-2-stop-request.ts` + `POST /api/qualify/screen-2` -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README §7.3 -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG 2026-05-17 §7.3 -->
 
 ### 7.4 Screen 3 — Call details
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Screen1ConsentForm } from "@/components/qualify/screen-1-consent-form";
+import { Screen2StopRequestForm } from "@/components/qualify/screen-2-stop-request-form";
 import {
   QUALIFY_STEP_TITLES,
   QUALIFY_WIZARD_STEP_MAX,
@@ -8,6 +9,7 @@ import {
 } from "@/lib/qualify/constants";
 import { buildQualifyPageHref } from "@/lib/qualify/qualify-step";
 import type { QualifyScreen1Answers } from "@/lib/qualify/screen-1-consent";
+import type { QualifyScreen2Answers } from "@/lib/qualify/screen-2-stop-request";
 
 export type QualifyWizardShellProps = {
   claimSubjectId: string;
@@ -15,6 +17,8 @@ export type QualifyWizardShellProps = {
   step: QualifyWizardStep;
   /** Loaded from `claim_events` when step is 1 (§7.2). */
   screen1Initial?: QualifyScreen1Answers | null;
+  /** Loaded from `claim_events` when step is 2 (§7.3). */
+  screen2Initial?: QualifyScreen2Answers | null;
 };
 
 /**
@@ -25,6 +29,7 @@ export function QualifyWizardShell({
   claimId,
   step,
   screen1Initial = null,
+  screen2Initial = null,
 }: QualifyWizardShellProps) {
   const title = QUALIFY_STEP_TITLES[step];
   const prevStep = step > 1 ? ((step - 1) as QualifyWizardStep) : null;
@@ -42,6 +47,12 @@ export function QualifyWizardShell({
           claimSubjectId={claimSubjectId}
           claimId={claimId}
           initialAnswers={screen1Initial}
+        />
+      ) : step === 2 ? (
+        <Screen2StopRequestForm
+          claimSubjectId={claimSubjectId}
+          claimId={claimId}
+          initialAnswers={screen2Initial}
         />
       ) : (
         <p className="text-muted-foreground text-sm">
@@ -66,7 +77,7 @@ export function QualifyWizardShell({
             Previous step
           </Link>
         ) : null}
-        {nextStep && step !== 1 ? (
+        {nextStep && step !== 1 && step !== 2 ? (
           <Link
             className="text-primary text-sm underline underline-offset-2"
             href={buildQualifyPageHref({

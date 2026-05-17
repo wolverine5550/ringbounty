@@ -22,6 +22,7 @@ import {
   resolveQualifyWizardStep,
 } from "@/lib/qualify/qualify-step";
 import { loadQualifyScreen1Answers } from "@/lib/qualify/screen-1-consent";
+import { loadQualifyScreen2Answers } from "@/lib/qualify/screen-2-stop-request";
 import { createClient } from "@/lib/supabase/server";
 
 type QualifyPageProps = {
@@ -156,6 +157,10 @@ export default async function QualifyPage({
     wizardStep === 1
       ? await loadQualifyScreen1Answers(supabase, claimId)
       : null;
+  const screen2Initial =
+    wizardStep === 2
+      ? await loadQualifyScreen2Answers(supabase, claimId)
+      : null;
 
   return (
     <QualifyPageLayout
@@ -170,6 +175,7 @@ export default async function QualifyPage({
         claimId={claimId}
         step={wizardStep}
         screen1Initial={screen1Initial}
+        screen2Initial={screen2Initial}
       />
     </QualifyPageLayout>
   );
