@@ -1,3 +1,6 @@
+import { Suspense } from "react";
+
+import { PostCheckPageFallback } from "@/components/post-check/post-check-page-fallback";
 import { enforcePostCheckAccess } from "@/lib/claims/enforce-post-check-access";
 import { LETTER_PATH_PREFIX } from "@/lib/claims/gated-routes";
 
@@ -6,8 +9,19 @@ type LetterPageProps = {
   searchParams: Promise<{ claim?: string }>;
 };
 
-/** Placeholder letter routes (Phase 9–10). */
-export default async function LetterPage({ params, searchParams }: LetterPageProps) {
+/**
+ * Placeholder letter routes (Phase 9–10).
+ * Sync shell — runtime access runs inside `<Suspense>` (Next.js 16 Cache Components).
+ */
+export default function LetterPage({ params, searchParams }: LetterPageProps) {
+  return (
+    <Suspense fallback={<PostCheckPageFallback />}>
+      <LetterPageContent params={params} searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function LetterPageContent({ params, searchParams }: LetterPageProps) {
   const { slug } = await params;
   const { claim } = await searchParams;
   const suffix = slug?.length ? slug.join("/") : "";

@@ -96,6 +96,27 @@ The app’s root [`proxy.ts`](proxy.ts) refreshes the session (see [`src/lib/sup
 | [`/privacy`](src/app/privacy/page.tsx) | Plain-English privacy policy (collection, retention, third parties, CCPA, anonymous vs signed-in lifecycle). |
 | [`/terms`](src/app/terms/page.tsx) | Terms of service (eligibility 18+, acceptable use, liability draft) — **TODO §3.7:** attorney lead-sharing terms. |
 
+### SEO landing pages (Phase §11.2)
+
+| Route | Purpose |
+|-------|---------|
+| [`/tcpa-violation-checker`](src/app/tcpa-violation-checker/page.tsx) | Primary TCPA screening landing (FAQ JSON-LD) |
+| [`/spam-call-compensation`](src/app/spam-call-compensation/page.tsx) | Statutory damages framing |
+| [`/do-not-call-registry-violation`](src/app/do-not-call-registry-violation/page.tsx) | DNC / registry framing |
+| [`/robocall-lawsuit`](src/app/robocall-lawsuit/page.tsx) | Lawsuit / attorney discussion framing |
+
+`/tcpa-demand-letter` **301** → `/tcpa-violation-checker` (no DIY letter promise). Copy: [`seo-landing-pages.ts`](src/lib/marketing/seo-landing-pages.ts). Footer **Resources** links in [`marketing-page-footer.tsx`](src/components/marketing/marketing-page-footer.tsx).
+
+### SEO URL strategy & technical SEO (Phase §11.1, §11.4)
+
+| Piece | Location |
+|-------|----------|
+| URL policy | [`docs/seo.md`](docs/seo.md) — company pages `/{slug}-spam-calls` (§11.3 content deferred) |
+| Company template | [`src/app/[slug]/page.tsx`](src/app/[slug]/page.tsx) + [`company-pages.ts`](src/lib/seo/company-pages.ts) |
+| Sitemap / robots | [`sitemap.ts`](src/app/sitemap.ts), [`robots.ts`](src/app/robots.ts) |
+| Canonical helpers | [`canonical-metadata.ts`](src/lib/seo/canonical-metadata.ts), [`site-url.ts`](src/lib/seo/site-url.ts) |
+| Env | `NEXT_PUBLIC_SITE_URL` (see [`.env.example`](.env.example)) |
+
 Shared copy lives in [`src/lib/marketing/`](src/lib/marketing/) (`constants.ts`, `faq.ts`, `privacy.ts`, `terms.ts`). The PRD §3 disclaimer is rendered by [`DisclaimerBanner`](src/components/marketing/disclaimer-banner.tsx) (global site footer, marketing pages, [`/check` layout](src/app/check/layout.tsx), [`(post-check)` layout](src/app/(post-check)/layout.tsx), and [`/protected`](src/app/protected/protected-shell-with-auth.tsx)). `/guide` will reuse the same component when Phase 10 ships.
 
 Marketing UI: [`src/components/marketing/`](src/components/marketing/). Unauthenticated access to marketing routes is allowed via [`isPublicMarketingPath`](src/lib/marketing/public-routes.ts) in [`src/lib/supabase/proxy.ts`](src/lib/supabase/proxy.ts).
@@ -208,8 +229,9 @@ Expected: `{"claim_id":"<uuid>"}`. Route handlers must not set `export const run
 
 | Name | Purpose |
 |------|---------|
-| `VERCEL_URL` | Hostname for the current deployment; the starter template uses it to build default URLs when present. |
-| `VERCEL_ENV` | `development`, `preview`, or `production` on Vercel. |
+| `NEXT_PUBLIC_SITE_URL` | Canonical public origin for sitemap, `metadataBase`, and canonical links (e.g. `https://ringbounty.com`). Preferred over `VERCEL_URL` (§11.4). |
+| `VERCEL_URL` | Hostname for the current deployment; fallback for `metadataBase` when `NEXT_PUBLIC_SITE_URL` is unset. |
+| `VERCEL_ENV` | `development`, `preview`, or `production` on Vercel. Preview sets `robots.txt` to `disallow: /` (§11.4.2). |
 | `VERCEL_PROJECT_PRODUCTION_URL` | Canonical production hostname on Vercel. |
 
 ### Planned integrations (names only; not required for the baseline app)
@@ -331,6 +353,8 @@ This app ships on **Next.js 16.2.x** with **Cache Components** enabled. Request-
 
 - **[`/login`](src/app/login/page.tsx)** — Sync page component; `<Suspense>` wraps `searchParams.then(({ next }) => …)` so the magic-link form receives `next` without blocking the segment. **[`src/app/login/loading.tsx`](src/app/login/loading.tsx)** provides the route `loading` fallback.
 - **[`/protected`](src/app/protected/layout.tsx)** — Layout wraps **[`ProtectedShellWithAuth`](src/app/protected/protected-shell-with-auth.tsx)** (which calls `requireUser()` → Supabase server client → `cookies()`) in `<Suspense>` with a shell fallback. **[`src/app/protected/loading.tsx`](src/app/protected/loading.tsx)** covers the segment during navigation.
+- **Post-check funnel** ([`/results`](src/app/(post-check)/results/page.tsx), [`/qualify/...`](src/app/(post-check)/qualify/[claimSubjectId]/page.tsx), [`/letter/...`](src/app/(post-check)/letter/[[...slug]]/page.tsx), [`/summary`](src/app/(post-check)/summary/page.tsx)) — Sync page shell + inner async component inside `<Suspense>` so [`enforcePostCheckAccess`](src/lib/claims/enforce-post-check-access.ts) (`cookies()`) does not block the static shell. Segment fallback: [`src/app/(post-check)/loading.tsx`](src/app/(post-check)/loading.tsx).
+- **[`/[slug]`](src/app/[slug]/page.tsx)** (company SEO, §11.3) — `connection()` + `<Suspense>` until `COMPANY_SEO_PAGES` has entries (Cache Components forbids empty `generateStaticParams`).
 
 After changing these files, **restart `npm run dev`** if Turbopack still shows a stale stack trace.
 

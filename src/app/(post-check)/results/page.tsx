@@ -1,3 +1,7 @@
+import type { Metadata } from "next";
+import { Suspense } from "react";
+
+import { PostCheckPageFallback } from "@/components/post-check/post-check-page-fallback";
 import { AttorneyReferralCta } from "@/components/results/attorney-referral-cta";
 import { EmailCaptureModal } from "@/components/email-capture-modal";
 import { ResultsIneligiblePanel } from "@/components/results/results-ineligible-panel";
@@ -8,16 +12,35 @@ import { SolWarningBanner } from "@/components/results/sol-warning-banner";
 import { enforcePostCheckAccess } from "@/lib/claims/enforce-post-check-access";
 import { loadResultsPageContext } from "@/lib/claims/load-results-page-context";
 import { RESULTS_PATH } from "@/lib/claims/gated-routes";
+import { buildCanonicalMetadata } from "@/lib/seo/canonical-metadata";
 import { createClient } from "@/lib/supabase/server";
 
 type ResultsPageProps = {
   searchParams: Promise<{ claim?: string }>;
 };
 
+/** Canonical `/results` without `?claim=` query variants (§11.4.3). */
+export function generateMetadata(): Metadata {
+  return buildCanonicalMetadata({
+    pathname: RESULTS_PATH,
+    title: "Your results",
+    noIndex: true,
+  });
+}
+
 /**
  * Post-qualify results (Phase 7.7 / 8.4). Strength, valuation, and attorney CTA.
+ * Sync shell — runtime access runs inside `<Suspense>` (Next.js 16 Cache Components).
  */
-export default async function ResultsPage({ searchParams }: ResultsPageProps) {
+export default function ResultsPage({ searchParams }: ResultsPageProps) {
+  return (
+    <Suspense fallback={<PostCheckPageFallback />}>
+      <ResultsPageContent searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function ResultsPageContent({ searchParams }: ResultsPageProps) {
   const { claim: claimId } = await searchParams;
   await enforcePostCheckAccess({
     returnPath: RESULTS_PATH,

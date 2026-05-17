@@ -3,6 +3,7 @@ import Link from "next/link";
 import { DisclaimerBanner } from "@/components/marketing/disclaimer-banner";
 import { Button } from "@/components/ui/button";
 import { COPYRIGHT_YEAR, SITE_NAME } from "@/lib/marketing/constants";
+import { SEO_RESOURCE_LINKS } from "@/lib/marketing/seo-landing-pages";
 
 const FOOTER_COLUMNS = [
   {
@@ -12,6 +13,10 @@ const FOOTER_COLUMNS = [
       { href: "/how-it-works", label: "How it works" },
       { href: "/faq", label: "FAQ" },
     ],
+  },
+  {
+    title: "Resources",
+    links: SEO_RESOURCE_LINKS,
   },
   {
     title: "Legal",
@@ -33,8 +38,8 @@ export function MarketingPageFooter() {
           <div className="flex flex-col gap-3 lg:col-span-2">
             <p className="text-sm font-semibold">{SITE_NAME}</p>
             <p className="text-muted-foreground max-w-md text-xs leading-relaxed">
-              Informational TCPA screening and DIY demand-letter tools for U.S.
-              consumers. Not a law firm.
+              Informational TCPA screening and optional attorney introductions for
+              U.S. consumers. Not a law firm.
             </p>
           </div>
           {FOOTER_COLUMNS.map((column) => (

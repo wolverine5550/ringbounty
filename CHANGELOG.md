@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-05-17 (Phase 11 — SEO landings, URL strategy, technical SEO)
+
+- **§11.1:** Canonical company URL `/{slug}-spam-calls` documented in [`docs/seo.md`](docs/seo.md). Legacy `/:company-*-spam-calls-compensation` and `/tcpa-demand-letter` → checker (`next.config.ts` redirects). Dynamic template [`src/app/[slug]/page.tsx`](src/app/[slug]/page.tsx) with `generateMetadata` ([`company-pages.ts`](src/lib/seo/company-pages.ts) registry empty until §11.3).
+- **§11.2:** SEO landing pages — [`/tcpa-violation-checker`](src/app/tcpa-violation-checker/page.tsx), [`/spam-call-compensation`](src/app/spam-call-compensation/page.tsx), [`/do-not-call-registry-violation`](src/app/do-not-call-registry-violation/page.tsx), [`/robocall-lawsuit`](src/app/robocall-lawsuit/page.tsx) ([`seo-landing-pages.ts`](src/lib/marketing/seo-landing-pages.ts), [`SeoLandingPage`](src/components/marketing/seo-landing-page.tsx)); FAQ JSON-LD on checker; footer **Resources** cluster.
+- **§11.4:** [`sitemap.ts`](src/app/sitemap.ts), [`robots.ts`](src/app/robots.ts) (block `VERCEL_ENV=preview`), [`canonical-metadata.ts`](src/lib/seo/canonical-metadata.ts), `NEXT_PUBLIC_SITE_URL` in [`.env.example`](.env.example). Vitest: `company-pages.test.ts`, `site-url.test.ts`, `public-routes.test.ts`.
+
 ## 2026-05-17 (Phase 8.5 — Persist scoring outputs)
 
 - **§8.5:** After qualify completion, [`persistClaimScoring`](src/lib/scoring/persist-claim-scoring.ts) writes `claims.claim_strength` and `estimated_value_*_cents` (conservative low/high + realistic from [`computeValuation`](src/lib/scoring/compute-valuation.ts)); appends `value_calculated` audit rows ([`scoring-claim-events.ts`](src/lib/scoring/scoring-claim-events.ts): strength, violation counts, maximum cents, per-subject matrix JSON) and `scoring_status=complete`. Wired on [`POST /api/qualify/screen-5`](src/app/api/qualify/screen-5/route.ts); backfill on `/results` when strength was null. Shared compute: [`computeClaimScoring`](src/lib/scoring/compute-claim-scoring.ts). Vitest: `compute-claim-scoring.test.ts`, `persist-claim-scoring.test.ts`.

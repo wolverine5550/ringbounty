@@ -1,5 +1,7 @@
 import { notFound, redirect } from "next/navigation";
+import { Suspense } from "react";
 
+import { PostCheckPageFallback } from "@/components/post-check/post-check-page-fallback";
 import { FederalDncAttestationForm } from "@/components/qualify/federal-dnc-attestation-form";
 import { QualifyWizardShell } from "@/components/qualify/qualify-wizard-shell";
 import { StateDncComingSoon } from "@/components/qualify/state-dnc-coming-soon";
@@ -35,8 +37,17 @@ type QualifyPageProps = {
 
 /**
  * Qualify entry — §7.1 routing: federal DNC pre-gate, then wizard screens 1–5 via `?step=`.
+ * Sync shell — runtime access runs inside `<Suspense>` (Next.js 16 Cache Components).
  */
-export default async function QualifyPage({
+export default function QualifyPage({ params, searchParams }: QualifyPageProps) {
+  return (
+    <Suspense fallback={<PostCheckPageFallback />}>
+      <QualifyPageContent params={params} searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function QualifyPageContent({
   params,
   searchParams,
 }: QualifyPageProps) {

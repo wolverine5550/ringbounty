@@ -2,17 +2,14 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { SiteShell } from "@/components/layout/site-shell";
+import { getSiteOrigin } from "@/lib/seo/site-url";
 import "./globals.css";
 
-const defaultUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
-
 export const metadata: Metadata = {
-  metadataBase: new URL(defaultUrl),
+  metadataBase: new URL(getSiteOrigin()),
   title: "RingBounty",
   description:
-    "TCPA demand-letter tooling and claim workflows built on Next.js and Supabase.",
+    "Informational TCPA screening, claim strength estimates, and optional attorney introductions.",
 };
 
 const geistSans = Geist({

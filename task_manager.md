@@ -1057,28 +1057,28 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 11.1 URL strategy
 
-- [ ] **11.1.1** Decide canonical company URL pattern; document in `README.md` or `docs/seo.md`.
-- [ ] **11.1.2** Implement `next.config` redirects from legacy pattern if PRD alternate URLs were published.
-- [ ] **11.1.3** Use `generateMetadata` for dynamic `[company]` route if using template.
+- [x] **11.1.1** Decide canonical company URL pattern; document in `README.md` or `docs/seo.md`. <!-- done: `/{slug}-spam-calls` in `docs/seo.md` -->
+- [x] **11.1.2** Implement `next.config` redirects from legacy pattern if PRD alternate URLs were published. <!-- done: `/tcpa-demand-letter`, `/:company-*-spam-calls-compensation` → canonical in `next.config.ts` -->
+- [x] **11.1.3** Use `generateMetadata` for dynamic `[company]` route if using template. <!-- done: `src/app/[slug]/page.tsx` + `company-pages.ts` registry (empty until §11.3) -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README §11 -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG 2026-05-17 §11 -->
 
 ### 11.2 Core SEO landing pages
 
-- [ ] **11.2.1** `/tcpa-violation-checker` — unique H1, intro, CTA, FAQ schema optional.
-- [ ] **11.2.2** `/spam-call-compensation`
-- [ ] **11.2.3** `/do-not-call-registry-violation`
-- [ ] **11.2.4** `/robocall-lawsuit`
-- [ ] **11.2.5** `/tcpa-demand-letter` — **Repurpose or 301** to attorney-referral / checker landing (no DIY letter promise).
-- [ ] **11.2.6** Cross-link cluster in footer “Resources”.
+- [x] **11.2.1** `/tcpa-violation-checker` — unique H1, intro, CTA, FAQ schema optional. <!-- done: `seo-landing-pages.ts`, FAQ JSON-LD on checker -->
+- [x] **11.2.2** `/spam-call-compensation` <!-- done -->
+- [x] **11.2.3** `/do-not-call-registry-violation` <!-- done -->
+- [x] **11.2.4** `/robocall-lawsuit` <!-- done -->
+- [x] **11.2.5** `/tcpa-demand-letter` — **Repurpose or 301** to attorney-referral / checker landing (no DIY letter promise). <!-- done: 301 → `/tcpa-violation-checker` -->
+- [x] **11.2.6** Cross-link cluster in footer “Resources”. <!-- done: `marketing-page-footer.tsx` -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done -->
 
 ### 11.3 Company-specific pages (10)
 
@@ -1093,14 +1093,14 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 11.4 Technical SEO
 
-- [ ] **11.4.1** `app/sitemap.ts` returning static + company routes.
-- [ ] **11.4.2** `app/robots.ts` allowing production crawl; block staging.
-- [ ] **11.4.3** `canonical` URLs in metadata for pages with query variants.
+- [x] **11.4.1** `app/sitemap.ts` returning static + company routes. <!-- done: `sitemap.ts`, `sitemap-routes.ts` -->
+- [x] **11.4.2** `app/robots.ts` allowing production crawl; block staging. <!-- done: `robots.ts`, `isSeoStagingEnvironment()` -->
+- [x] **11.4.3** `canonical` URLs in metadata for pages with query variants. <!-- done: `canonical-metadata.ts`, SEO pages, `/results` noindex + canonical -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done -->
 
 ---
 
