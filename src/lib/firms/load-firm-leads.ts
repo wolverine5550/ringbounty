@@ -5,7 +5,8 @@ import type { Database } from "@/types/database";
 import type { FirmLeadListRow } from "./apply-firm-lead-filters";
 
 type LeadUserJoin = {
-  state: string | null;
+  email: string;
+  full_name: string | null;
 };
 
 type LeadSelectRow = {
@@ -17,11 +18,14 @@ type LeadSelectRow = {
   violation_type: string;
   assigned_firm_id: string | null;
   created_at: string;
+  consumer_state: string | null;
+  evidence_pdf_url: string | null;
   users: LeadUserJoin | LeadUserJoin[] | null;
 };
 
 /**
  * Loads leads visible to the firm via RLS (pool + assigned).
+ * Consumer PII (email, name) is available only after paid accept (§13.5.2 RLS).
  */
 export async function loadFirmLeads(
   supabase: SupabaseClient<Database>,
@@ -29,7 +33,7 @@ export async function loadFirmLeads(
   const { data, error } = await supabase
     .from("leads")
     .select(
-      "id, status, claim_strength, estimated_value_realistic_cents, estimated_value_low_cents, violation_type, assigned_firm_id, created_at, users!inner(state)",
+      "id, status, claim_strength, estimated_value_realistic_cents, estimated_value_low_cents, violation_type, assigned_firm_id, created_at, consumer_state, evidence_pdf_url, users(email, full_name)",
     )
     .order("created_at", { ascending: false })
     .limit(200);
@@ -51,7 +55,10 @@ export async function loadFirmLeads(
       violation_type: typed.violation_type,
       assigned_firm_id: typed.assigned_firm_id,
       created_at: typed.created_at,
-      consumer_state: userJoin?.state ?? null,
+      consumer_state: typed.consumer_state ?? null,
+      consumer_email: userJoin?.email ?? null,
+      consumer_full_name: userJoin?.full_name ?? null,
+      evidence_pdf_url: typed.evidence_pdf_url,
     };
   });
 }

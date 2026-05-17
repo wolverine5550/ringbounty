@@ -13,6 +13,9 @@ const sample: FirmLeadListRow[] = [
     assigned_firm_id: null,
     created_at: "2026-05-17T00:00:00Z",
     consumer_state: "TX",
+    consumer_email: null,
+    consumer_full_name: null,
+    evidence_pdf_url: null,
   },
   {
     id: "2",
@@ -24,6 +27,9 @@ const sample: FirmLeadListRow[] = [
     assigned_firm_id: null,
     created_at: "2026-05-17T01:00:00Z",
     consumer_state: "CA",
+    consumer_email: null,
+    consumer_full_name: null,
+    evidence_pdf_url: null,
   },
 ];
 

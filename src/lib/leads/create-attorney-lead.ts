@@ -125,6 +125,16 @@ export async function createAttorneyLead(
     return { status: "already_submitted", leadId: existingLead.id };
   }
 
+  const { data: profile, error: profileError } = await userSupabase
+    .from("users")
+    .select("state")
+    .eq("id", input.userId)
+    .maybeSingle();
+
+  if (profileError) {
+    throw profileError;
+  }
+
   const { data: inserted, error: insertError } = await admin
     .from("leads")
     .insert({
@@ -136,6 +146,7 @@ export async function createAttorneyLead(
       estimated_value_low_cents: claim.estimated_value_low_cents,
       estimated_value_high_cents: claim.estimated_value_high_cents,
       estimated_value_realistic_cents: claim.estimated_value_realistic_cents,
+      consumer_state: profile?.state ?? null,
     })
     .select("id")
     .single();

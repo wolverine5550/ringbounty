@@ -1216,14 +1216,14 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 13.5 Lead accept and payment *(v0.2)*
 
-- [ ] **13.5.1** “Accept” button: create PaymentIntent with **application fee** or destination charge to firm Connect account per decision.
-- [ ] **13.5.2** On `payment_intent.succeeded`: set `leads.status = accepted`, timestamps; unlock consumer PII to firm row visibility policy.
-- [ ] **13.5.3** “Decline” flow: status + optional reason; hide from firm list.
+- [x] **13.5.1** “Accept” button: create PaymentIntent with **application fee** or destination charge to firm Connect account per decision. <!-- done: **direct charge** on Express Connect + `application_fee_amount` = full lead fee; Checkout session — `create-lead-accept-checkout-session.ts`, `POST /api/firms/leads/[leadId]/accept` -->
+- [x] **13.5.2** On `payment_intent.succeeded`: set `leads.status = accepted`, timestamps; unlock consumer PII to firm row visibility policy. <!-- done: webhook handler `handle-lead-accept-payment-intent.ts`, `finalize-lead-accept-payment.ts`; RLS `users_select_for_firm_assigned_lead`, `claim_subjects_select_for_firm_assigned_lead` -->
+- [x] **13.5.3** “Decline” flow: status + optional reason; hide from firm list. <!-- done: `firm_lead_declines` + `decline-firm-lead.ts`, `POST /api/firms/leads/[leadId]/decline`, pool RLS excludes declined -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README §13.5 -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG 2026-05-17 §13.5 -->
 
 ### 13.6 Firm status updates → user visibility
 

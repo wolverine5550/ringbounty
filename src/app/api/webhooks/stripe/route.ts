@@ -2,6 +2,10 @@ import { type NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 
 import { createStripeClient, StripeNotConfiguredError } from "@/lib/stripe/client";
+import {
+  handleLeadAcceptPaymentIntentFailed,
+  handleLeadAcceptPaymentIntentSucceeded,
+} from "@/lib/stripe/connect/handle-lead-accept-payment-intent";
 import { syncConnectAccountFromStripe } from "@/lib/stripe/connect/sync-connect-account-from-stripe";
 import {
   createAdminClient,
@@ -9,7 +13,7 @@ import {
 } from "@/lib/supabase/admin";
 
 /**
- * Phase 13.3.3 — Stripe webhooks (`account.updated` → `law_firms` Connect flags).
+ * Stripe webhooks — Connect `account.updated` (§13.3.3), lead accept `payment_intent.*` (§13.5.2).
  */
 export async function POST(request: NextRequest) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
@@ -38,18 +42,32 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
-  if (event.type === "account.updated") {
-    const account = event.data.object as Stripe.Account;
-    try {
-      const admin = createAdminClient();
+  try {
+    const admin = createAdminClient();
+
+    if (event.type === "account.updated") {
+      const account = event.data.object as Stripe.Account;
       await syncConnectAccountFromStripe(admin, account);
-    } catch (e) {
-      if (e instanceof SupabaseAdminKeyMissingError) {
-        return NextResponse.json({ error: "Database admin not configured" }, { status: 503 });
-      }
-      console.error("Stripe account.updated handler failed", e);
-      return NextResponse.json({ error: "Handler failed" }, { status: 500 });
     }
+
+    if (event.type === "payment_intent.succeeded") {
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
+      await handleLeadAcceptPaymentIntentSucceeded(admin, paymentIntent);
+    }
+
+    if (
+      event.type === "payment_intent.payment_failed" ||
+      event.type === "payment_intent.canceled"
+    ) {
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
+      await handleLeadAcceptPaymentIntentFailed(admin, paymentIntent);
+    }
+  } catch (e) {
+    if (e instanceof SupabaseAdminKeyMissingError) {
+      return NextResponse.json({ error: "Database admin not configured" }, { status: 503 });
+    }
+    console.error("Stripe webhook handler failed", event.type, e);
+    return NextResponse.json({ error: "Handler failed" }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });

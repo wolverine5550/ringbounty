@@ -15,11 +15,19 @@ export default async function FirmLeadsPage({ searchParams }: FirmLeadsPageProps
   const rows = await loadFirmLeads(supabase);
   const filters = parseFirmLeadFilters(await searchParams);
 
+  const { data: firm } = await supabase
+    .from("law_firms")
+    .select("lead_fee_cents, stripe_connect_charges_enabled")
+    .eq("id", membership.firmId)
+    .maybeSingle();
+
   return (
     <FirmLeadsDashboard
       firmId={membership.firmId}
       initialRows={rows}
       filters={filters}
+      leadFeeCents={firm?.lead_fee_cents ?? null}
+      stripeChargesEnabled={firm?.stripe_connect_charges_enabled ?? false}
     />
   );
 }

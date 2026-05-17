@@ -249,6 +249,45 @@ export type Database = {
           },
         ]
       }
+      firm_lead_declines: {
+        Row: {
+          created_at: string
+          firm_id: string
+          id: string
+          lead_id: string
+          reason: string | null
+        }
+        Insert: {
+          created_at?: string
+          firm_id: string
+          id?: string
+          lead_id: string
+          reason?: string | null
+        }
+        Update: {
+          created_at?: string
+          firm_id?: string
+          id?: string
+          lead_id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "firm_lead_declines_firm_id_fkey"
+            columns: ["firm_id"]
+            isOneToOne: false
+            referencedRelation: "law_firms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "firm_lead_declines_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       firm_users: {
         Row: {
           auth_user_id: string | null
@@ -339,6 +378,7 @@ export type Database = {
           claim_id: string
           claim_strength: string | null
           closed_at: string | null
+          consumer_state: string | null
           contacted_at: string | null
           created_at: string
           estimated_value_high_cents: number | null
@@ -359,6 +399,7 @@ export type Database = {
           claim_id: string
           claim_strength?: string | null
           closed_at?: string | null
+          consumer_state?: string | null
           contacted_at?: string | null
           created_at?: string
           estimated_value_high_cents?: number | null
@@ -379,6 +420,7 @@ export type Database = {
           claim_id?: string
           claim_strength?: string | null
           closed_at?: string | null
+          consumer_state?: string | null
           contacted_at?: string | null
           created_at?: string
           estimated_value_high_cents?: number | null

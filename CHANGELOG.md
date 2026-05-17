@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-05-17 (Phase 13.5 — Lead accept and payment)
+
+- **§13.5.1:** Accept button → Stripe Checkout on firm Connect account ([`create-lead-accept-checkout-session.ts`](src/lib/stripe/connect/create-lead-accept-checkout-session.ts)); direct charge with `application_fee_amount` (platform lead fee). APIs: [`POST /api/firms/leads/[leadId]/accept`](src/app/api/firms/leads/[leadId]/accept/route.ts), [`release-payment`](src/app/api/firms/leads/[leadId]/release-payment/route.ts) on cancel.
+- **§13.5.2:** Webhook `payment_intent.succeeded` / failed → [`finalize-lead-accept-payment.ts`](src/lib/firms/finalize-lead-accept-payment.ts) / [`release-lead-payment-lock.ts`](src/lib/firms/release-lead-payment-lock.ts). RLS unlocks consumer email/name and claim subjects for assigned accepted leads ([`20260517220000_firm_lead_accept_decline.sql`](supabase/migrations/20260517220000_firm_lead_accept_decline.sql)).
+- **§13.5.3:** Decline with optional reason → `firm_lead_declines`; pool RLS excludes declined rows per firm ([`decline-firm-lead.ts`](src/lib/firms/decline-firm-lead.ts)).
+- Firm inbox UI: Accept / Decline actions, contact column after paid accept ([`firm-lead-row-actions.tsx`](src/components/firms/firm-lead-row-actions.tsx), [`firm-leads-table.tsx`](src/components/firms/firm-leads-table.tsx)).
+
 ## 2026-05-17 (Phase 13.4 — Firm dashboard app)
 
 - **§13.4.1:** Firm portal routes under `/firms/*` in the same Next.js app; optional `firms.*` hostname rewrite via [`apply-firm-portal-proxy.ts`](src/lib/firms/apply-firm-portal-proxy.ts) + [`firm-portal-host.ts`](src/lib/firms/firm-portal-host.ts).

@@ -1,3 +1,6 @@
+import Link from "next/link";
+
+import { FirmLeadRowActions } from "@/components/firms/firm-lead-row-actions";
 import type { FirmLeadListRow } from "@/lib/firms/apply-firm-lead-filters";
 
 function formatUsd(cents: number | null): string {
@@ -12,9 +15,16 @@ function formatUsd(cents: number | null): string {
 type FirmLeadsTableProps = {
   rows: FirmLeadListRow[];
   firmId: string;
+  leadFeeCents: number | null;
+  stripeChargesEnabled: boolean;
 };
 
-export function FirmLeadsTable({ rows, firmId }: FirmLeadsTableProps) {
+export function FirmLeadsTable({
+  rows,
+  firmId,
+  leadFeeCents,
+  stripeChargesEnabled,
+}: FirmLeadsTableProps) {
   if (rows.length === 0) {
     return (
       <p className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
@@ -26,7 +36,7 @@ export function FirmLeadsTable({ rows, firmId }: FirmLeadsTableProps) {
 
   return (
     <div className="overflow-x-auto rounded-lg border">
-      <table className="w-full min-w-[720px] text-left text-sm">
+      <table className="w-full min-w-[960px] text-left text-sm">
         <thead className="border-b bg-muted/40 text-xs uppercase text-muted-foreground">
           <tr>
             <th className="px-3 py-2">Created</th>
@@ -34,7 +44,9 @@ export function FirmLeadsTable({ rows, firmId }: FirmLeadsTableProps) {
             <th className="px-3 py-2">Strength</th>
             <th className="px-3 py-2">Est. value</th>
             <th className="px-3 py-2">Status</th>
+            <th className="px-3 py-2">Contact</th>
             <th className="px-3 py-2">Source</th>
+            <th className="px-3 py-2 text-right">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -44,6 +56,8 @@ export function FirmLeadsTable({ rows, firmId }: FirmLeadsTableProps) {
               row.estimated_value_low_cents;
             const isAssigned = row.assigned_firm_id === firmId;
             const isPool = row.assigned_firm_id == null;
+            const showPii =
+              isAssigned && row.status === "accepted" && row.consumer_email;
 
             return (
               <tr key={row.id} className="border-b last:border-0">
@@ -57,6 +71,26 @@ export function FirmLeadsTable({ rows, firmId }: FirmLeadsTableProps) {
                 <td className="px-3 py-2">{formatUsd(value)}</td>
                 <td className="px-3 py-2 capitalize">{row.status}</td>
                 <td className="px-3 py-2">
+                  {showPii ? (
+                    <div className="space-y-0.5">
+                      <p>{row.consumer_full_name ?? "—"}</p>
+                      <p className="text-muted-foreground">{row.consumer_email}</p>
+                      {row.evidence_pdf_url ? (
+                        <Link
+                          href={row.evidence_pdf_url}
+                          className="text-xs underline"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Evidence PDF
+                        </Link>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">After accept</span>
+                  )}
+                </td>
+                <td className="px-3 py-2">
                   {isAssigned ? (
                     <span className="text-emerald-700 dark:text-emerald-400">
                       Assigned to you
@@ -66,6 +100,15 @@ export function FirmLeadsTable({ rows, firmId }: FirmLeadsTableProps) {
                   ) : (
                     <span className="text-muted-foreground">Other</span>
                   )}
+                </td>
+                <td className="px-3 py-2 text-right">
+                  <FirmLeadRowActions
+                    leadId={row.id}
+                    isPool={isPool}
+                    status={row.status}
+                    leadFeeCents={leadFeeCents}
+                    stripeChargesEnabled={stripeChargesEnabled}
+                  />
                 </td>
               </tr>
             );
