@@ -6,6 +6,9 @@
 /** Full results view — blocked for anonymous successful-query state. */
 export const RESULTS_PATH = "/results";
 
+/** Attorney expectation + consent before `leads` insert (Phase 13.1). */
+export const ATTORNEY_CONNECT_PATH = "/attorney-connect";
+
 /** Multi-subject summary before letter purchase. */
 export const SUMMARY_PATH = "/summary";
 
@@ -20,6 +23,7 @@ export const ACCOUNT_REQUIRED_PATH = "/check/account-required";
 
 const GATED_PREFIXES = [
   RESULTS_PATH,
+  ATTORNEY_CONNECT_PATH,
   SUMMARY_PATH,
   QUALIFY_PATH_PREFIX,
   LETTER_PATH_PREFIX,

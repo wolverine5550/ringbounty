@@ -1169,15 +1169,15 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 13.1 Consumer attorney path *(v0.1)*
 
-- [ ] **13.1.1** Results CTA: **“Connect with an attorney — free”** (no DIY letter branch). Shown only when `canReferToAttorney` (§6.6).
-- [ ] **13.1.2** Expectation page: 48h contact, contingency **informational** wording per PRD; clear not legal advice / no guarantee of representation.
-- [ ] **13.1.3** Create `leads` row linked to `claim_id` (+ subject ids); status `new`; trigger evidence PDF job (§13.2).
-- [ ] **13.1.4** Email confirmation to user; optional SMS later.
+- [x] **13.1.1** Results CTA: **“Connect with an attorney — free”** (no DIY letter branch). Shown only when `canReferToAttorney` (§6.6). <!-- done: `AttorneyReferralCta` → `/attorney-connect?claim=` -->
+- [x] **13.1.2** Expectation page: 48h contact, contingency **informational** wording per PRD; clear not legal advice / no guarantee of representation. <!-- done: `(post-check)/attorney-connect/page.tsx`, `attorney-referral-expectations.ts`, `AttorneyConnectForm` -->
+- [x] **13.1.3** Create `leads` row linked to `claim_id` (+ subject ids); status `new`; trigger evidence PDF job (§13.2). <!-- done: `create-attorney-lead.ts`, `POST /api/leads/attorney-referral`, `enqueue-evidence-pdf-job.ts` (queue marker); subject ids on `claim_events` -->
+- [x] **13.1.4** Email confirmation to user; optional SMS later. <!-- done: `send-attorney-referral-confirmation.ts` (Resend when `RESEND_API_KEY`); SMS deferred -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README §13.1 -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG 2026-05-17 §13.1 -->
 
 ### 13.2 Evidence PDF for firms *(v0.1)*
 

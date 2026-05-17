@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-17 (Phase 13.1 — Consumer attorney path)
+
+- **§13.1:** [`/attorney-connect`](src/app/(post-check)/attorney-connect/page.tsx) — 48h contact expectation, informational contingency copy, lead-sharing consent ([`attorney-referral-expectations.ts`](src/lib/constants/attorney-referral-expectations.ts)). [`AttorneyReferralCta`](src/components/results/attorney-referral-cta.tsx) links eligible users from `/results`. [`POST /api/leads/attorney-referral`](src/app/api/leads/attorney-referral/route.ts) enforces [`canReferToAttorney`](src/lib/claims/can-refer-to-attorney.ts), inserts `leads` (`status=new`) with valuation snapshot, records eligible subject ids on `claim_events`, queues evidence PDF job stub ([`enqueue-evidence-pdf-job.ts`](src/lib/leads/enqueue-evidence-pdf-job.ts) → §13.2). Confirmation email via Resend when `RESEND_API_KEY` is set ([`send-attorney-referral-confirmation.ts`](src/lib/leads/send-attorney-referral-confirmation.ts)). Vitest: `create-attorney-lead.test.ts`.
+
 ## 2026-05-17 (Phase 11 — SEO landings, URL strategy, technical SEO)
 
 - **§11.1:** Canonical company URL `/{slug}-spam-calls` documented in [`docs/seo.md`](docs/seo.md). Legacy `/:company-*-spam-calls-compensation` and `/tcpa-demand-letter` → checker (`next.config.ts` redirects). Dynamic template [`src/app/[slug]/page.tsx`](src/app/[slug]/page.tsx) with `generateMetadata` ([`company-pages.ts`](src/lib/seo/company-pages.ts) registry empty until §11.3).

@@ -12,6 +12,7 @@ export const CLAIM_EVENT_TYPE_VALUES = [
   "qualification_answer",
   "value_calculated",
   "evidence_checklist_ack",
+  "attorney_referral",
 ] as const;
 
 export type ClaimEventType = (typeof CLAIM_EVENT_TYPE_VALUES)[number];

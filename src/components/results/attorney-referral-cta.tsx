@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { ATTORNEY_CONNECT_PATH } from "@/lib/claims/gated-routes";
 import {
   ATTORNEY_REFERRAL_CTA_LABEL,
   ATTORNEY_REFERRAL_REASON_CLAIM_INELIGIBLE,
@@ -35,7 +37,7 @@ export type AttorneyReferralCtaProps = {
 /**
  * Phase 8.4.5 — Attorney CTA on `/results` when {@link canReferToAttorney} passes (§6.6).
  * Weak strength requires acknowledgement before enabling the CTA (§8.4.3).
- * Full expectation flow wires in Phase 13.1.
+ * Links to `/attorney-connect` when eligible (Phase 13.1).
  */
 export function AttorneyReferralCta({ context }: AttorneyReferralCtaProps) {
   const requiresWeakAck = context.effectiveClaimStrength === "weak";
@@ -68,12 +70,18 @@ export function AttorneyReferralCta({ context }: AttorneyReferralCtaProps) {
             </div>
           ) : null}
 
-          <Button type="button" disabled={ctaDisabled} aria-describedby="attorney-cta-note">
-            {ATTORNEY_REFERRAL_CTA_LABEL}
+          <Button type="button" disabled={ctaDisabled} asChild={!ctaDisabled}>
+            {ctaDisabled ? (
+              ATTORNEY_REFERRAL_CTA_LABEL
+            ) : (
+              <Link href={`${ATTORNEY_CONNECT_PATH}?claim=${context.claimId}`}>
+                {ATTORNEY_REFERRAL_CTA_LABEL}
+              </Link>
+            )}
           </Button>
           <p className="text-muted-foreground text-xs" id="attorney-cta-note">
-            Attorney matching and lead submission ship in a later phase. Eligibility
-            is based on your qualification answers and claim data.
+            Free introduction to participating attorneys. Eligibility is based on your
+            qualification answers and claim data.
           </p>
         </div>
       ) : (
