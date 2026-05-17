@@ -897,13 +897,13 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 8.5 Persist outputs
 
-- [ ] **8.5.1** Write `claims.claim_strength`, `estimated_*_cents` fields from engine.
-- [ ] **8.5.2** Write detailed `claim_events` rows (`value_calculated` keys) for audit trail.
+- [x] **8.5.1** Write `claims.claim_strength`, `estimated_*_cents` fields from engine. <!-- done: `persist-claim-scoring.ts` on Screen 5 + backfill via `ensureClaimScoringPersisted` on `/results` -->
+- [x] **8.5.2** Write detailed `claim_events` rows (`value_calculated` keys) for audit trail. <!-- done: `scoring-claim-events.ts`, matrix snapshots JSON, `scoring_status=complete` -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README §8.5 -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG 2026-05-17 §8.5 -->
 
 ---
 

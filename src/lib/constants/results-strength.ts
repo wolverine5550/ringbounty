@@ -68,7 +68,7 @@ export const VALUATION_SCENARIO_LABELS = {
 export const VALUATION_INFORMATIONAL_NOTE =
   "These dollar ranges are informational estimates under 47 U.S.C. § 227. They are not a recommended demand amount.";
 
-/** Badge label for aggregate strength when persisted column is still null (§8.5 pending). */
+/** Badge label for aggregate claim strength band. */
 export function formatClaimStrengthBadge(
   strength: ClaimStrengthGate | StrengthMatrixStrength,
 ): string {

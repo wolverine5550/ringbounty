@@ -12,29 +12,17 @@ import { getResultsStrengthDisplay } from "@/lib/constants/results-strength";
 import { loadQualifyScreen1Answers } from "@/lib/qualify/screen-1-consent";
 import { loadQualifyScreen2Answers } from "@/lib/qualify/screen-2-stop-request";
 import { loadQualifyScreen3Answers } from "@/lib/qualify/screen-3-call-details";
-import {
-  aggregateClaimStrength,
-  resolveEffectiveClaimStrength,
-} from "@/lib/scoring/aggregate-claim-strength";
-import {
-  buildStrengthMatrixInput,
-  type DncRowForStrength,
-} from "@/lib/scoring/build-strength-matrix-input";
-import { buildViolationCountInput } from "@/lib/scoring/compute-violation-counts";
-import {
-  computeValuation,
-  type ValuationScenarios,
-} from "@/lib/scoring/compute-valuation";
+import { resolveEffectiveClaimStrength } from "@/lib/scoring/aggregate-claim-strength";
+import { computeClaimScoring } from "@/lib/scoring/compute-claim-scoring";
+import type { DncRowForStrength } from "@/lib/scoring/build-strength-matrix-input";
+import { ensureClaimScoringPersisted } from "@/lib/scoring/persist-claim-scoring";
 import { loadSolFlags } from "@/lib/scoring/load-sol-flags";
 import type { PersistedSolFlags } from "@/lib/scoring/sol-claim-events";
 import {
   buildDncSummary,
   buildSpamSummary,
 } from "@/lib/scoring/subject-evidence-summaries";
-import {
-  computeStrengthMatrix,
-  type StrengthMatrixStrength,
-} from "@/lib/scoring/strength-matrix";
+import type { StrengthMatrixStrength } from "@/lib/scoring/strength-matrix";
 import type { Database } from "@/types/database";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -55,7 +43,7 @@ export type ResultsPageContext = {
   claimId: string;
   effectiveClaimStrength: ClaimStrengthGate;
   strengthDisplay: ReturnType<typeof getResultsStrengthDisplay>;
-  valuation: ValuationScenarios | null;
+  valuation: ReturnType<typeof computeClaimScoring>["valuation"];
   subjects: ResultsSubjectView[];
   anyCanRefer: boolean;
   ineligibleReasons: string[];
@@ -119,6 +107,26 @@ export async function loadResultsPageContext(
     return null;
   }
 
+  const persistedStrength = claim.claim_strength as ClaimStrengthGate;
+
+  await ensureClaimScoringPersisted(supabase, {
+    claimId: claim.id,
+    claimStrength: persistedStrength,
+  });
+
+  const { data: claimAfterScoring, error: claimReloadError } = await supabase
+    .from("claims")
+    .select("claim_strength")
+    .eq("id", claim.id)
+    .maybeSingle();
+
+  if (claimReloadError) {
+    throw claimReloadError;
+  }
+
+  const claimStrengthAfterPersist =
+    (claimAfterScoring?.claim_strength as ClaimStrengthGate) ?? persistedStrength;
+
   const [subjectsResult, dncResult, screen1, screen2, screen3, sol] =
     await Promise.all([
       supabase
@@ -153,43 +161,28 @@ export async function loadResultsPageContext(
     }
   }
 
-  const persistedStrength = claim.claim_strength as ClaimStrengthGate;
-  const perSubjectStrengths: StrengthMatrixStrength[] = [];
-
   const subjectRows = subjectsResult.data ?? [];
-
-  for (const subject of subjectRows) {
-    const matrix = computeStrengthMatrix(
-      buildStrengthMatrixInput({
-        subject,
-        screen1,
-        screen2,
-        screen3,
-        dnc: dncBySubject.get(subject.id) ?? null,
-        sol,
-      }),
-    );
-    perSubjectStrengths.push(matrix.strength);
-  }
+  const scoring = computeClaimScoring({
+    subjects: subjectRows,
+    dncBySubject,
+    screen1,
+    screen2,
+    screen3,
+    sol,
+  });
 
   const effectiveClaimStrength = resolveEffectiveClaimStrength({
-    persisted: persistedStrength,
-    computed: aggregateClaimStrength(perSubjectStrengths),
+    persisted: claimStrengthAfterPersist,
+    computed: scoring.claimStrength,
   });
 
   const claimInput = { claim_strength: effectiveClaimStrength };
 
-  const subjects: ResultsSubjectView[] = subjectRows.map((subject, index) => {
-    const matrix = computeStrengthMatrix(
-      buildStrengthMatrixInput({
-        subject,
-        screen1,
-        screen2,
-        screen3,
-        dnc: dncBySubject.get(subject.id) ?? null,
-        sol,
-      }),
-    );
+  const subjects: ResultsSubjectView[] = scoring.subjects.map((subjectScoring) => {
+    const subject = subjectRows.find((s) => s.id === subjectScoring.subjectId);
+    if (!subject) {
+      throw new Error("Subject row missing after scoring");
+    }
 
     return {
       subjectId: subject.id,
@@ -199,10 +192,8 @@ export async function loadResultsPageContext(
       exemptReason: subject.exempt_reason,
       spamSummary: buildSpamSummary(subject),
       dncSummary: buildDncSummary(dncBySubject.get(subject.id) ?? null),
-      strength: perSubjectStrengths[index] ?? matrix.strength,
-      strengthLabel: getResultsStrengthDisplay(
-        perSubjectStrengths[index] ?? matrix.strength,
-      ).label,
+      strength: subjectScoring.strength,
+      strengthLabel: getResultsStrengthDisplay(subjectScoring.strength).label,
       referral: canReferToAttorney(claimInput, {
         is_exempt: subject.is_exempt,
         company_identified: subject.company_identified,
@@ -210,14 +201,6 @@ export async function loadResultsPageContext(
       }),
     };
   });
-
-  const violationInput = buildViolationCountInput(screen2, screen3);
-  const valuation = violationInput
-    ? computeValuation({
-        ...violationInput,
-        likelyTimeBarred: sol?.likelyTimeBarred ?? false,
-      })
-    : null;
 
   const emailCapture = getEmailCaptureTrigger({
     claim: { claim_strength: effectiveClaimStrength },
@@ -235,7 +218,7 @@ export async function loadResultsPageContext(
     claimId: claim.id,
     effectiveClaimStrength,
     strengthDisplay: getResultsStrengthDisplay(strengthForDisplay),
-    valuation,
+    valuation: scoring.valuation,
     subjects,
     anyCanRefer: subjects.some((s) => s.referral.ok),
     ineligibleReasons: collectIneligibleReasons({

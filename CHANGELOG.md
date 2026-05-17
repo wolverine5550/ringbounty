@@ -1,8 +1,12 @@
 # Changelog
 
+## 2026-05-17 (Phase 8.5 — Persist scoring outputs)
+
+- **§8.5:** After qualify completion, [`persistClaimScoring`](src/lib/scoring/persist-claim-scoring.ts) writes `claims.claim_strength` and `estimated_value_*_cents` (conservative low/high + realistic from [`computeValuation`](src/lib/scoring/compute-valuation.ts)); appends `value_calculated` audit rows ([`scoring-claim-events.ts`](src/lib/scoring/scoring-claim-events.ts): strength, violation counts, maximum cents, per-subject matrix JSON) and `scoring_status=complete`. Wired on [`POST /api/qualify/screen-5`](src/app/api/qualify/screen-5/route.ts); backfill on `/results` when strength was null. Shared compute: [`computeClaimScoring`](src/lib/scoring/compute-claim-scoring.ts). Vitest: `compute-claim-scoring.test.ts`, `persist-claim-scoring.test.ts`.
+
 ## 2026-05-17 (Phase 8.4 — Results UI)
 
-- **§8.4:** [`/results`](src/app/(post-check)/results/page.tsx) — per-subject cards ([`ResultsSubjectCard`](src/components/results/results-subject-card.tsx): spam/DNC summaries, exempt + strength badges), claim-level strength header ([`ResultsStrengthHeader`](src/components/results/results-strength-header.tsx)), three-scenario valuation ([`ResultsValuationPanel`](src/components/results/results-valuation-panel.tsx)), ineligible panel + email capture ([`ResultsIneligiblePanel`](src/components/results/results-ineligible-panel.tsx)), attorney CTA with weak-strength acknowledgement ([`AttorneyReferralCta`](src/components/results/attorney-referral-cta.tsx)). Runtime scoring via [`loadResultsPageContext`](src/lib/claims/load-results-page-context.ts) (matrix + valuation until §8.5 persist). Vitest: `aggregate-claim-strength.test.ts`, `subject-evidence-summaries.test.ts`.
+- **§8.4:** [`/results`](src/app/(post-check)/results/page.tsx) — per-subject cards ([`ResultsSubjectCard`](src/components/results/results-subject-card.tsx): spam/DNC summaries, exempt + strength badges), claim-level strength header ([`ResultsStrengthHeader`](src/components/results/results-strength-header.tsx)), three-scenario valuation ([`ResultsValuationPanel`](src/components/results/results-valuation-panel.tsx)), ineligible panel + email capture ([`ResultsIneligiblePanel`](src/components/results/results-ineligible-panel.tsx)), attorney CTA with weak-strength acknowledgement ([`AttorneyReferralCta`](src/components/results/attorney-referral-cta.tsx)). Scoring via [`loadResultsPageContext`](src/lib/claims/load-results-page-context.ts) + [`computeClaimScoring`](src/lib/scoring/compute-claim-scoring.ts) (persisted §8.5). Vitest: `aggregate-claim-strength.test.ts`, `subject-evidence-summaries.test.ts`.
 
 ## 2026-05-17 (Phase 8.3 — Valuation engine)
 

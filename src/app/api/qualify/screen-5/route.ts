@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { loadResultsAttorneyReferral } from "@/lib/claims/load-results-attorney-referral";
 import { RESULTS_PATH } from "@/lib/claims/gated-routes";
 import { completeQualifyClaim } from "@/lib/qualify/complete-qualify-claim";
+import { persistClaimScoring } from "@/lib/scoring/persist-claim-scoring";
 import { loadQualifyPageContext } from "@/lib/qualify/load-qualify-context";
 import {
   parseQualifyScreen5Body,
@@ -65,6 +66,7 @@ export async function POST(request: NextRequest) {
     });
 
     await completeQualifyClaim(supabase, { claimId: pageContext.claim.id });
+    await persistClaimScoring(supabase, { claimId: pageContext.claim.id });
 
     const referral = await loadResultsAttorneyReferral(supabase, {
       claimId: pageContext.claim.id,
