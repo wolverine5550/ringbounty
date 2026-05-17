@@ -10,9 +10,11 @@ import {
 
 describe("claimEvent constants", () => {
   it("exposes unique claim event types aligned with PRD examples + checklist ack", () => {
-    expect(CLAIM_EVENT_TYPE_VALUES).toHaveLength(5);
-    expect(new Set(CLAIM_EVENT_TYPE_VALUES).size).toBe(5);
+    expect(CLAIM_EVENT_TYPE_VALUES).toHaveLength(6);
+    expect(new Set(CLAIM_EVENT_TYPE_VALUES).size).toBe(6);
     expect(CLAIM_EVENT_TYPE_VALUES).toContain("dnc_check");
+    expect(CLAIM_EVENT_TYPE_VALUES).toContain("registered_agent_lookup");
+    expect(CLAIM_EVENT_TYPE_VALUES).toContain("qualification_answer");
     expect(CLAIM_EVENT_TYPE_VALUES).toContain("evidence_checklist_ack");
   });
 

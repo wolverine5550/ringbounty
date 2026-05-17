@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-17 (Phase 7.1 — qualify routing and step state)
+
+- **§7.1:** [`/qualify/[claimSubjectId]`](src/app/(post-check)/qualify/[claimSubjectId]/page.tsx) loads subject + owned claim ([`load-qualify-context.ts`](src/lib/qualify/load-qualify-context.ts)); 404 on invalid UUID, wrong `?claim=`, or non-owner. Federal DNC pre-gate, then wizard screens **1–4** via `?step=`; auto-redirect to `?step=1` after attestation. Resume from `claim_events` key `qualify_step_resume` ([`qualify-step.ts`](src/lib/qualify/qualify-step.ts)). Placeholder chrome: [`qualify-wizard-shell.tsx`](src/components/qualify/qualify-wizard-shell.tsx) until §7.2–7.5 forms ship.
+
 ## 2026-05-17 (Product pivot + Phase 6.6 — attorney referral gate)
 
 - **Product:** v0.1 focuses on **evidence gathering**, **informational claim strength**, and **attorney referral** — DIY demand letter generation and consumer Stripe letter Checkout are **out of scope** (Phases 9–10 cancelled in `task_manager.md`).

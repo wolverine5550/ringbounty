@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ export function FederalDncAttestationForm({
   initialRegistrationDate = null,
   initialScreenshotPath = null,
 }: FederalDncAttestationFormProps) {
+  const router = useRouter();
   const [registered, setRegistered] = useState<boolean | null>(
     initialRegistered,
   );
@@ -99,6 +101,7 @@ export function FederalDncAttestationForm({
         setSavedScreenshotPath(body.federal_dnc_confirmation_screenshot_path);
         setScreenshotFile(null);
       }
+      router.refresh();
     } catch {
       setSubmitError("Network error. Please try again.");
     } finally {
@@ -205,8 +208,8 @@ export function FederalDncAttestationForm({
 
       {saved ? (
         <p className="text-success text-sm">
-          Saved. Additional qualification steps ship in Phase 7; federal DNC
-          eligibility for scoring will update when you enter call dates.
+          Saved. Continuing to qualification step 1… Federal DNC eligibility for
+          scoring will update when you enter call dates (Phase 7.4).
         </p>
       ) : null}
 

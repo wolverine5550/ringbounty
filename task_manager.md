@@ -761,14 +761,14 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 7.1 Routing and state machine
 
-- [ ] **7.1.1** Dynamic route `app/qualify/[claimSubjectId]/page.tsx` (or by claim id + subject index — pick one URL scheme).
-- [ ] **7.1.2** Load subject + parent claim; 404 if not owned (post-auth) or invalid session.
-- [ ] **7.1.3** Step state: `screen` 1–4 persisted in URL query `?step=` or in `claim_events` for resume.
+- [x] **7.1.1** Dynamic route `app/qualify/[claimSubjectId]/page.tsx` (or by claim id + subject index — pick one URL scheme). <!-- done: `src/app/(post-check)/qualify/[claimSubjectId]/page.tsx` — URL by subject id + optional `?claim=` -->
+- [x] **7.1.2** Load subject + parent claim; 404 if not owned (post-auth) or invalid session. <!-- done: `src/lib/qualify/load-qualify-context.ts`, `load-qualify-context.test.ts` -->
+- [x] **7.1.3** Step state: `screen` 1–4 persisted in URL query `?step=` or in `claim_events` for resume. <!-- done: `src/lib/qualify/qualify-step.ts`, `qualify-step.test.ts`, `src/components/qualify/qualify-wizard-shell.tsx`; resume key `qualify_step_resume` -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README Phase 7.1 -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG 2026-05-17 §7.1 -->
 
 ### 7.2 Screen 1 — Consent / EBR
 

@@ -1,62 +1,111 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { FederalDncAttestationForm } from "@/components/qualify/federal-dnc-attestation-form";
+import { QualifyWizardShell } from "@/components/qualify/qualify-wizard-shell";
 import { StateDncComingSoon } from "@/components/qualify/state-dnc-coming-soon";
 import { enforcePostCheckAccess } from "@/lib/claims/enforce-post-check-access";
+import { buildLoginHrefForClaim } from "@/lib/claims/gated-routes";
 import { getFederalDncScreenshotPathFromMetadata } from "@/lib/dnc/federal-dnc-evidence";
 import {
   deriveStateDncScaffoldFields,
   getApplicableStateDncCode,
 } from "@/lib/dnc/scaffold-state-dnc-row";
+import {
+  claimQueryMatchesSubject,
+  loadQualifyPageContext,
+} from "@/lib/qualify/load-qualify-context";
+import {
+  buildQualifyPageHref,
+  isFederalDncAttestationComplete,
+  loadQualifyResumeStep,
+  parseQualifyStepFromQuery,
+  resolveQualifyWizardStep,
+} from "@/lib/qualify/qualify-step";
 import { createClient } from "@/lib/supabase/server";
 
 type QualifyPageProps = {
   params: Promise<{ claimSubjectId: string }>;
-  searchParams: Promise<{ claim?: string }>;
+  searchParams: Promise<{ claim?: string; step?: string }>;
 };
 
 /**
- * Qualify entry — Phase 6.2 federal DNC attestation gate; full wizard in Phase 7.
+ * Qualify entry — §7.1 routing: federal DNC pre-gate, then wizard screens 1–4 via `?step=`.
  */
 export default async function QualifyPage({
   params,
   searchParams,
 }: QualifyPageProps) {
   const { claimSubjectId } = await params;
-  const { claim } = await searchParams;
-  const returnPath = `/qualify/${claimSubjectId}`;
+  const { claim: claimIdFromQuery, step: stepRaw } = await searchParams;
+  const returnPath = buildQualifyPageHref({
+    claimSubjectId,
+    step: parseQualifyStepFromQuery(stepRaw) ?? undefined,
+    claimId: claimIdFromQuery,
+  });
 
   await enforcePostCheckAccess({
     returnPath,
-    claimIdFromQuery: claim ?? null,
+    claimIdFromQuery: claimIdFromQuery ?? null,
   });
 
   const supabase = await createClient();
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
 
-  const { data: subjectRow, error: loadError } = await supabase
-    .from("claim_subjects")
-    .select("id, phone_number, metadata")
-    .eq("id", claimSubjectId)
-    .maybeSingle();
-
-  if (loadError) {
-    throw loadError;
+  if (authError || !user) {
+    redirect(
+      buildLoginHrefForClaim({
+        returnPath,
+        claimId: claimIdFromQuery ?? "",
+      }),
+    );
   }
 
-  if (!subjectRow?.id) {
+  const pageContext = await loadQualifyPageContext(supabase, {
+    claimSubjectId,
+    userId: user.id,
+  });
+
+  if (!pageContext) {
     notFound();
   }
+
+  if (
+    !claimQueryMatchesSubject(claimIdFromQuery, pageContext.subject.claim_id)
+  ) {
+    notFound();
+  }
+
+  const claimId = pageContext.claim.id;
 
   const { data: dncRow } = await supabase
     .from("dnc_check_results")
     .select(
       "federal_dnc_registered, federal_dnc_registration_date, state_dnc_applicable, state_dnc_state",
     )
-    .eq("claim_subject_id", claimSubjectId)
+    .eq("claim_subject_id", pageContext.subject.id)
     .maybeSingle();
+
+  const federalDncComplete = isFederalDncAttestationComplete(
+    dncRow?.federal_dnc_registered,
+  );
+
+  const urlStep = parseQualifyStepFromQuery(stepRaw);
+  if (stepRaw !== undefined && stepRaw !== "" && urlStep === null) {
+    notFound();
+  }
+
+  if (federalDncComplete && urlStep === null) {
+    redirect(
+      buildQualifyPageHref({
+        claimSubjectId: pageContext.subject.id,
+        step: 1,
+        claimId,
+      }),
+    );
+  }
 
   let applicableStateCode = getApplicableStateDncCode({
     state_dnc_applicable: dncRow?.state_dnc_applicable ?? null,
@@ -65,7 +114,7 @@ export default async function QualifyPage({
     state_dnc_checked_at: null,
   });
 
-  if (!applicableStateCode && user?.id) {
+  if (!applicableStateCode) {
     const { data: profile } = await supabase
       .from("users")
       .select("state")
@@ -76,31 +125,66 @@ export default async function QualifyPage({
     );
   }
 
+  if (!federalDncComplete) {
+    return (
+      <QualifyPageLayout
+        title="National Do Not Call Registry"
+        subtitle="Before the qualification wizard — confirm your registry status (Phase 6.2)."
+      >
+        {applicableStateCode ? (
+          <StateDncComingSoon stateCode={applicableStateCode} />
+        ) : null}
+        <FederalDncAttestationForm
+          claimSubjectId={pageContext.subject.id}
+          phoneDisplay={pageContext.subject.phone_number}
+          initialRegistered={dncRow?.federal_dnc_registered ?? null}
+          initialRegistrationDate={
+            dncRow?.federal_dnc_registration_date ?? null
+          }
+          initialScreenshotPath={getFederalDncScreenshotPathFromMetadata(
+            pageContext.subject.metadata,
+          )}
+        />
+      </QualifyPageLayout>
+    );
+  }
+
+  const resumeStep = await loadQualifyResumeStep(supabase, claimId);
+  const wizardStep = resolveQualifyWizardStep({ urlStep, resumeStep });
+
   return (
-    <div className="mx-auto flex min-h-svh max-w-lg flex-col gap-6 p-8">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          National Do Not Call Registry
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          Step 1 of qualification — confirm your registry status before other
-          questions (Phase 7).
-        </p>
-      </div>
+    <QualifyPageLayout
+      title="Qualify your claim"
+      subtitle={`Screen ${wizardStep} of 4 — answer questions about this number.`}
+    >
       {applicableStateCode ? (
         <StateDncComingSoon stateCode={applicableStateCode} />
       ) : null}
-      <FederalDncAttestationForm
-        claimSubjectId={claimSubjectId}
-        phoneDisplay={subjectRow.phone_number}
-        initialRegistered={dncRow?.federal_dnc_registered ?? null}
-        initialRegistrationDate={
-          dncRow?.federal_dnc_registration_date ?? null
-        }
-        initialScreenshotPath={getFederalDncScreenshotPathFromMetadata(
-          subjectRow.metadata,
-        )}
+      <QualifyWizardShell
+        claimSubjectId={pageContext.subject.id}
+        claimId={claimId}
+        step={wizardStep}
       />
+    </QualifyPageLayout>
+  );
+}
+
+function QualifyPageLayout({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="mx-auto flex min-h-svh max-w-lg flex-col gap-6 p-8">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+        <p className="text-muted-foreground text-sm">{subtitle}</p>
+      </div>
+      {children}
     </div>
   );
 }
