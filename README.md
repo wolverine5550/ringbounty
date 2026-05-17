@@ -160,7 +160,8 @@ Marketing UI: [`src/components/marketing/`](src/components/marketing/). Unauthen
 | **Qualify §7.7** | Screen 5 final submit → `claims.status` = `qualified`, `claim_events` `scoring_status=pending` ([`complete-qualify-claim.ts`](src/lib/qualify/complete-qualify-claim.ts)) → [`/results?claim=`](src/app/(post-check)/results/page.tsx). Attorney CTA when [`canReferToAttorney`](src/lib/claims/can-refer-to-attorney.ts) ([`AttorneyReferralCta`](src/components/results/attorney-referral-cta.tsx)). [`/summary`](src/app/(post-check)/summary/page.tsx) redirects to `/results` (no letter cart in v0.1). |
 | **Scoring §8.1** | PRD §8 matrix: [`computeStrengthMatrix`](src/lib/scoring/strength-matrix.ts) + [`strength-matrix-constants.ts`](src/lib/scoring/strength-matrix-constants.ts); per-signal spam/DNC helpers unchanged. Wired to claims on qualify complete via `scoring_status=pending` (§7.7) — persist/UI in §8.4–8.5. |
 | **Scoring §8.2** | SOL: [`computeSolFlags`](src/lib/scoring/compute-sol-flags.ts) + [`getStateSolYears`](src/lib/scoring/state-sol-years.ts); persisted on Screen 3 ([`persistSolFlags`](src/lib/scoring/persist-sol-flags.ts)). `/results` [`SolWarningBanner`](src/components/results/sol-warning-banner.tsx) when `likely_time_barred` — informational only (does not block attorney referral per §6.6). |
-| **Next** | §8.3 valuation, §8.4–8.5 results persist/UI, §13.1 attorney lead flow. |
+| **Scoring §8.3** | Valuation: [`computeValuation`](src/lib/scoring/compute-valuation.ts) + [`computeViolationCounts`](src/lib/scoring/compute-violation-counts.ts) (PRD §11; integer cents). [`buildValuationDisplayCaveat`](src/lib/scoring/compute-valuation.ts) appends SOL note when time-barred. Wire to `/results` + `claims.estimated_*` → §8.4–8.5. |
+| **Next** | §8.4–8.5 results persist/UI, §13.1 attorney lead flow. |
 
 **Phase 6.5 — registered agent lookup:**
 

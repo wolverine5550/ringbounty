@@ -872,15 +872,15 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 8.3 Valuation engine (three scenarios)
 
-- [ ] **8.3.1** Implement PRD §11 formulas: `standard_violation_count`, `willful_violation_count`, `time_violation_count`.
-- [ ] **8.3.2** Compute conservative low/high, realistic, maximum in cents; avoid floating point — integers only.
-- [ ] **8.3.3** If SOL warning: append caveat string to all displays.
-- [ ] **8.3.4** Unit tests with fixed qualification fixtures and expected dollar outputs.
+- [x] **8.3.1** Implement PRD §11 formulas: `standard_violation_count`, `willful_violation_count`, `time_violation_count`. <!-- done: `compute-violation-counts.ts`, `buildViolationCountInput` -->
+- [x] **8.3.2** Compute conservative low/high, realistic, maximum in cents; avoid floating point — integers only. <!-- done: `compute-valuation.ts`, `valuation-constants.ts` -->
+- [x] **8.3.3** If SOL warning: append caveat string to all displays. <!-- done: `buildValuationDisplayCaveat` + `valuation-caveat.ts` (`likelyTimeBarred` on `ValuationScenarios`) -->
+- [x] **8.3.4** Unit tests with fixed qualification fixtures and expected dollar outputs. <!-- done: `compute-valuation.test.ts` -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README §8.3 -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG 2026-05-17 §8.3 -->
 
 ### 8.4 Results UI (`/results`) — strength / probability + attorney CTA
 

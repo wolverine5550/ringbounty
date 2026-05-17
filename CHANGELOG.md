@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-17 (Phase 8.3 — Valuation engine)
+
+- **§8.3:** PRD §11 three-scenario valuation — [`computeViolationCounts`](src/lib/scoring/compute-violation-counts.ts) (`standard` / `willful` / `time` from Q8–Q12 + Screen 2 stop), [`computeValuation`](src/lib/scoring/compute-valuation.ts) (conservative low/high, realistic, maximum in integer cents; `formatUsdFromCents`). SOL addendum via [`buildValuationDisplayCaveat`](src/lib/scoring/compute-valuation.ts) when `likelyTimeBarred`. Vitest: [`compute-valuation.test.ts`](src/lib/scoring/compute-valuation.test.ts). Persist + `/results` UI → §8.4–8.5.
+
 ## 2026-05-17 (Phase 8.2 — Statute of limitations)
 
 - **§8.2:** SOL engine — [`getStateSolYears`](src/lib/scoring/state-sol-years.ts) (informational per-state overrides + 4-year default), [`computeSolFlags`](src/lib/scoring/compute-sol-flags.ts) from Q10 `most_recent_call_date` + `users.state`, `likely_time_barred` when both federal and state windows are expired (PRD §7 Step 5). Persisted on Screen 3 save via [`persistSolFlags`](src/lib/scoring/persist-sol-flags.ts) → `claim_events` `value_calculated` keys. [`/results`](src/app/(post-check)/results/page.tsx) shows informational [`SolWarningBanner`](src/components/results/sol-warning-banner.tsx) — no hard block. Vitest: `compute-sol-flags.test.ts`, `state-sol-years.test.ts`, `persist-sol-flags.test.ts`.
