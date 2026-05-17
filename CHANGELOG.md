@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-05-17 (Phase 13.3 — Stripe Connect onboarding)
+
+- **§13.3.1:** **Express** Connect accounts for law firms ([`stripe/connect/constants.ts`](src/lib/stripe/connect/constants.ts)) — platform-hosted onboarding; supports application fees on lead accept (§13.5).
+- **§13.3.2:** [`POST /api/firms/stripe-connect/onboarding`](src/app/api/firms/stripe-connect/onboarding/route.ts) — authenticated `firm_users` row → creates Connect account if needed → Stripe Account Link URL. Requires `STRIPE_SECRET_KEY` + `SUPABASE_SECRET_KEY`.
+- **§13.3.3:** `law_firms.stripe_connect_account_id`, `stripe_connect_charges_enabled`, `stripe_connect_details_submitted` (migration [`20260517190000_law_firms_stripe_connect.sql`](supabase/migrations/20260517190000_law_firms_stripe_connect.sql)); [`POST /api/webhooks/stripe`](src/app/api/webhooks/stripe/route.ts) handles `account.updated` via [`syncConnectAccountFromStripe`](src/lib/stripe/connect/sync-connect-account-from-stripe.ts).
+- Dependency: `stripe`. Vitest: `sync-connect-account-from-stripe.test.ts`, `resolve-site-origin.test.ts`.
+
 ## 2026-05-17 (Phase 13.2 — Evidence PDF for firms)
 
 - **§13.2:** Evidence PDF compiler ([`generate-and-upload-evidence-pdf.ts`](src/lib/leads/evidence-pdf/generate-and-upload-evidence-pdf.ts)) — aggregates claim/subject data, qualification answers, spam/DNC summaries, registered agent, upload paths; renders via **pdfkit**; uploads to private `lead-packages` Storage bucket; sets `leads.evidence_pdf_url` (`bucket:path` ref). Triggered from [`run-evidence-pdf-job.ts`](src/lib/leads/run-evidence-pdf-job.ts) after attorney referral submit. Migration: [`20260517143000_lead_packages_storage.sql`](supabase/migrations/20260517143000_lead_packages_storage.sql).

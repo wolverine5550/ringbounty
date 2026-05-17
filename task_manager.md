@@ -953,7 +953,7 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 ### 9.5 Webhooks *(letter purchase — cancelled; Connect webhooks in Phase 13)*
 
 - [ ] ~~**9.5.2–9.5.3** `letters` insert on Checkout~~ — **Cancelled v0.1.**
-- [ ] **9.5.1** *(optional infra)* Route Handler `POST /api/webhooks/stripe` skeleton if firm Connect ships in v0.2 — not required for v0.1 attorney referral without payment.
+- [x] **9.5.1** *(optional infra)* Route Handler `POST /api/webhooks/stripe` skeleton if firm Connect ships in v0.2 — not required for v0.1 attorney referral without payment. <!-- done: §13.3.3 `src/app/api/webhooks/stripe/route.ts` (`account.updated`) -->
 
 
 **Docs — this subsection**
@@ -1193,14 +1193,14 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 13.3 Stripe Connect onboarding *(v0.2)*
 
-- [ ] **13.3.1** Dashboard Connect settings: Standard or Express accounts for firms (decide).
-- [ ] **13.3.2** Onboarding link generation for `law_firms` admin user.
-- [ ] **13.3.3** Store `stripe_connect_account_id` on firm; webhook `account.updated` for `charges_enabled`.
+- [x] **13.3.1** Dashboard Connect settings: Standard or Express accounts for firms (decide). <!-- done: Express — `src/lib/stripe/connect/constants.ts`; enable Connect in Stripe Dashboard -->
+- [x] **13.3.2** Onboarding link generation for `law_firms` admin user. <!-- done: `POST /api/firms/stripe-connect/onboarding`, `create-firm-connect-onboarding-link.ts`, `load-firm-user-membership.ts` -->
+- [x] **13.3.3** Store `stripe_connect_account_id` on firm; webhook `account.updated` for `charges_enabled`. <!-- done: migration `20260517190000_law_firms_stripe_connect.sql`, `POST /api/webhooks/stripe`, `sync-connect-account-from-stripe.ts` -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README §13.3 -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG 2026-05-17 §13.3 -->
 
 ### 13.4 Firm dashboard app *(v0.2)*
 
@@ -1382,7 +1382,7 @@ Track resolutions here by checking items off and adding `<!-- done: decision rec
 - [ ] **RLS for anonymous claims** — Must be airtight: only server uses service role to read/write anonymous rows keyed to session.
 - [ ] **Leads ↔ subjects** — Ensure every `leads` row references the correct `claim_id` / subject set for multi-number claims (evidence PDF §13.2).
 - [x] ~~**Letters ↔ company**~~ — **Deferred** with cancelled letter product (`letters` table retained only).
-- [ ] **Connect account type** — Standard vs Express for law firms (Phase 13.3.1).
+- [x] **Connect account type** — Standard vs Express for law firms (Phase 13.3.1). <!-- done: Express (`src/lib/stripe/connect/constants.ts`) -->
 
 
 **Docs — this subsection**

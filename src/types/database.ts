@@ -294,6 +294,9 @@ export type Database = {
           min_claim_strength: string | null
           min_claim_value_cents: number | null
           name: string
+          stripe_connect_account_id: string | null
+          stripe_connect_charges_enabled: boolean
+          stripe_connect_details_submitted: boolean
           target_states: string[] | null
           violation_types: string[] | null
         }
@@ -306,6 +309,9 @@ export type Database = {
           min_claim_strength?: string | null
           min_claim_value_cents?: number | null
           name: string
+          stripe_connect_account_id?: string | null
+          stripe_connect_charges_enabled?: boolean
+          stripe_connect_details_submitted?: boolean
           target_states?: string[] | null
           violation_types?: string[] | null
         }
@@ -318,6 +324,9 @@ export type Database = {
           min_claim_strength?: string | null
           min_claim_value_cents?: number | null
           name?: string
+          stripe_connect_account_id?: string | null
+          stripe_connect_charges_enabled?: boolean
+          stripe_connect_details_submitted?: boolean
           target_states?: string[] | null
           violation_types?: string[] | null
         }
