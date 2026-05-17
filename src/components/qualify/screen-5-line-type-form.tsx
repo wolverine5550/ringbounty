@@ -34,8 +34,8 @@ export function Screen5LineTypeForm({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const goToResults = () => {
-    router.push(`/results?claim=${claimId}`);
+  const goToResults = (path?: string) => {
+    router.push(path ?? `/results?claim=${claimId}`);
     router.refresh();
   };
 
@@ -60,14 +60,17 @@ export function Screen5LineTypeForm({
         }),
       });
 
-      const body = (await res.json()) as { error?: string };
+      const body = (await res.json()) as {
+        error?: string;
+        redirect?: string;
+      };
 
       if (!res.ok) {
         setSubmitError(body.error ?? "Could not save your answer.");
         return;
       }
 
-      goToResults();
+      goToResults(body.redirect);
     } catch {
       setSubmitError("Network error. Please try again.");
     } finally {

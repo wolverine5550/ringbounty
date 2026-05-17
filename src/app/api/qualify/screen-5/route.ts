@@ -1,5 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 
+import { loadResultsAttorneyReferral } from "@/lib/claims/load-results-attorney-referral";
+import { RESULTS_PATH } from "@/lib/claims/gated-routes";
+import { completeQualifyClaim } from "@/lib/qualify/complete-qualify-claim";
 import { loadQualifyPageContext } from "@/lib/qualify/load-qualify-context";
 import {
   parseQualifyScreen5Body,
@@ -8,7 +11,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 
 /**
- * Phase 7.6 — Persist Screen 5 line type attestation (`claim_events.line_type`).
+ * Phase 7.6 / 7.7 — Persist Screen 5 attestation; complete claim → `/results`.
  */
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -61,7 +64,21 @@ export async function POST(request: NextRequest) {
       answers: parsedAnswers,
     });
 
-    return NextResponse.json({ ok: true });
+    await completeQualifyClaim(supabase, { claimId: pageContext.claim.id });
+
+    const referral = await loadResultsAttorneyReferral(supabase, {
+      claimId: pageContext.claim.id,
+      userId: user.id,
+    });
+
+    const redirectUrl = new URL(RESULTS_PATH, "http://local");
+    redirectUrl.searchParams.set("claim", pageContext.claim.id);
+
+    return NextResponse.json({
+      ok: true,
+      redirect: `${redirectUrl.pathname}${redirectUrl.search}`,
+      can_refer_to_attorney: referral?.anyCanRefer ?? false,
+    });
   } catch (e) {
     console.error("POST /api/qualify/screen-5 persist", e);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });

@@ -132,8 +132,7 @@ export function QualifyWizardShell({
         ) : null}
         {!nextStep ? (
           <span className="text-muted-foreground text-sm">
-            Final wizard step — results and attorney referral ship in Phase 8 /
-            13.
+            Final step — submit to view results and attorney referral eligibility.
           </span>
         ) : null}
       </nav>

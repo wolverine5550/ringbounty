@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-05-17 (Phase 8.1 — Claim strength matrix)
+
+- **§8.1:** PRD §8 scoring engine — [`strength-matrix-constants.ts`](src/lib/scoring/strength-matrix-constants.ts) (point values + thresholds), [`computeStrengthMatrix`](src/lib/scoring/strength-matrix.ts) + `StrengthMatrixInput` (aggregates spam/DNC/stop/time-of-day/company/RA/SOL/consent/exempt), exempt → `ineligible` override, `mapScoreToClaimStrength` (≥70 strong, ≥40 moderate, ≥10 weak). Reuses per-signal resolvers from §5.6 / §6.1 / §6.3. Vitest: [`strength-matrix.test.ts`](src/lib/scoring/strength-matrix.test.ts). Persistence + `/results` UI → §8.4–8.5.
+
+## 2026-05-17 (Phase 7.7 — Qualify completion → results)
+
+- **§7.7:** Final Screen 5 submit ([`POST /api/qualify/screen-5`](src/app/api/qualify/screen-5/route.ts)) sets `claims.status` → `qualified` and records `qualification_completed` + `scoring_status=pending` on `claim_events` ([`complete-qualify-claim.ts`](src/lib/qualify/complete-qualify-claim.ts)) for Phase 8 scoring. Redirect to [`/results?claim=`](src/app/(post-check)/results/page.tsx) with attorney referral CTA when [`canReferToAttorney`](src/lib/claims/can-refer-to-attorney.ts) passes ([`AttorneyReferralCta`](src/components/results/attorney-referral-cta.tsx)). [`/summary`](src/app/(post-check)/summary/page.tsx) redirects to `/results` (letter cart dropped for v0.1).
+
 ## 2026-05-17 (Phase 7.6 — Screen 5 line type attestation)
 
 - **§7.6:** Step 5 on [`/qualify/[claimSubjectId]?step=5`](src/app/(post-check)/qualify/[claimSubjectId]/page.tsx) — user attests mobile vs home/landline ([`Screen5LineTypeForm`](src/components/qualify/screen-5-line-type-form.tsx), [`POST /api/qualify/screen-5`](src/app/api/qualify/screen-5/route.ts)) → `claim_events` key `line_type` (`mobile` \| `residential`). TCPA subsection mapping for scoring/evidence: [`line-type-statute.ts`](src/lib/tcpa/line-type-statute.ts) (§227(b)(1)(A)(iii) vs (B)). Screen 4 now continues to step 5 instead of `/results`.

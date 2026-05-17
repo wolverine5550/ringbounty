@@ -16,3 +16,6 @@ export type AttorneyReferralBlockReason =
   | typeof ATTORNEY_REFERRAL_REASON_CLAIM_INELIGIBLE
   | typeof ATTORNEY_REFERRAL_REASON_COMPANY_UNIDENTIFIED
   | typeof ATTORNEY_REFERRAL_REASON_FDCPA_DEBT_COLLECTION;
+
+/** Primary results CTA label (PRD / §8.4.5; wired on `/results` in §7.7.2). */
+export const ATTORNEY_REFERRAL_CTA_LABEL = "Connect with an attorney — free" as const;

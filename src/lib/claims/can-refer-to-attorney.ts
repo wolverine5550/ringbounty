@@ -18,7 +18,8 @@ import { isTcpaLetterBlockedForCallCategory } from "@/lib/constants/fdcpa-debt-c
 import type { ClaimStrengthGate } from "./successful-query";
 
 export type CanReferToAttorneyClaimInput = {
-  claim_strength: ClaimStrengthGate;
+  /** Null until Phase 8 scoring runs; only `ineligible` blocks referral. */
+  claim_strength: ClaimStrengthGate | null;
 };
 
 export type CanReferToAttorneySubjectInput = {

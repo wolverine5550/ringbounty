@@ -833,13 +833,13 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 7.7 Completion
 
-- [ ] **7.7.1** On final submit: set `claim.status` to `qualified` (or equivalent); enqueue scoring job or run synchronously if fast.
-- [ ] **7.7.2** Redirect to `/results` (primary post-qualify surface) with attorney CTA when `canReferToAttorney`; drop `/summary` letter-cart flow for v0.1 unless repurposed as read-only claim overview.
+- [x] **7.7.1** On final submit: set `claim.status` to `qualified` (or equivalent); enqueue scoring job or run synchronously if fast. <!-- done: `complete-qualify-claim.ts` on `POST /api/qualify/screen-5`; `claim_events` `scoring_status=pending` for Phase 8 -->
+- [x] **7.7.2** Redirect to `/results` (primary post-qualify surface) with attorney CTA when `canReferToAttorney`; drop `/summary` letter-cart flow for v0.1 unless repurposed as read-only claim overview. <!-- done: `results/page.tsx` + `AttorneyReferralCta`; `/summary` → `/results` redirect -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README §7.7 -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG 2026-05-17 §7.7 -->
 
 ---
 
@@ -847,16 +847,16 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 8.1 Strength matrix implementation
 
-- [ ] **8.1.1** Translate PRD §8 table to code constants (points per signal).
-- [ ] **8.1.2** Input struct aggregating: spam scores, DNC flags, stop request, time-of-day counts, company ID, RA found, SOL flags, consent negatives, exempt.
-- [ ] **8.1.3** Compute total score; apply exempt override → `ineligible`.
-- [ ] **8.1.4** Map score to `strong` | `moderate` | `weak` | `ineligible` thresholds.
-- [ ] **8.1.5** Unit tests: matrix edge cases (single call, exempt, max points).
+- [x] **8.1.1** Translate PRD §8 table to code constants (points per signal). <!-- done: `src/lib/scoring/strength-matrix-constants.ts`; reuses `spam-db-matrix-signal.ts`, `federal-dnc-matrix-signal.ts`, `state-dnc-matrix-signal.ts` -->
+- [x] **8.1.2** Input struct aggregating: spam scores, DNC flags, stop request, time-of-day counts, company ID, RA found, SOL flags, consent negatives, exempt. <!-- done: `StrengthMatrixInput` in `strength-matrix.ts` -->
+- [x] **8.1.3** Compute total score; apply exempt override → `ineligible`. <!-- done: `computeStrengthMatrix` -->
+- [x] **8.1.4** Map score to `strong` | `moderate` | `weak` | `ineligible` thresholds. <!-- done: `mapScoreToClaimStrength` -->
+- [x] **8.1.5** Unit tests: matrix edge cases (single call, exempt, max points). <!-- done: `strength-matrix.test.ts` -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README §8.1 -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG 2026-05-17 §8.1 -->
 
 ### 8.2 Statute of limitations
 
