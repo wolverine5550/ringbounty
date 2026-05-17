@@ -7,7 +7,7 @@ export const REGISTERED_AGENT_LOOKUP_SOURCE_OPENCORPORATES =
 
 /** Shown when OpenCorporates could not resolve a registered agent. */
 export const REGISTERED_AGENT_MANUAL_LOOKUP_MESSAGE =
-  "We could not find a registered agent automatically. You will need to look up the company's registered agent on your state's Secretary of State website before sending a demand letter.";
+  "We could not find a registered agent automatically. You may need to look up the company's registered agent on your state's Secretary of State website — your attorney can use this when evaluating service of process.";
 
 /** Shown when the per-session OpenCorporates budget is exceeded (§6.5.5). */
 export const OPENCORPORATES_RATE_LIMIT_USER_MESSAGE =

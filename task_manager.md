@@ -5,20 +5,39 @@ Living checklist for building RingBounty from `prd.md` and product decisions.
 
 ---
 
+## Strategic pivot (2026-05-17) — evidence + probability + attorney routing
+
+**Removed from v0.1:** DIY **demand letter generation**, Stripe letter Checkout, OpenRouter letter/PDF pipeline, filing guide gated on purchased letters, and consumer-facing “pay for letter” CTAs.
+
+**v0.1 core product loop:**
+
+1. **Gather evidence** — `/check` evidence checklist (Phase 4), qualification facts (Phase 7), optional uploads (federal DNC screenshot §6.2.4, voicemail §7.5.4, Q14 evidence flags).
+2. **Show informational case strength** — PRD §8 matrix → `strong` \| `moderate` \| `weak` \| `ineligible` plus SOL/valuation bands on `/results` (Phase 8). Present as **probability / strength language**, not legal advice or guaranteed outcomes.
+3. **Route to attorney** — eligible users opt into **free attorney connection** (promoted from old Phase 13.1); firms receive structured lead + evidence package (old 13.2).
+
+**Codebase carryover (do not delete yet):** `letters` table, `/letter/*` routes, `tcpa_letter_blocked` events, and marketing “DIY letter” copy remain until a dedicated cleanup pass updates README, marketing, and constants. New work should **not** extend letter purchase or generation.
+
+**Reprioritized engineering (after §6.5):** §**6.6** `canReferToAttorney` (replaces `canPurchaseLetter`) → Phase **7** qualification → Phase **8** scoring/results → **Phase 13.1–13.2** attorney path + evidence PDF (v0.1). Phases **9–10** cancelled for v0.1 (see banners below).
+
+---
+
 ## Product decisions (locked for v0.1 planning)
 
 | Area | Decision |
 |------|----------|
+| **v0.1 primary outcome** | **Evidence gathering** + **informational claim strength / probability** + **attorney referral** — not DIY demand letters. |
 | Auth gate | Users may run checks **without** an account until the **first successful query** (they may have a claim). After that, **account required** to see more. If a query yields **no claim / no results**, they may **try another number** without signing up. |
 | Email capture | **Yes** for ineligible / blocked flows (and anywhere else it makes sense). |
-| Refunds | **Not in scope for now** — no refund policy in product until decided. |
-| Cell vs residential (TCPA subsection) | **Explicit user attestation** only — do not infer from carrier or metadata alone. |
-| Demand amount in letter | **User-selectable** option (e.g. conservative / realistic / maximum) with disclaimers; product does not recommend which to choose. |
+| Refunds | **Not in scope for now** — no consumer letter product in v0.1. |
+| Cell vs residential (TCPA subsection) | **Explicit user attestation** only — do not infer from carrier or metadata alone. Stored for **scoring + attorney evidence package**, not letter subsection selection. |
+| DIY demand letters | **Out of scope v0.1** — no generation, PDF, Stripe letter SKUs, or `/letter` purchase flow. Legacy schema/UI may remain until cleanup. |
+| Demand / valuation display | **Informational only** on `/results` — conservative / realistic / maximum **estimate bands** (PRD §11) to help users and attorneys understand scale; product does not recommend a demand amount. |
+| Attorney referral | **In scope v0.1** — “Connect with an attorney — free” after qualification + strength gate; creates `leads` row (see Phase 13.1, promoted). |
+| Consumer Stripe (letters) | **Cancelled v0.1** — old Phase 9. Firm-side Connect remains v0.2 (Phase 13.3+). |
 | Federal DNC / FTC access | **Manual attestation** (qualification) — user attests yes/no + registration date after self-check at [donotcall.gov](https://www.donotcall.gov) (FTC confirmation email has date); optional screenshot of that email (§6.2.4). **No** Registry API/SAN/vendor scrub unless counsel approves ([Q&A #13](https://www.ftc.gov/business-guidance/resources/qa-telemarketers-sellers-about-dnc-provisions-tsr-0)). Spike: [`docs/spikes/20260516190000-federal-dnc-access.md`](docs/spikes/20260516190000-federal-dnc-access.md). |
 | Spam / reputation (Nomorobo + Twilio) | **Decided** — **Nomorobo Enterprise** primary (`GET /v2/check`); **Twilio Lookup v2** secondary (§5.2). YouMail **not** in v0.1. |
-| OpenCorporates | **Undecided budget** — define caps and fallback UX before heavy usage. |
-| Stripe bundles | **Undecided** — choose one Checkout pattern during payments milestone. |
-| Stripe Tax | **In scope for v0.1** — enable/configure as part of payments work. |
+| OpenCorporates | **In use** (§6.5 RA lookup, §7.5.1b soft verify) — caps via `opencorporates_lookup` rate limit; SOS manual fallback UX. |
+| Stripe Tax | **Deferred** with consumer letter Checkout (old Phase 9). |
 | Law firm payouts (v0.2) | **Stripe Connect**. |
 | Lead billing (v0.2) | **Charge on accept only**. |
 | iOS (v1.0) | **Screenshot-only** path acceptable for now. |
@@ -222,9 +241,9 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 - [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
 - [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
 
-### 1.9 `letters`
+### 1.9 `letters` *(schema retained; consumer letter product cancelled v0.1)*
 
-- [x] **1.9.1** Migration: PRD columns + **`claim_subject_id uuid references claim_subjects(id)`** (or equivalent company grouping FK). <!-- done: supabase/migrations/20260514190900_letters.sql; applied via Supabase MCP -->
+- [x] **1.9.1** Migration: PRD columns + **`claim_subject_id uuid references claim_subjects(id)`** (or equivalent company grouping FK). <!-- done: supabase/migrations/20260514190900_letters.sql; applied via Supabase MCP — table unused for v0.1 MVP -->
 - [x] **1.9.2** Add optional `demand_scenario text` — `conservative` | `realistic` | `maximum` to record user choice for letter generation. <!-- done: letters_demand_scenario_check in same migration -->
 - [x] **1.9.3** Index `(claim_id)`, `(user_id)`, `(claim_subject_id)`, `(stripe_payment_intent_id)` unique where not null. <!-- done: letters_*_idx + letters_stripe_payment_intent_id_unique partial -->
 - [x] **1.9.4** Storage path convention documented: e.g. `letters/{user_id}/{letter_id}.pdf`. <!-- done: README.md (Supabase Storage convention) -->
@@ -333,7 +352,7 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 2.5 Account wall UX
 
-- [x] **2.5.1** After check completes: if `isSuccessfulQuery` and no authenticated user, render **Account wall** modal or full page with headline + benefits + CTA to `/login`. <!-- done: `src/components/account-wall.tsx`, `src/components/check-outcome-panel.tsx`, `src/app/check/page.tsx`, `src/app/check/account-required/page.tsx` -->
+- [x] **2.5.1** After check completes: if `isSuccessfulQuery` and no authenticated user, render **Account wall** modal or full page with headline + benefits + CTA to `/login`. <!-- done: `src/components/account-wall.tsx` — **TODO (pivot §3.7.3):** update benefits copy away from demand letter purchase -->
 - [x] **2.5.2** Block navigation to `/results` full detail, `/qualify/*`, `/summary`, `/letter/*` for unauthenticated successful-query state (define exact routes). <!-- done: `src/lib/claims/gated-routes.ts`, `src/lib/claims/enforce-post-check-access.ts`, `src/app/(post-check)/**`, `src/lib/supabase/proxy.ts` (`isAnonymousAllowedPath`) -->
 - [x] **2.5.3** If **not** successful query: allow retry another number without login; show gentle copy. <!-- done: `CheckOutcomePanel` + `/check?retry=1` redirect from enforce guard -->
 - [x] **2.5.4** Store minimal state in URL or encrypted query param if needed for deep link post-login (avoid PII in query string). <!-- done: `claim` + `returnTo` query params only (`buildLoginHrefForClaim`, `buildAccountRequiredHref`) -->
@@ -414,7 +433,7 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 3.2 `/how-it-works`
 
-- [x] **3.2.1** Explain flow: check → qualify → pay → letter → file (informational). <!-- done: src/app/how-it-works/page.tsx -->
+- [x] **3.2.1** Explain flow: check → qualify → pay → letter → file (informational). <!-- done: src/app/how-it-works/page.tsx — **TODO (pivot):** rewrite to check → qualify → results/strength → connect with attorney -->
 - [x] **3.2.2** TCPA overview without promising outcomes; link to FAQ. <!-- done: same page → /faq -->
 - [x] **3.2.3** Disclaimer block mid-page or bottom (PRD §3 text). <!-- done: src/components/marketing/disclaimer-block.tsx -->
 
@@ -447,7 +466,7 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 ### 3.5 `/terms`
 
 - [x] **3.5.1** Terms of service: not legal advice, limitation of liability (lawyer-reviewed draft), acceptable use, age requirement (18+), jurisdiction. <!-- done: src/lib/marketing/terms.ts, src/app/terms/page.tsx -->
-- [x] **3.5.2** Digital product / letter purchase terms; **no refund** clause matches current product decision or neutral wording. <!-- done: terms.ts digital-product + refunds sections -->
+- [x] **3.5.2** Digital product / letter purchase terms; **no refund** clause matches current product decision or neutral wording. <!-- done: terms.ts — **TODO (pivot):** remove or replace letter-purchase terms with attorney-referral / lead-sharing language -->
 
 
 **Docs — this subsection**
@@ -464,6 +483,19 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 **Docs — this subsection**
 - [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md -->
 - [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md -->
+
+### 3.7 Product copy pivot — no DIY demand letters *(2026-05-17)*
+
+- [ ] **3.7.1** Landing + hero + how-it-works: replace “DIY demand letter” / “pay for letter” with evidence → strength → attorney referral ([`landing-content.ts`](src/lib/marketing/landing-content.ts), [`landing-hero.tsx`](src/components/marketing/landing-hero.tsx), [`how-it-works`](src/app/how-it-works/page.tsx)).
+- [ ] **3.7.2** FAQ: remove paid-letter pricing answers; add attorney-referral expectations ([`faq.ts`](src/lib/marketing/faq.ts)).
+- [ ] **3.7.3** [`account-wall.tsx`](src/components/account-wall.tsx) + [`check/page.tsx`](src/app/check/page.tsx): benefits list — qualify + see strength + connect with attorney (not “purchase a demand letter”).
+- [ ] **3.7.4** Privacy/terms: lead-sharing with law firms; remove digital letter product sections where obsolete.
+- [ ] **3.7.5** README + CHANGELOG entry when copy pivot ships.
+
+
+**Docs — this subsection**
+- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
+- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
 
 ---
 
@@ -630,7 +662,7 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 **Assumptions / risks (Phase 5.7 — carry until Phase 6.6 / product lock):**
 
 - **Category resolution:** Debt collection detection uses the same §5.5 aliases as exempt handling (`Debt Collector`, `debt_collector`, etc.) via [`resolveExemptCategory`](src/lib/constants/exempt-categories.ts) / [`isDebtCollectionCallCategory`](src/lib/constants/fdcpa-debt-collection.ts).
-- **TCPA letter block:** Blocking is persisted on `claim_events` (`tcpa_letter_blocked = fdcpa_debt_collection`) now; Phase **6.6** `canPurchaseLetter` must also call [`isTcpaLetterBlockedForCallCategory`](src/lib/constants/fdcpa-debt-collection.ts).
+- **TCPA attorney-referral block:** Blocking is persisted on `claim_events` (`tcpa_letter_blocked = fdcpa_debt_collection` — rename to `tcpa_referral_blocked` in a future cleanup). Phase **6.6** `canReferToAttorney` must call [`isTcpaLetterBlockedForCallCategory`](src/lib/constants/fdcpa-debt-collection.ts) (or renamed helper).
 - **Email capture:** `debt_collection_interest` only when **every** subject is exempt **and** debt-collection category; mixed exempt claims still use `exempt_only`.
 
 ---
@@ -679,8 +711,8 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 - [x] **6.4.0** **Policy (locked v0.1):** [`docs/company-identification-strategy.md`](docs/company-identification-strategy.md) — only **Nomorobo** + **user Q13** set `company_identified`; Twilio CNAM + Whitepages are **hints** only; spoofing → Q13/voicemail are the real unlock. <!-- done: strategy doc + merge-spam-results.ts, enrich-merged-company-from-lookup.ts, check-funnel-client.tsx -->
 - [x] **6.4.1** If spam merge yields Nomorobo `reported_name`: set `company_identified = true`, `company_name`, `company_name_source=nomorobo` on subject + `claim_events`. Twilio CNAM → `company_name_hint` only (not identified). <!-- done: merge-spam-results.ts, persist-spam-check-outcome.ts -->
 - [x] **6.4.2** If not identified: optional enrichment — **Whitepages** (flag-gated, hint only); **FTC complaints** spike deferred (bulk ETL only). <!-- Whitepages: docs/spikes/20260516220000-whitepages-company-lookup.md; FTC: docs/spikes/20260516210000-ftc-complaints-company-lookup.md -->
-- [x] **6.4.3** If still unknown: `company_identified = false`; `claim_events.tcpa_letter_blocked = company_unidentified`. <!-- done: company-identification.ts -->
-- [x] **6.4.4** `/check` UX: unidentified copy + CNAM/Whitepages hint line when present; letter path needs Q13 (§7.5). <!-- done: check-funnel-client.tsx -->
+- [x] **6.4.3** If still unknown: `company_identified = false`; `claim_events.tcpa_letter_blocked = company_unidentified` (legacy key — blocks attorney referral until Q13). <!-- done: company-identification.ts -->
+- [x] **6.4.4** `/check` UX: unidentified copy + CNAM/Whitepages hint line when present; attorney referral path needs Q13 (§7.5). <!-- done: check-funnel-client.tsx — update copy away from “demand letter” in marketing/constants pass -->
 - [ ] **6.4.5** **Bake-off (product):** 30–50 real spam numbers — Nomorobo vs trial **YouMail** (if miss rate high); document in `docs/` before re-adding YouMail to PRD.
 - [ ] **6.4.6** **Twilio VOIP / line type:** Persist `line_type_intelligence` on `claim_events` for claim-strength scoring (Lookup v2 already called; not CNAM for company ID).
 - [ ] **6.4.7** **FTC bulk index (v1):** Offline ingest consumer complaint data → phone→name lookup table (not live `dnc-complaints` API).
@@ -692,8 +724,8 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 **Assumptions / risks (Phase 6.4 — carry forward):**
 
-- **CNAM / Whitepages** must not unlock letter purchase without Q13 until counsel approves higher-trust automation.
-- **Next engineering priority:** §**7.5.4** voicemail upload (v0.1 web), §**7.5.1** Q13 + §**7.5.1b** soft OpenCorporates verify, §**6.6** `canPurchaseLetter`.
+- **CNAM / Whitepages** must not unlock attorney referral without Q13 until counsel approves higher-trust automation.
+- **Next engineering priority:** §**6.6** `canReferToAttorney`, §**7.5.4** voicemail upload (v0.1 web), §**7.5.1** Q13 + §**7.5.1b** soft OpenCorporates verify, §**8** scoring/results, §**13.1–13.2** attorney path + evidence PDF.
 - **YouMail / TrueCaller / Google enrichment:** deferred until bake-off or v1; see strategy doc.
 
 ### 6.5 Registered agent lookup
@@ -709,16 +741,19 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 - [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md Phase 6.5 -->
 - [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md Phase 6.5 -->
 
-### 6.6 Block letter generation rules
+### 6.6 Attorney referral eligibility (replaces letter purchase gates)
 
-- [ ] **6.6.1** Central function `canPurchaseLetter(claim, subject): { ok: boolean; reasons: string[] }`. <!-- §5.7: also call isTcpaLetterBlockedForCallCategory (fdcpa-debt-collection.ts) + claim_events tcpa_letter_blocked -->
-- [ ] **6.6.2** Enforce on server before Stripe Checkout creation (never UI-only).
-- [ ] **6.6.3** Unit tests for: exempt, unidentified company, ineligible strength.
+> Replaces cancelled `canPurchaseLetter` / Stripe letter Checkout. Central gate for “Connect with attorney” and evidence-package handoff.
+
+- [x] **6.6.1** Central function `canReferToAttorney(claim, subject): { ok: boolean; reasons: string[] }` — mirror old letter rules: exempt, `ineligible` strength, unidentified company (`tcpa_letter_blocked = company_unidentified`), FDCPA debt collection ([`isTcpaLetterBlockedForCallCategory`](src/lib/constants/fdcpa-debt-collection.ts)), federal DNC / SOL warnings informational only (do not hard-block unless product decides). <!-- done: `src/lib/claims/can-refer-to-attorney.ts`, `src/lib/constants/attorney-referral.ts` -->
+- [x] **6.6.2** Enforce on server before creating `leads` row or showing attorney CTA (never UI-only). Deprecate or stub any `canPurchaseLetter` references. <!-- done: `assertCanReferToAttorney`; `canPurchaseLetter` deprecated alias; wire on leads API in §13.1 -->
+- [x] **6.6.3** Unit tests for: exempt, unidentified company, ineligible strength, debt collection block. <!-- done: `src/lib/claims/can-refer-to-attorney.test.ts` -->
+- [x] **6.6.4** **Copy/constants pass:** Replace user-facing “demand letter” gate messages (e.g. [`company-identification.ts`](src/lib/constants/company-identification.ts), [`registered-agent-lookup.ts`](src/lib/constants/registered-agent-lookup.ts), FDCPA copy) with attorney-referral framing. <!-- done: §6.6 gate constants; marketing §3.7 still open -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README v0.1 pivot + Phase 6.6 -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG 2026-05-17 -->
 
 ---
 
@@ -740,7 +775,7 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 - [ ] **7.2.1** Q1 UI + store `qualification_answer` / `gave_direct_consent` boolean.
 - [ ] **7.2.2** Q2 third-party consent UI + storage.
 - [ ] **7.2.3** Q3 ongoing relationship UI + storage.
-- [ ] **7.2.4** If yes to Q1 or Q3: show PRD explainer modal; write `claim_events` note for letter prompt context.
+- [ ] **7.2.4** If yes to Q1 or Q3: show PRD explainer modal; write `claim_events` note for attorney evidence package / scoring context (not letter generation).
 
 
 **Docs — this subsection**
@@ -776,9 +811,9 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 - [ ] **7.5.3** **Spike (priority):** Voicemail → company ID — [`docs/spikes/20260516230000-voicemail-company-identification.md`](docs/spikes/20260516230000-voicemail-company-identification.md). Highest-trust source; v0.1 web file upload (no native app).
 - [ ] **7.5.4** **Implement voicemail path (v0.1 web):** “Do you have a voicemail?” → upload mp3/m4a/wav → OpenRouter Whisper → extract `company_name`, callback #, product → if name: `company_identified = true`, `source: voicemail_transcription` on `claim_events`. Storage + qualify UI + API.
-- [ ] **7.5.1** Q13 — when voicemail missing / no extraction: company name + context (pitch, callback #). On submit: [`persistUserCompanyIdentification`](src/lib/company/persist-user-company-identification.ts) → `company_identified = true`, `source: user_input`, clear company letter block.
-- [ ] **7.5.1b** **Soft OpenCorporates verify after Q13** (not a hard gate): if `user_input` → [`softVerifyCompanyNameWithOpenCorporates`](src/lib/company/opencorporates-soft-verify.ts) → `claim_events.company_name_verification_status` = `user_input_verified` \| `user_input_unverified`. **Letter allowed either way**; show [`COMPANY_NAME_UNVERIFIED_WARNING`](src/lib/constants/company-name-verification.ts) when unverified. Env: `OPENCORPORATES_API_TOKEN`. <!-- scaffold done; wire on Q13 API route in 7.5.1 -->
-- [ ] **7.5.2** Q14 evidence yes/no → `claim_events` for future letter/evidence package.
+- [ ] **7.5.1** Q13 — when voicemail missing / no extraction: company name + context (pitch, callback #). On submit: [`persistUserCompanyIdentification`](src/lib/company/persist-user-company-identification.ts) → `company_identified = true`, `source: user_input`, clear company referral block (`tcpa_letter_blocked = company_unidentified`).
+- [ ] **7.5.1b** **Soft OpenCorporates verify after Q13** (not a hard gate): if `user_input` → [`softVerifyCompanyNameWithOpenCorporates`](src/lib/company/opencorporates-soft-verify.ts) → `claim_events.company_name_verification_status` = `user_input_verified` \| `user_input_unverified`. **Attorney referral allowed either way**; show [`COMPANY_NAME_UNVERIFIED_WARNING`](src/lib/constants/company-name-verification.ts) when unverified. Env: `OPENCORPORATES_API_TOKEN`. <!-- scaffold done; wire on Q13 API route in 7.5.1 -->
+- [ ] **7.5.2** Q14 evidence yes/no → `claim_events` for attorney evidence package (screenshots, call logs, etc. — feeds §13.2 PDF).
 
 
 **Docs — this subsection**
@@ -789,7 +824,7 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 - [ ] **7.6.1** New question UI: “Was this number calling your mobile phone or a home/landline?” (copy lawyer-reviewed).
 - [ ] **7.6.2** Persist choice in `claim_events` (e.g. `line_type` = `mobile` | `residential`).
-- [ ] **7.6.3** Map to statute subsections in shared module for letter generation (§227(b)(1)(A)(iii) vs (B)).
+- [ ] **7.6.3** Map to statute subsections in shared module for **scoring + attorney evidence summary** (§227(b)(1)(A)(iii) vs (B)) — not for auto-generated demand letters.
 
 
 **Docs — this subsection**
@@ -799,7 +834,7 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 ### 7.7 Completion
 
 - [ ] **7.7.1** On final submit: set `claim.status` to `qualified` (or equivalent); enqueue scoring job or run synchronously if fast.
-- [ ] **7.7.2** Redirect to `/results` or `/summary` based on multi-subject flow.
+- [ ] **7.7.2** Redirect to `/results` (primary post-qualify surface) with attorney CTA when `canReferToAttorney`; drop `/summary` letter-cart flow for v0.1 unless repurposed as read-only claim overview.
 
 
 **Docs — this subsection**
@@ -847,12 +882,13 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 - [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
 - [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
 
-### 8.4 Results UI (`/results`)
+### 8.4 Results UI (`/results`) — strength / probability + attorney CTA
 
 - [ ] **8.4.1** Per subject card: spam summary, DNC summary, exempt badge, strength badge.
-- [ ] **8.4.2** Three-scenario dollar display with labels; mandatory caveat paragraph under numbers (PRD §11).
-- [ ] **8.4.3** Strength-specific UI: green/yellow/orange/red; weak → checkbox acknowledgement component before “Continue”.
-- [ ] **8.4.4** Ineligible: block pay CTA; show reasons bullet list; offer email capture (Phase 2.8).
+- [ ] **8.4.2** Three-scenario dollar display with labels; mandatory caveat paragraph under numbers (PRD §11) — **informational estimates**, not a recommended demand.
+- [ ] **8.4.3** Strength-specific UI: green/yellow/orange/red; plain-language **“likelihood you have something worth discussing with an attorney”** copy (lawyer-reviewed); weak → checkbox acknowledgement before attorney CTA.
+- [ ] **8.4.4** Ineligible: hide attorney CTA; show reasons bullet list; offer email capture (Phase 2.8).
+- [ ] **8.4.5** Eligible (`canReferToAttorney`): primary CTA **“Connect with an attorney — free”** → Phase 13.1 flow (expectation screen + `leads` insert).
 
 
 **Docs — this subsection**
@@ -873,71 +909,60 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ## Phase 9 — Summary, bundles, Stripe, Tax
 
-### 9.1 Summary page `/summary`
+> **STATUS: CANCELLED for v0.1 (2026-05-17)** — DIY demand letter purchase removed. Do not implement Stripe letter Checkout, bundles, or Tax for consumer letters. Optional: lightweight `/summary` as read-only multi-subject overview **without** pay CTAs. Attorney monetization → Phase 13 (firm Connect, charge on accept).
 
-- [ ] **9.1.1** Group subjects by normalized `company_name` (trim, case-insensitive key).
-- [ ] **9.1.2** Per group: show aggregated strength (rule: weakest of group vs strongest — **decide and document**; see Open questions).
-- [ ] **9.1.3** Per group CTA: “Get letter for {Company}” → `/letter/[id]` with subject or group id.
-- [ ] **9.1.4** Display bundle pricing table when 2+ groups eligible for purchase.
+### 9.1 Summary page `/summary` *(cancelled — letter cart)*
 
-
-**Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
-
-### 9.2 Stripe catalog
-
-- [ ] **9.2.1** Create Products in Stripe Dashboard or via API: single letter, 2-bundle, 3-bundle, per-item for 4+.
-- [ ] **9.2.2** Store Price IDs in env or `stripe_prices` config module.
-- [ ] **9.2.3** Map cart selection to correct Price or custom `price_data` if dynamic.
+- [ ] ~~**9.1.1** Group subjects by normalized `company_name`~~ — **Deferred:** only if repurposed as non-commerce claim overview.
+- [ ] ~~**9.1.2** Per group: show aggregated strength~~ — **Moved to** `/results` (§8.4).
+- [ ] ~~**9.1.3** Per group CTA: “Get letter for {Company}”~~ — **Cancelled.**
+- [ ] ~~**9.1.4** Display bundle pricing table~~ — **Cancelled.**
 
 
 **Docs — this subsection**
 - [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
 - [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
 
-### 9.3 Stripe Tax
+### 9.2 Stripe catalog *(cancelled — consumer letters)*
 
-- [ ] **9.3.1** Enable Stripe Tax in Dashboard; configure origin address.
-- [ ] **9.3.2** Tag products with appropriate `tax_code` for digital goods/services.
-- [ ] **9.3.3** Pass `customer_update: { address: 'auto' }` and `automatic_tax: { enabled: true }` in Checkout Session creation.
-- [ ] **9.3.4** Test mode: use Stripe test addresses for CA/NY etc.
+- [ ] ~~**9.2.1–9.2.3** Letter products / prices~~ — **Cancelled v0.1.** Revisit only if product reintroduces paid consumer documents.
 
 
 **Docs — this subsection**
 - [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
 - [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
 
-### 9.4 Checkout session creation
+### 9.3 Stripe Tax *(deferred with Phase 9)*
 
-- [ ] **9.4.1** Route Handler `POST /api/checkout`: validate auth user owns `claim_id` and subjects in cart.
-- [ ] **9.4.2** Re-run `canPurchaseLetter` for each subject in cart.
-- [ ] **9.4.3** Create Checkout Session with line items per chosen bundle rules; attach `client_reference_id` = `claim_id`.
-- [ ] **9.4.4** Metadata: `claim_id`, comma-separated `claim_subject_ids`, `violation_type`, `demand_scenario` choice.
-- [ ] **9.4.5** Success/cancel URLs pointing to `/letter/...` or `/summary` with query flags.
+- [ ] ~~**9.3.1–9.3.4**~~ — **Deferred** until a paid consumer SKU exists (none in v0.1).
 
 
 **Docs — this subsection**
 - [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
 - [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
 
-### 9.5 Webhooks
+### 9.4 Checkout session creation *(cancelled)*
 
-- [ ] **9.5.1** Route Handler `POST /api/webhooks/stripe` with raw body + signature verification.
-- [ ] **9.5.2** Handle `checkout.session.completed`: idempotent insert into `letters` rows (one per purchased subject).
-- [ ] **9.5.3** Store `stripe_payment_intent_id`, `amount_paid_cents` on `letters`.
-- [ ] **9.5.4** Handle failures/duplicates with logging + admin alert hook (email/Slack) optional.
+- [ ] ~~**9.4.1–9.4.5** Consumer letter Checkout~~ — **Cancelled v0.1.**
 
 
 **Docs — this subsection**
 - [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
 - [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
 
-### 9.6 Demand scenario user choice
+### 9.5 Webhooks *(letter purchase — cancelled; Connect webhooks in Phase 13)*
 
-- [ ] **9.6.1** Before Checkout: radio buttons `conservative` | `realistic` | `maximum` with disclaimer that product is not recommending a choice.
-- [ ] **9.6.2** Pass selected scenario into Checkout metadata and persist on `letters.demand_scenario`.
-- [ ] **9.6.3** Show dollar amount preview for selected scenario next to radios (read-only from engine).
+- [ ] ~~**9.5.2–9.5.3** `letters` insert on Checkout~~ — **Cancelled v0.1.**
+- [ ] **9.5.1** *(optional infra)* Route Handler `POST /api/webhooks/stripe` skeleton if firm Connect ships in v0.2 — not required for v0.1 attorney referral without payment.
+
+
+**Docs — this subsection**
+- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
+- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+
+### 9.6 Demand scenario user choice *(cancelled — was pre-Checkout for letters)*
+
+- [ ] ~~**9.6.1–9.6.3**~~ — **Cancelled.** Valuation scenarios display on `/results` only (§8.4.2); no user “demand amount” selection for v0.1.
 
 
 **Docs — this subsection**
@@ -948,91 +973,78 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ## Phase 10 — Letter generation, PDF, filing guide, account
 
-### 10.1 Async architecture
+> **STATUS: CANCELLED for v0.1 (2026-05-17)** — No OpenRouter demand-letter generation, letter PDFs, `/letter/[id]` purchase UX, or filing guide gated on purchased letters. **Promoted instead:** attorney evidence PDF (old §13.2). Keep `letters` table/migrations for possible future use; do not build generation pipeline.
 
-- [ ] **10.1.1** Document chosen approach: Vercel `waitUntil`, QStash, Inngest, Supabase Edge Function + cron, or worker.
-- [ ] **10.1.2** Implement job record table **or** `letters` status `pending` → `generated` → `failed` with error message.
-- [ ] **10.1.3** Retry policy: max N attempts with exponential backoff for OpenRouter/PDF transient errors.
+### 10.1 Async architecture *(cancelled — letter jobs)*
 
-
-**Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
-
-### 10.2 Few-shot corpus
-
-- [ ] **10.2.1** Draft 10 human-written example letters covering varied violation mixes (offline doc OK until checked into secure storage).
-- [ ] **10.2.2** Redact PII from examples; store in private bucket or env-injected build secret if needed.
-- [ ] **10.2.3** Build prompt assembler that injects 2–3 relevant few-shots by scenario (simple similarity or fixed pairs at first).
+- [ ] ~~**10.1.1–10.1.3** Letter generation worker~~ — **Cancelled v0.1.**
 
 
 **Docs — this subsection**
 - [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
 - [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
 
-### 10.3 OpenRouter integration
+### 10.2 Few-shot corpus *(cancelled)*
 
-- [ ] **10.3.1** Server-only client; configure model name via env.
-- [ ] **10.3.2** Build JSON or plain-text prompt sections: user facts, DNC table, RA, subsections list, strength, disclaimers, output format instructions.
-- [ ] **10.3.3** Sanitize user free text to reduce prompt injection risk (strip XML-ish tags or escape).
-- [ ] **10.3.4** Log token usage per letter for cost tracking.
+- [ ] ~~**10.2.1–10.2.3** Demand letter few-shots~~ — **Cancelled v0.1.**
 
 
 **Docs — this subsection**
 - [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
 - [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
 
-### 10.4 Output validation
+### 10.3 OpenRouter integration *(reprioritized)*
 
-- [ ] **10.4.1** Check letter contains required disclaimer substring and statute citations placeholders filled.
-- [ ] **10.4.2** Max length guard; truncate or regenerate once if exceeded.
-- [ ] **10.4.3** If validation fails after retries: mark `failed`, notify user with support contact.
-
-
-**Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
-
-### 10.5 PDF generation and storage
-
-- [ ] **10.5.1** Choose PDF strategy: `@react-pdf/renderer`, Puppeteer on serverless (bundle size constraints), or external API.
-- [ ] **10.5.2** Render letter HTML/PDF with print stylesheet; embed fonts if needed.
-- [ ] **10.5.3** Upload PDF to Supabase Storage bucket `letters` with RLS or signed URLs policy.
-- [ ] **10.5.4** Save public/signed URL + `generated_at` on `letters` row.
+- [ ] **10.3.1** Server-only OpenRouter client — **v0.1 use:** Whisper transcription for voicemail (§7.5.4) only. **Not** demand-letter completion.
+- [ ] ~~**10.3.2–10.3.4** Letter prompts / token tracking per letter~~ — **Cancelled v0.1.**
 
 
 **Docs — this subsection**
 - [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
 - [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
 
-### 10.6 Letter page `/letter/[id]`
+### 10.4 Output validation *(cancelled — generated letters)*
 
-- [ ] **10.6.1** Auth gate; verify `letters.user_id = auth.uid()`.
-- [ ] **10.6.2** Show generation spinner when `pending`; error state when `failed`.
-- [ ] **10.6.3** Download button uses short-lived signed URL.
-- [ ] **10.6.4** Inline disclaimer repeated on page (PRD §13 letter disclaimer + product disclaimer).
+- [ ] ~~**10.4.1–10.4.3**~~ — **Cancelled v0.1.**
 
 
 **Docs — this subsection**
 - [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
 - [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
 
-### 10.7 Filing guide `/guide`
+### 10.5 PDF generation and storage *(moved to attorney evidence — §13.2)*
 
-- [ ] **10.7.1** Gate: only if user has at least one purchased letter for claim (query `letters` + payment state).
-- [ ] **10.7.2** Sections 1–7 per PRD §16 as anchor headings + printable layout.
-- [ ] **10.7.3** Internal links to USPS certified mail, state small claims URL placeholders.
+- [ ] ~~**10.5.2–10.5.4** Demand letter PDF to `letters` bucket~~ — **Cancelled v0.1.**
+- [ ] **10.5.1** Choose PDF strategy for **evidence package** (§13.2) — same tech options apply.
 
 
 **Docs — this subsection**
 - [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
 - [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
 
-### 10.8 Account `/account`
+### 10.6 Letter page `/letter/[id]` *(cancelled — stub may remain)*
 
-- [ ] **10.8.1** List claims with statuses and timestamps.
-- [ ] **10.8.2** List letters with download CTA and scenario used.
-- [ ] **10.8.3** Link to `/guide` from each letter row.
+- [ ] ~~**10.6.1–10.6.4** Purchased letter download UX~~ — **Cancelled v0.1.** Remove or redirect `/letter/*` in marketing/cleanup pass; keep route stub if needed to avoid 404 during transition.
+
+
+**Docs — this subsection**
+- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
+- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+
+### 10.7 Filing guide `/guide` *(deferred)*
+
+- [ ] ~~**10.7.1** Gate on purchased letter~~ — **Deferred** — no letter purchase in v0.1. Optional later: informational guide for users who retained an attorney (not DIY filing).
+- [ ] **10.7.2–10.7.3** PRD §16 content — **Deferred** with guide; low priority vs attorney path.
+
+
+**Docs — this subsection**
+- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
+- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+
+### 10.8 Account `/account` *(partial — no letters list v0.1)*
+
+- [ ] **10.8.1** List claims with statuses, strength, and attorney lead status (`leads` join).
+- [ ] ~~**10.8.2–10.8.3** Letters list + guide links~~ — **Cancelled v0.1** (no purchased letters).
 
 
 **Docs — this subsection**
@@ -1060,7 +1072,7 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 - [ ] **11.2.2** `/spam-call-compensation`
 - [ ] **11.2.3** `/do-not-call-registry-violation`
 - [ ] **11.2.4** `/robocall-lawsuit`
-- [ ] **11.2.5** `/tcpa-demand-letter`
+- [ ] **11.2.5** `/tcpa-demand-letter` — **Repurpose or 301** to attorney-referral / checker landing (no DIY letter promise).
 - [ ] **11.2.6** Cross-link cluster in footer “Resources”.
 
 
@@ -1142,7 +1154,7 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 - [ ] **12.5.1** Production Supabase: run migrations; verify RLS in dashboard.
 - [ ] **12.5.2** Stripe live mode keys isolated; Tax live activation when ready.
 - [ ] **12.5.3** Vercel env vars complete; preview env for staging branch optional.
-- [ ] **12.5.4** Post-deploy smoke: anonymous check → account wall → magic link → merge → pay test card → PDF download.
+- [ ] **12.5.4** Post-deploy smoke: anonymous check → account wall → magic link → merge → qualify → `/results` strength → attorney referral (no letter Checkout).
 
 
 **Docs — this subsection**
@@ -1151,32 +1163,35 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ---
 
-## Phase 13 — v0.2 (granular high level)
+## Phase 13 — Attorney referral, evidence package, firm platform
 
-### 13.1 Consumer attorney path
+> **v0.1 core (promoted 2026-05-17):** §**13.1** consumer attorney path + §**13.2** evidence PDF. §**13.3+** remain **v0.2** (Stripe Connect, firm dashboard, lead billing).
 
-- [ ] **13.1.1** Decision screen branch: “DIY letter” vs “Connect with attorney — free”.
-- [ ] **13.1.2** Expectation page: 48h contact, contingency **informational** wording per PRD.
-- [ ] **13.1.3** Create `leads` row linked to `claim_id`; status `new`.
-- [ ] **13.1.4** Email capture confirmation to user.
+### 13.1 Consumer attorney path *(v0.1)*
+
+- [ ] **13.1.1** Results CTA: **“Connect with an attorney — free”** (no DIY letter branch). Shown only when `canReferToAttorney` (§6.6).
+- [ ] **13.1.2** Expectation page: 48h contact, contingency **informational** wording per PRD; clear not legal advice / no guarantee of representation.
+- [ ] **13.1.3** Create `leads` row linked to `claim_id` (+ subject ids); status `new`; trigger evidence PDF job (§13.2).
+- [ ] **13.1.4** Email confirmation to user; optional SMS later.
 
 
 **Docs — this subsection**
 - [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
 - [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
 
-### 13.2 Evidence PDF for firms
+### 13.2 Evidence PDF for firms *(v0.1)*
 
-- [ ] **13.2.1** Server job compiling claim_events + screenshots metadata into PDF.
+- [ ] **13.2.1** Server job compiling claim_events, qualification answers, spam/DNC summary, company + registered agent, strength score, valuation bands, and uploaded evidence paths into a single PDF for firms.
 - [ ] **13.2.2** Upload to Storage; save URL on `leads.evidence_pdf_url`.
 - [ ] **13.2.3** Redact sensitive third-party PII if required by firm contract (future).
+- [ ] **13.2.4** User-facing summary on `/results`: “What we’re sharing with attorneys” checklist (transparency, not legal advice).
 
 
 **Docs — this subsection**
 - [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
 - [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
 
-### 13.3 Stripe Connect onboarding
+### 13.3 Stripe Connect onboarding *(v0.2)*
 
 - [ ] **13.3.1** Dashboard Connect settings: Standard or Express accounts for firms (decide).
 - [ ] **13.3.2** Onboarding link generation for `law_firms` admin user.
@@ -1187,7 +1202,7 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 - [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
 - [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
 
-### 13.4 Firm dashboard app
+### 13.4 Firm dashboard app *(v0.2)*
 
 - [ ] **13.4.1** Separate deploy or Next route group `firms.*` subdomain middleware host check.
 - [ ] **13.4.2** Firm user auth: map `firm_users.auth_user_id` to Supabase Auth invites.
@@ -1199,7 +1214,7 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 - [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
 - [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
 
-### 13.5 Lead accept and payment
+### 13.5 Lead accept and payment *(v0.2)*
 
 - [ ] **13.5.1** “Accept” button: create PaymentIntent with **application fee** or destination charge to firm Connect account per decision.
 - [ ] **13.5.2** On `payment_intent.succeeded`: set `leads.status = accepted`, timestamps; unlock consumer PII to firm row visibility policy.
@@ -1252,7 +1267,7 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 - [ ] **14.1.2** Request `READ_CALL_LOG` permission flow with rationale screens.
 - [ ] **14.1.3** Import call log; normalize numbers; batch server checks with rate limits.
 - [ ] **14.1.4** Auto-detect time-of-day violations from timestamps; prefill qualification.
-- [ ] **14.1.5** Stripe React Native for in-app purchases mirroring web SKUs.
+- [ ] ~~**14.1.5** Stripe in-app letter purchases~~ — **Cancelled** unless product reintroduces paid SKUs.
 
 
 **Docs — this subsection**
@@ -1263,7 +1278,7 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 - [ ] **14.2.1** Image picker + upload to signed URL; vision model prompt to extract numbers/dates/counts.
 - [ ] **14.2.2** User confirmation step for parsed rows before server persistence.
-- [ ] **14.2.3** Reuse same qualification + letter flows via shared screens.
+- [ ] **14.2.3** Reuse same qualification + results + attorney referral flows via shared screens.
 
 
 **Docs — this subsection**
@@ -1314,21 +1329,24 @@ Track resolutions here by checking items off and adding `<!-- done: decision rec
 
 ### Payments and money
 
-- [ ] **Stripe bundle Checkout structure** — Single line item with metadata vs multiple Prices; impact on refunds later (refunds still “not for now” but structure persists).
-- [ ] **Stripe Tax** — Product tax code selection and nexus registration who owns ops (you vs accountant).
+- [x] **Consumer letter Checkout** — **Cancelled v0.1 (2026-05-17).** No Stripe letter SKUs, bundles, or Tax for DIY letters.
+- [ ] **Stripe bundle Checkout structure** — **Deferred** (was for letter bundles).
+- [ ] **Stripe Tax** — **Deferred** with consumer Checkout.
 - [ ] **Currency** — USD-only for v0.1 assumed; confirm.
-- [ ] **Partial bundle completion** — If Checkout succeeds for subset due to race, how to reconcile (unlikely — still decide).
+- [ ] **Partial bundle completion** — **N/A** until a paid consumer SKU returns.
 
 
 **Docs — this subsection**
 - [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
 - [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
 
-### Letters and liability (product, not legal advice)
+### Attorney referral and liability (product, not legal advice)
 
-- [ ] **User edits after PDF** — Disclaimer coverage for edited downloads.
+- [ ] **Strength / probability copy** — Lawyer-reviewed language for “likelihood worth discussing with an attorney” on `/results` (Phase 8.4.3); must not promise representation or recovery.
 - [ ] **§227(b)(1)(A)(iii) vs (B)** — Final UX copy for attestation screen (Phase 7.6) without advising outcome.
-- [ ] **AI hallucination guardrails** — Human review of first N letters before full automation? (PRD suggests review first 50 outputs.)
+- [ ] **Evidence PDF to firms** — What PII is included; user consent screen before `leads` insert (Phase 13.1 + 13.2.4).
+- [ ] **Lead sharing consent** — Checkbox + privacy policy alignment for sharing claim data with third-party law firms.
+- [x] ~~**DIY demand letters**~~ — **Removed from v0.1** (no generated letter PDFs; old open questions on user edits / AI letter review **closed**).
 
 
 **Docs — this subsection**
@@ -1362,7 +1380,8 @@ Track resolutions here by checking items off and adding `<!-- done: decision rec
 
 - [ ] **“Zero migrations for new verticals”** — Treat as aspirational; still expect migrations for indexes, RLS, and global features.
 - [ ] **RLS for anonymous claims** — Must be airtight: only server uses service role to read/write anonymous rows keyed to session.
-- [ ] **Letters ↔ company** — Ensure every `letters` row references the intended `claim_subject`(s) or company grouping key for multi-defendant claims.
+- [ ] **Leads ↔ subjects** — Ensure every `leads` row references the correct `claim_id` / subject set for multi-number claims (evidence PDF §13.2).
+- [x] ~~**Letters ↔ company**~~ — **Deferred** with cancelled letter product (`letters` table retained only).
 - [ ] **Connect account type** — Standard vs Express for law firms (Phase 13.3.1).
 
 
@@ -1372,4 +1391,4 @@ Track resolutions here by checking items off and adding `<!-- done: decision rec
 
 ---
 
-*Last updated: Husky + first commit in Phase 0; docs checklists after each subsection. Sync when `prd.md` or decisions change.*
+*Last updated: 2026-05-17 — strategic pivot (evidence + strength + attorney referral; Phases 9–10 cancelled for v0.1; Phase 13.1–13.2 promoted). Sync when `prd.md` or decisions change.*

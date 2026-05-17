@@ -22,7 +22,7 @@ describe("fdcpa-debt-collection (§5.7)", () => {
 
   it("mentions FDCPA and no TCPA letter without product promises", () => {
     expect(FDCPA_DEBT_COLLECTION_USER_MESSAGE).toMatch(/FDCPA/i);
-    expect(FDCPA_DEBT_COLLECTION_USER_MESSAGE).toMatch(/will not generate a TCPA/i);
+    expect(FDCPA_DEBT_COLLECTION_USER_MESSAGE).toMatch(/cannot offer a TCPA/i);
     expect(FDCPA_DEBT_COLLECTION_USER_MESSAGE).not.toMatch(/coming soon|we will offer|launch/i);
   });
 

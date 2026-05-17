@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-05-17 (Product pivot + Phase 6.6 — attorney referral gate)
+
+- **Product:** v0.1 focuses on **evidence gathering**, **informational claim strength**, and **attorney referral** — DIY demand letter generation and consumer Stripe letter Checkout are **out of scope** (Phases 9–10 cancelled in `task_manager.md`).
+- **§6.6:** [`canReferToAttorney`](src/lib/claims/can-refer-to-attorney.ts) central gate with reason codes ([`attorney-referral.ts`](src/lib/constants/attorney-referral.ts)); [`assertCanReferToAttorney`](src/lib/claims/can-refer-to-attorney.ts) for server enforcement before `leads` insert (§13.1). Deprecated `canPurchaseLetter` alias.
+- **Copy:** Attorney-referral framing in [`company-identification.ts`](src/lib/constants/company-identification.ts), [`fdcpa-debt-collection.ts`](src/lib/constants/fdcpa-debt-collection.ts), [`registered-agent-lookup.ts`](src/lib/constants/registered-agent-lookup.ts). Marketing pages still TODO (§3.7).
+
 ## 2026-05-16 (Phase 6.5 — registered agent lookup)
 
 - **§6.5 OpenCorporates RA lookup:** Shared client [`opencorporates-api.ts`](src/lib/company/opencorporates-api.ts); [`lookupRegisteredAgentViaOpenCorporates`](src/lib/company/lookup-registered-agent-opencorporates.ts) searches by `company_name` + `users.state` (`jurisdiction_code=us_XX`), then national fallbacks (`us_de`, `us_nv`, `us_wy`, then `country_code=us`). Company detail → registered-agent officer → optional officer detail for address.

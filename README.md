@@ -91,10 +91,10 @@ The app’s root [`proxy.ts`](proxy.ts) refreshes the session (see [`src/lib/sup
 | Route | Purpose |
 |-------|---------|
 | [`/`](src/app/page.tsx) | Landing: TCPA informational hero, trust strip, CTAs to `/check` and `/how-it-works`, PRD disclaimer footer. |
-| [`/how-it-works`](src/app/how-it-works/page.tsx) | Product flow overview (check → qualify → pay → letter → file), TCPA overview, link to `/faq`. |
+| [`/how-it-works`](src/app/how-it-works/page.tsx) | Product flow overview (check → qualify → results → attorney referral) — **TODO §3.7:** update page copy from legacy pay/letter flow. |
 | [`/faq`](src/app/faq/page.tsx) | Objection-handling FAQ (cost, legality, outcomes, timing, DNC, attorneys) with non-advice reminders. |
 | [`/privacy`](src/app/privacy/page.tsx) | Plain-English privacy policy (collection, retention, third parties, CCPA, anonymous vs signed-in lifecycle). |
-| [`/terms`](src/app/terms/page.tsx) | Terms of service (eligibility 18+, acceptable use, digital letters, refunds, liability draft). |
+| [`/terms`](src/app/terms/page.tsx) | Terms of service (eligibility 18+, acceptable use, liability draft) — **TODO §3.7:** attorney lead-sharing terms. |
 
 Shared copy lives in [`src/lib/marketing/`](src/lib/marketing/) (`constants.ts`, `faq.ts`, `privacy.ts`, `terms.ts`). The PRD §3 disclaimer is rendered by [`DisclaimerBanner`](src/components/marketing/disclaimer-banner.tsx) (global site footer, marketing pages, [`/check` layout](src/app/check/layout.tsx), [`(post-check)` layout](src/app/(post-check)/layout.tsx), and [`/protected`](src/app/protected/protected-shell-with-auth.tsx)). `/guide` will reuse the same component when Phase 10 ships.
 
@@ -118,7 +118,7 @@ Marketing UI: [`src/components/marketing/`](src/components/marketing/). Unauthen
 
 **`/check` §5.4–5.7 spam pipeline:** [`spam-check-pipeline.ts`](src/lib/spam/spam-check-pipeline.ts) orchestrates Nomorobo (primary) + Twilio (secondary), merges per PRD §7, and persists to `claim_subjects` / `claim_events`. **§5.5:** merged `call_category` in [`EXEMPT_CATEGORIES`](src/lib/constants/exempt-categories.ts) sets `is_exempt` + `exempt_reason` (DNC / registered-agent steps should skip exempt subjects in Phase 6). **§5.6:** non-exempt rows with no spam hit show soft-warning copy ([`no-spam-hit.ts`](src/lib/constants/no-spam-hit.ts)) but still allow qualification; PRD §8 matrix tiers (+30 / +15 / 0) are derived in [`spam-db-matrix-signal.ts`](src/lib/scoring/spam-db-matrix-signal.ts) and stored on `claim_events` as `spam_db_matrix_tier` / `spam_db_matrix_points`. **§5.7:** debt-collection category shows FDCPA informational copy ([`fdcpa-debt-collection.ts`](src/lib/constants/fdcpa-debt-collection.ts)), blocks TCPA letter path (`claim_events.tcpa_letter_blocked = fdcpa_debt_collection`), and offers optional waitlist capture (`debt_collection_interest`) when all subjects are debt-collection exempt — copy does not promise a future product. Submit JSON `number_checks[].is_exempt`, `is_known_spammer`, and `is_debt_collection` drive per-number messaging on `/check`. Enable providers with `SPAM_PROVIDER_NOMOROBO_ENABLED` / `SPAM_PROVIDER_TWILIO_ENABLED` plus API keys; without them, adapters return **skipped** results (no outbound HTTP). [`parallel-check-pipeline-stub.ts`](src/lib/check/parallel-check-pipeline-stub.ts) remains for stub-only unit tests. Loading UI is skeleton until one **`POST /api/check/submit`** completes (**not streaming**).
 
-**§5.7 assumptions (carry until Phase 6.6):** Debt collection is detected via the same §5.5 category aliases (`Debt Collector`, `debt_collector`, etc.). TCPA letter blocking is written to `claim_events` now; Phase 6.6 `canPurchaseLetter` should also use [`isTcpaLetterBlockedForCallCategory`](src/lib/constants/fdcpa-debt-collection.ts). Waitlist source `debt_collection_interest` appears only when every subject is exempt and debt-collection; mixed exempt claims still use `exempt_only`.
+**§5.7 / §6.6:** Debt collection is detected via the same §5.5 category aliases (`Debt Collector`, `debt_collector`, etc.). `claim_events.tcpa_letter_blocked` (legacy key) records blocks; [`canReferToAttorney`](src/lib/claims/can-refer-to-attorney.ts) enforces the same rules for attorney referral. Waitlist source `debt_collection_interest` appears only when every subject is exempt and debt-collection; mixed exempt claims still use `exempt_only`.
 
 **Phase 6.1–6.2 — federal DNC (manual attestation only):**
 
@@ -153,10 +153,10 @@ Marketing UI: [`src/components/marketing/`](src/components/marketing/). Unauthen
 | **Twilio Lookup v2** | Spam score + line type / VOIP (carrier intelligence). **CNAM → `company_name_hint` only** — does not set `company_identified`. |
 | **Whitepages (§6.4.2)** | Optional after spam merge (`WHITEPAGES_*` env). [`GET /v2/person?phone=…`](https://api.whitepages.com/docs/documentation/person-search/reverse-phone-lookup) → **hint only**, not `company_identified`. Spike: [`docs/spikes/20260516220000-whitepages-company-lookup.md`](docs/spikes/20260516220000-whitepages-company-lookup.md). |
 | **FTC complaints** | **Deferred** (bulk index v1, not live API). [`docs/spikes/20260516210000-ftc-complaints-company-lookup.md`](docs/spikes/20260516210000-ftc-complaints-company-lookup.md). |
-| **Letter block (§6.4.3)** | `tcpa_letter_blocked = company_unidentified` until identified; enforce in §6.6 `canPurchaseLetter`. |
+| **Referral block (§6.4.3)** | `tcpa_letter_blocked = company_unidentified` until identified; enforce via §6.6 [`canReferToAttorney`](src/lib/claims/can-refer-to-attorney.ts). |
 | **`/check` (§6.4.4)** | Unidentified copy, “Company identified” when Nomorobo hits, **unverified CNAM/hint** line when `company_name_hint` present. |
-| **Qualify §7.5 (planned)** | **Voicemail upload first** (mp3/m4a/wav → OpenRouter → `voicemail_transcription`) — spike [`docs/spikes/20260516230000-voicemail-company-identification.md`](docs/spikes/20260516230000-voicemail-company-identification.md). **Q13** free-text company + [`persistUserCompanyIdentification`](src/lib/company/persist-user-company-identification.ts). **Soft verify:** OpenCorporates on Q13 name → `user_input_verified` / `user_input_unverified` — letter **allowed either way**; warning [`COMPANY_NAME_UNVERIFIED_WARNING`](src/lib/constants/company-name-verification.ts) if unverified. |
-| **Next** | §7.5.4 voicemail implement, §7.5.1 Q13 UI/API, §6.6 `canPurchaseLetter`. |
+| **Qualify §7.5 (planned)** | **Voicemail upload first** (mp3/m4a/wav → OpenRouter → `voicemail_transcription`) — spike [`docs/spikes/20260516230000-voicemail-company-identification.md`](docs/spikes/20260516230000-voicemail-company-identification.md). **Q13** free-text company + [`persistUserCompanyIdentification`](src/lib/company/persist-user-company-identification.ts). **Soft verify:** OpenCorporates on Q13 name → `user_input_verified` / `user_input_unverified` — referral **allowed either way**; warning [`COMPANY_NAME_UNVERIFIED_WARNING`](src/lib/constants/company-name-verification.ts) if unverified. |
+| **Next** | §7.5.4 voicemail, §7.5.1 Q13 UI/API, §8 scoring/results, §13.1 attorney CTA. |
 
 **Phase 6.5 — registered agent lookup:**
 
@@ -169,6 +169,18 @@ Marketing UI: [`src/components/marketing/`](src/components/marketing/). Unauthen
 | **Manual** | SOS business-search links per top states — [`registered-agent-lookup.ts`](src/lib/constants/registered-agent-lookup.ts). |
 | **Rate limit** | 6 lookups per anonymous session per hour (`opencorporates_lookup`). |
 | **Env** | `OPENCORPORATES_API_TOKEN` in `.env.local`. |
+
+**v0.1 product direction (2026-05-17):** No DIY demand letters or consumer Stripe Checkout. Users **gather evidence** on `/check` and `/qualify`, see **informational claim strength** on `/results` (Phase 8), and may **connect with an attorney** when [`canReferToAttorney`](src/lib/claims/can-refer-to-attorney.ts) passes (Phase 6.6). Phases 9–10 (letter purchase, PDF generation) are cancelled; see `task_manager.md`.
+
+**Phase 6.6 — attorney referral eligibility:**
+
+| Topic | Decision |
+|-------|----------|
+| **Gate** | [`canReferToAttorney(claim, subject)`](src/lib/claims/can-refer-to-attorney.ts) → `{ ok, reasons[] }`; server routes use [`assertCanReferToAttorney`](src/lib/claims/can-refer-to-attorney.ts) before creating `leads` (§13.1). |
+| **Blocks** | `is_exempt`, `claim_strength === ineligible`, unidentified company (§6.4.3), debt collection / FDCPA ([`fdcpa-debt-collection.ts`](src/lib/constants/fdcpa-debt-collection.ts)). |
+| **Does not block** | Federal DNC attestation gaps, SOL warnings — informational on `/results` only. |
+| **Legacy** | `canPurchaseLetter` aliases `canReferToAttorney`; `tcpa_letter_blocked` event key unchanged. |
+| **Reason codes** | [`attorney-referral.ts`](src/lib/constants/attorney-referral.ts) — `exempt`, `claim_ineligible`, `company_unidentified`, `fdcpa_debt_collection`. |
 
 Applies to the **consumer’s receiving number**, not spammer numbers entered on `/check`.
 
