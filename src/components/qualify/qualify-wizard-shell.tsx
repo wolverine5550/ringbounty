@@ -4,6 +4,7 @@ import { Screen1ConsentForm } from "@/components/qualify/screen-1-consent-form";
 import { Screen2StopRequestForm } from "@/components/qualify/screen-2-stop-request-form";
 import { Screen3CallDetailsForm } from "@/components/qualify/screen-3-call-details-form";
 import { Screen4CompanyForm } from "@/components/qualify/screen-4-company-form";
+import { Screen5LineTypeForm } from "@/components/qualify/screen-5-line-type-form";
 import {
   QUALIFY_STEP_TITLES,
   QUALIFY_WIZARD_STEP_MAX,
@@ -14,6 +15,7 @@ import type { QualifyScreen1Answers } from "@/lib/qualify/screen-1-consent";
 import type { QualifyScreen2Answers } from "@/lib/qualify/screen-2-stop-request";
 import type { QualifyScreen3Answers } from "@/lib/qualify/screen-3-call-details";
 import type { QualifyScreen4Answers } from "@/lib/qualify/screen-4-company-identification";
+import type { QualifyScreen5Answers } from "@/lib/qualify/screen-5-line-type";
 
 export type QualifyWizardShellProps = {
   claimSubjectId: string;
@@ -31,6 +33,8 @@ export type QualifyWizardShellProps = {
   screen4Initial?: QualifyScreen4Answers | null;
   /** Subject column fallback for Q13 company name. */
   subjectCompanyName?: string | null;
+  /** Loaded from `claim_events` when step is 5 (§7.6). */
+  screen5Initial?: QualifyScreen5Answers | null;
 };
 
 /**
@@ -46,6 +50,7 @@ export function QualifyWizardShell({
   showPostStopCount = false,
   screen4Initial = null,
   subjectCompanyName = null,
+  screen5Initial = null,
 }: QualifyWizardShellProps) {
   const title = QUALIFY_STEP_TITLES[step];
   const prevStep = step > 1 ? ((step - 1) as QualifyWizardStep) : null;
@@ -84,6 +89,12 @@ export function QualifyWizardShell({
           initialAnswers={screen4Initial}
           initialCompanyName={subjectCompanyName}
         />
+      ) : step === 5 ? (
+        <Screen5LineTypeForm
+          claimSubjectId={claimSubjectId}
+          claimId={claimId}
+          initialAnswers={screen5Initial}
+        />
       ) : (
         <p className="text-muted-foreground text-sm">
           Question forms for this screen ship in Phase 7.{step + 1}. Your progress
@@ -107,7 +118,7 @@ export function QualifyWizardShell({
             Previous step
           </Link>
         ) : null}
-        {nextStep && step !== 1 && step !== 2 && step !== 3 && step !== 4 ? (
+        {nextStep && step !== 1 && step !== 2 && step !== 3 && step !== 4 && step !== 5 ? (
           <Link
             className="text-primary text-sm underline underline-offset-2"
             href={buildQualifyPageHref({

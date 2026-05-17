@@ -25,6 +25,7 @@ import { loadQualifyScreen1Answers } from "@/lib/qualify/screen-1-consent";
 import { loadQualifyScreen2Answers } from "@/lib/qualify/screen-2-stop-request";
 import { loadQualifyScreen3Answers } from "@/lib/qualify/screen-3-call-details";
 import { loadQualifyScreen4Answers } from "@/lib/qualify/screen-4-company-identification";
+import { loadQualifyScreen5Answers } from "@/lib/qualify/screen-5-line-type";
 import { createClient } from "@/lib/supabase/server";
 
 type QualifyPageProps = {
@@ -33,7 +34,7 @@ type QualifyPageProps = {
 };
 
 /**
- * Qualify entry — §7.1 routing: federal DNC pre-gate, then wizard screens 1–4 via `?step=`.
+ * Qualify entry — §7.1 routing: federal DNC pre-gate, then wizard screens 1–5 via `?step=`.
  */
 export default async function QualifyPage({
   params,
@@ -160,7 +161,7 @@ export default async function QualifyPage({
       ? await loadQualifyScreen1Answers(supabase, claimId)
       : null;
   const screen2Answers =
-    wizardStep === 2 || wizardStep === 3 || wizardStep === 4
+    wizardStep === 2 || wizardStep === 3 || wizardStep === 4 || wizardStep === 5
       ? await loadQualifyScreen2Answers(supabase, claimId)
       : null;
   const screen2Initial = wizardStep === 2 ? screen2Answers : null;
@@ -176,11 +177,13 @@ export default async function QualifyPage({
           pageContext.subject.company_name,
         )
       : null;
+  const screen5Initial =
+    wizardStep === 5 ? await loadQualifyScreen5Answers(supabase, claimId) : null;
 
   return (
     <QualifyPageLayout
       title="Qualify your claim"
-      subtitle={`Screen ${wizardStep} of 4 — answer questions about this number.`}
+      subtitle={`Screen ${wizardStep} of 5 — answer questions about this number.`}
     >
       {applicableStateCode ? (
         <StateDncComingSoon stateCode={applicableStateCode} />
@@ -195,6 +198,7 @@ export default async function QualifyPage({
         showPostStopCount={showPostStopCount}
         screen4Initial={screen4Initial}
         subjectCompanyName={pageContext.subject.company_name}
+        screen5Initial={screen5Initial}
       />
     </QualifyPageLayout>
   );

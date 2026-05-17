@@ -16,6 +16,7 @@ import {
   QUALIFY_VOICEMAIL_TRANSCRIPT_LABEL,
   QUALIFY_VOICEMAIL_TRANSCRIPTION_UNAVAILABLE,
 } from "@/lib/constants/qualify-screen-4";
+import { buildQualifyPageHref } from "@/lib/qualify/qualify-step";
 import type { QualifyScreen4Answers } from "@/lib/qualify/screen-4-company-identification";
 
 export type Screen4CompanyFormProps = {
@@ -97,8 +98,14 @@ export function Screen4CompanyForm({
   const canSubmit =
     companyName.trim().length >= 2 && hasAdditionalEvidence !== null;
 
-  const goToResults = () => {
-    router.push(`/results?claim=${claimId}`);
+  const goToStep5 = () => {
+    router.push(
+      buildQualifyPageHref({
+        claimSubjectId,
+        claimId,
+        step: 5,
+      }),
+    );
     router.refresh();
   };
 
@@ -222,7 +229,7 @@ export function Screen4CompanyForm({
         setShowUnverifiedWarning(true);
       }
 
-      goToResults();
+      goToStep5();
     } catch {
       setSubmitError("Network error. Please try again.");
     } finally {
@@ -327,7 +334,7 @@ export function Screen4CompanyForm({
       ) : null}
 
       <Button type="submit" disabled={!canSubmit || isSubmitting}>
-        {isSubmitting ? "Saving…" : "Save and view results"}
+        {isSubmitting ? "Saving…" : "Save and continue"}
       </Button>
     </form>
   );

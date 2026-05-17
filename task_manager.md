@@ -822,14 +822,14 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 7.6 Cell vs residential attestation
 
-- [ ] **7.6.1** New question UI: “Was this number calling your mobile phone or a home/landline?” (copy lawyer-reviewed).
-- [ ] **7.6.2** Persist choice in `claim_events` (e.g. `line_type` = `mobile` | `residential`).
-- [ ] **7.6.3** Map to statute subsections in shared module for **scoring + attorney evidence summary** (§227(b)(1)(A)(iii) vs (B)) — not for auto-generated demand letters.
+- [x] **7.6.1** New question UI: “Was this number calling your mobile phone or a home/landline?” (copy lawyer-reviewed). <!-- done: `Screen5LineTypeForm`, `qualify-screen-5.ts` — counsel may refine copy in §Open -->
+- [x] **7.6.2** Persist choice in `claim_events` (e.g. `line_type` = `mobile` | `residential`). <!-- done: `POST /api/qualify/screen-5`, `screen-5-line-type.ts` -->
+- [x] **7.6.3** Map to statute subsections in shared module for **scoring + attorney evidence summary** (§227(b)(1)(A)(iii) vs (B)) — not for auto-generated demand letters. <!-- done: `src/lib/tcpa/line-type-statute.ts` -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README §7.6 -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG 2026-05-17 §7.6 -->
 
 ### 7.7 Completion
 

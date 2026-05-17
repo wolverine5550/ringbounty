@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-17 (Phase 7.6 — Screen 5 line type attestation)
+
+- **§7.6:** Step 5 on [`/qualify/[claimSubjectId]?step=5`](src/app/(post-check)/qualify/[claimSubjectId]/page.tsx) — user attests mobile vs home/landline ([`Screen5LineTypeForm`](src/components/qualify/screen-5-line-type-form.tsx), [`POST /api/qualify/screen-5`](src/app/api/qualify/screen-5/route.ts)) → `claim_events` key `line_type` (`mobile` \| `residential`). TCPA subsection mapping for scoring/evidence: [`line-type-statute.ts`](src/lib/tcpa/line-type-statute.ts) (§227(b)(1)(A)(iii) vs (B)). Screen 4 now continues to step 5 instead of `/results`.
+
 ## 2026-05-17 (Phase 7.5 — Screen 4 company identification)
 
 - **§7.5:** Step 4 on [`/qualify/[claimSubjectId]?step=4`](src/app/(post-check)/qualify/[claimSubjectId]/page.tsx) — voicemail upload + OpenRouter STT/extract ([`POST /api/qualify/voicemail`](src/app/api/qualify/voicemail/route.ts), [`openrouter-voicemail.ts`](src/lib/company/openrouter-voicemail.ts)), Q13 company + context, Q14 `has_additional_evidence` ([`Screen4CompanyForm`](src/components/qualify/screen-4-company-form.tsx), [`POST /api/qualify/screen-4`](src/app/api/qualify/screen-4/route.ts)). Voicemail path sets `company_identified` via [`persistVoicemailCompanyIdentification`](src/lib/company/persist-voicemail-company-identification.ts); manual Q13 via [`persistUserCompanyIdentification`](src/lib/company/persist-user-company-identification.ts) + OpenCorporates soft verify. Env: `OPENROUTER_API_KEY`, `OPENCORPORATES_API_TOKEN`.

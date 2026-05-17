@@ -24,7 +24,7 @@ export function isClaimSubjectIdUuid(value: string): boolean {
 }
 
 /**
- * Parses `?step=` (1–4). Invalid or out-of-range values return `null`.
+ * Parses `?step=` (1–5). Invalid or out-of-range values return `null`.
  */
 export function parseQualifyStepFromQuery(
   raw: string | null | undefined,
