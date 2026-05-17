@@ -159,7 +159,8 @@ Marketing UI: [`src/components/marketing/`](src/components/marketing/). Unauthen
 | **Qualify §7.6** | Explicit attestation: mobile vs home/landline → `line_type` on `claim_events`. [`mapLineTypeToTcpaSubsection`](src/lib/tcpa/line-type-statute.ts) maps to §227(b)(1)(A)(iii) or (B) for scoring and attorney evidence — not demand letters. |
 | **Qualify §7.7** | Screen 5 final submit → `claims.status` = `qualified`, `claim_events` `scoring_status=pending` ([`complete-qualify-claim.ts`](src/lib/qualify/complete-qualify-claim.ts)) → [`/results?claim=`](src/app/(post-check)/results/page.tsx). Attorney CTA when [`canReferToAttorney`](src/lib/claims/can-refer-to-attorney.ts) ([`AttorneyReferralCta`](src/components/results/attorney-referral-cta.tsx)). [`/summary`](src/app/(post-check)/summary/page.tsx) redirects to `/results` (no letter cart in v0.1). |
 | **Scoring §8.1** | PRD §8 matrix: [`computeStrengthMatrix`](src/lib/scoring/strength-matrix.ts) + [`strength-matrix-constants.ts`](src/lib/scoring/strength-matrix-constants.ts); per-signal spam/DNC helpers unchanged. Wired to claims on qualify complete via `scoring_status=pending` (§7.7) — persist/UI in §8.4–8.5. |
-| **Next** | §8.2 SOL, §8.3 valuation, §8.4–8.5 results persist/UI, §13.1 attorney lead flow. |
+| **Scoring §8.2** | SOL: [`computeSolFlags`](src/lib/scoring/compute-sol-flags.ts) + [`getStateSolYears`](src/lib/scoring/state-sol-years.ts); persisted on Screen 3 ([`persistSolFlags`](src/lib/scoring/persist-sol-flags.ts)). `/results` [`SolWarningBanner`](src/components/results/sol-warning-banner.tsx) when `likely_time_barred` — informational only (does not block attorney referral per §6.6). |
+| **Next** | §8.3 valuation, §8.4–8.5 results persist/UI, §13.1 attorney lead flow. |
 
 **Phase 6.5 — registered agent lookup:**
 

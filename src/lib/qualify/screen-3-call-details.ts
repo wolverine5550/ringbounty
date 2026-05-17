@@ -9,6 +9,7 @@ import type { CallCountTotalBucket } from "@/lib/constants/qualify-screen-3";
 import { isCallCountTotalBucket } from "@/lib/constants/qualify-screen-3";
 import type { ClaimEventType } from "@/lib/constants/claimEvent";
 import { recomputeFederalDncEligibility } from "@/lib/dnc/recompute-federal-dnc-eligibility";
+import { persistSolFlags } from "@/lib/scoring/persist-sol-flags";
 import type { FederalDncAttestationInput } from "@/lib/dnc/federal-dnc-attestation-gate";
 import type { Database } from "@/types/database";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -180,9 +181,11 @@ export async function persistQualifyScreen3Answers(
     claimId: string;
     claimSubjectId: string;
     answers: QualifyScreen3Answers;
+    /** `public.users.state` for §8.2 state SOL (nullable). */
+    userState?: string | null;
   },
 ): Promise<{ federalDncEligible: boolean | null }> {
-  const { claimId, claimSubjectId, answers } = params;
+  const { claimId, claimSubjectId, answers, userState } = params;
 
   const screen2 = await loadQualifyScreen2Answers(supabase, claimId);
   if (screen2?.stopRequestMade && answers.callCountAfterStop === null) {
@@ -238,6 +241,12 @@ export async function persistQualifyScreen3Answers(
   }
 
   await persistQualifyResumeStep(supabase, { claimId, step: 3 });
+
+  await persistSolFlags(supabase, {
+    claimId,
+    mostRecentCallDate: answers.mostRecentCallDate,
+    userState,
+  });
 
   const { data: dncRow, error: dncError } = await supabase
     .from("dnc_check_results")

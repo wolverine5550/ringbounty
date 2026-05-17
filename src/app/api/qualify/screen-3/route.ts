@@ -59,11 +59,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: parsedAnswers.error }, { status: 400 });
   }
 
+  const { data: profile } = await supabase
+    .from("users")
+    .select("state")
+    .eq("id", user.id)
+    .maybeSingle();
+
   try {
     const result = await persistQualifyScreen3Answers(supabase, {
       claimId: pageContext.claim.id,
       claimSubjectId,
       answers: parsedAnswers,
+      userState: profile?.state ?? null,
     });
 
     return NextResponse.json({

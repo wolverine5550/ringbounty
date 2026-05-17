@@ -1,6 +1,8 @@
 import { AttorneyReferralCta } from "@/components/results/attorney-referral-cta";
+import { SolWarningBanner } from "@/components/results/sol-warning-banner";
 import { enforcePostCheckAccess } from "@/lib/claims/enforce-post-check-access";
 import { loadResultsAttorneyReferral } from "@/lib/claims/load-results-attorney-referral";
+import { loadSolFlags } from "@/lib/scoring/load-sol-flags";
 import { RESULTS_PATH } from "@/lib/claims/gated-routes";
 import { createClient } from "@/lib/supabase/server";
 
@@ -31,6 +33,9 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
         })
       : null;
 
+  const solFlags =
+    claimId && user?.id ? await loadSolFlags(supabase, claimId) : null;
+
   return (
     <div className="mx-auto flex min-h-svh max-w-lg flex-col gap-6 p-8">
       <header className="flex flex-col gap-2">
@@ -40,6 +45,8 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
           qualification for this claim.
         </p>
       </header>
+
+      {solFlags ? <SolWarningBanner sol={solFlags} /> : null}
 
       {referralContext ? (
         <AttorneyReferralCta context={referralContext} />

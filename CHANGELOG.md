@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-17 (Phase 8.2 — Statute of limitations)
+
+- **§8.2:** SOL engine — [`getStateSolYears`](src/lib/scoring/state-sol-years.ts) (informational per-state overrides + 4-year default), [`computeSolFlags`](src/lib/scoring/compute-sol-flags.ts) from Q10 `most_recent_call_date` + `users.state`, `likely_time_barred` when both federal and state windows are expired (PRD §7 Step 5). Persisted on Screen 3 save via [`persistSolFlags`](src/lib/scoring/persist-sol-flags.ts) → `claim_events` `value_calculated` keys. [`/results`](src/app/(post-check)/results/page.tsx) shows informational [`SolWarningBanner`](src/components/results/sol-warning-banner.tsx) — no hard block. Vitest: `compute-sol-flags.test.ts`, `state-sol-years.test.ts`, `persist-sol-flags.test.ts`.
+
 ## 2026-05-17 (Phase 8.1 — Claim strength matrix)
 
 - **§8.1:** PRD §8 scoring engine — [`strength-matrix-constants.ts`](src/lib/scoring/strength-matrix-constants.ts) (point values + thresholds), [`computeStrengthMatrix`](src/lib/scoring/strength-matrix.ts) + `StrengthMatrixInput` (aggregates spam/DNC/stop/time-of-day/company/RA/SOL/consent/exempt), exempt → `ineligible` override, `mapScoreToClaimStrength` (≥70 strong, ≥40 moderate, ≥10 weak). Reuses per-signal resolvers from §5.6 / §6.1 / §6.3. Vitest: [`strength-matrix.test.ts`](src/lib/scoring/strength-matrix.test.ts). Persistence + `/results` UI → §8.4–8.5.

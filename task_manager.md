@@ -860,15 +860,15 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 8.2 Statute of limitations
 
-- [ ] **8.2.1** Implement `getStateSolYears(state: string): number` table (defaults + notes in code comments).
-- [ ] **8.2.2** Compute `within_federal_sol`, `within_state_sol` from `most_recent_call_date`.
-- [ ] **8.2.3** If both false: set `likely_time_barred` flag; UI warning banner; do not hard-block payment per PRD.
-- [ ] **8.2.4** Persist SOL flags in `claim_events`.
+- [x] **8.2.1** Implement `getStateSolYears(state: string): number` table (defaults + notes in code comments). <!-- done: `src/lib/scoring/state-sol-years.ts`, `federal-sol-years.ts` -->
+- [x] **8.2.2** Compute `within_federal_sol`, `within_state_sol` from `most_recent_call_date`. <!-- done: `compute-sol-flags.ts` -->
+- [x] **8.2.3** If both false: set `likely_time_barred` flag; UI warning banner; do not hard-block payment per PRD. <!-- done: `likely_time_barred` + [`SolWarningBanner`](src/components/results/sol-warning-banner.tsx) on `/results` -->
+- [x] **8.2.4** Persist SOL flags in `claim_events`. <!-- done: `persist-sol-flags.ts` (`value_calculated`); wired from Screen 3 save -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README §8.2 -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG 2026-05-17 §8.2 -->
 
 ### 8.3 Valuation engine (three scenarios)
 
