@@ -809,16 +809,16 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 7.5 Screen 4 — Company identification assist
 
-- [ ] **7.5.3** **Spike (priority):** Voicemail → company ID — [`docs/spikes/20260516230000-voicemail-company-identification.md`](docs/spikes/20260516230000-voicemail-company-identification.md). Highest-trust source; v0.1 web file upload (no native app).
-- [ ] **7.5.4** **Implement voicemail path (v0.1 web):** “Do you have a voicemail?” → upload mp3/m4a/wav → OpenRouter Whisper → extract `company_name`, callback #, product → if name: `company_identified = true`, `source: voicemail_transcription` on `claim_events`. Storage + qualify UI + API.
-- [ ] **7.5.1** Q13 — when voicemail missing / no extraction: company name + context (pitch, callback #). On submit: [`persistUserCompanyIdentification`](src/lib/company/persist-user-company-identification.ts) → `company_identified = true`, `source: user_input`, clear company referral block (`tcpa_letter_blocked = company_unidentified`).
-- [ ] **7.5.1b** **Soft OpenCorporates verify after Q13** (not a hard gate): if `user_input` → [`softVerifyCompanyNameWithOpenCorporates`](src/lib/company/opencorporates-soft-verify.ts) → `claim_events.company_name_verification_status` = `user_input_verified` \| `user_input_unverified`. **Attorney referral allowed either way**; show [`COMPANY_NAME_UNVERIFIED_WARNING`](src/lib/constants/company-name-verification.ts) when unverified. Env: `OPENCORPORATES_API_TOKEN`. <!-- scaffold done; wire on Q13 API route in 7.5.1 -->
-- [ ] **7.5.2** Q14 evidence yes/no → `claim_events` for attorney evidence package (screenshots, call logs, etc. — feeds §13.2 PDF).
+- [x] **7.5.3** **Spike (priority):** Voicemail → company ID — [`docs/spikes/20260516230000-voicemail-company-identification.md`](docs/spikes/20260516230000-voicemail-company-identification.md). Highest-trust source; v0.1 web file upload (no native app). <!-- done: spike doc -->
+- [x] **7.5.4** **Implement voicemail path (v0.1 web):** “Do you have a voicemail?” → upload mp3/m4a/wav → OpenRouter Whisper → extract `company_name`, callback #, product → if name: `company_identified = true`, `source: voicemail_transcription` on `claim_events`. Storage + qualify UI + API. <!-- done: `POST /api/qualify/voicemail`, `openrouter-voicemail.ts`, `persist-voicemail-company-identification.ts`, `Screen4CompanyForm` -->
+- [x] **7.5.1** Q13 — when voicemail missing / no extraction: company name + context (pitch, callback #). On submit: [`persistUserCompanyIdentification`](src/lib/company/persist-user-company-identification.ts) → `company_identified = true`, `source: user_input`, clear company referral block (`tcpa_letter_blocked = company_unidentified`). <!-- done: `POST /api/qualify/screen-4`, `screen-4-company-identification.ts` -->
+- [x] **7.5.1b** **Soft OpenCorporates verify after Q13** (not a hard gate): if `user_input` → [`softVerifyCompanyNameWithOpenCorporates`](src/lib/company/opencorporates-soft-verify.ts) → `claim_events.company_name_verification_status` = `user_input_verified` \| `user_input_unverified`. **Attorney referral allowed either way**; show [`COMPANY_NAME_UNVERIFIED_WARNING`](src/lib/constants/company-name-verification.ts) when unverified. Env: `OPENCORPORATES_API_TOKEN`. <!-- done: wired via `persistUserCompanyIdentification` on screen-4 POST -->
+- [x] **7.5.2** Q14 evidence yes/no → `claim_events` for attorney evidence package (screenshots, call logs, etc. — feeds §13.2 PDF). <!-- done: `has_additional_evidence` key -->
 
 
 **Docs — this subsection**
-- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README §7.5 voicemail + Q13 verify -->
-- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG §7.5 plan -->
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README §7.5 -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG 2026-05-17 §7.5 -->
 
 ### 7.6 Cell vs residential attestation
 

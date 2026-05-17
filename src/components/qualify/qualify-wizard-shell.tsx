@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Screen1ConsentForm } from "@/components/qualify/screen-1-consent-form";
 import { Screen2StopRequestForm } from "@/components/qualify/screen-2-stop-request-form";
 import { Screen3CallDetailsForm } from "@/components/qualify/screen-3-call-details-form";
+import { Screen4CompanyForm } from "@/components/qualify/screen-4-company-form";
 import {
   QUALIFY_STEP_TITLES,
   QUALIFY_WIZARD_STEP_MAX,
@@ -12,6 +13,7 @@ import { buildQualifyPageHref } from "@/lib/qualify/qualify-step";
 import type { QualifyScreen1Answers } from "@/lib/qualify/screen-1-consent";
 import type { QualifyScreen2Answers } from "@/lib/qualify/screen-2-stop-request";
 import type { QualifyScreen3Answers } from "@/lib/qualify/screen-3-call-details";
+import type { QualifyScreen4Answers } from "@/lib/qualify/screen-4-company-identification";
 
 export type QualifyWizardShellProps = {
   claimSubjectId: string;
@@ -25,6 +27,10 @@ export type QualifyWizardShellProps = {
   screen3Initial?: QualifyScreen3Answers | null;
   /** When Screen 2 stop request was made — show Q9 on step 3. */
   showPostStopCount?: boolean;
+  /** Loaded from `claim_events` when step is 4 (§7.5). */
+  screen4Initial?: QualifyScreen4Answers | null;
+  /** Subject column fallback for Q13 company name. */
+  subjectCompanyName?: string | null;
 };
 
 /**
@@ -38,6 +44,8 @@ export function QualifyWizardShell({
   screen2Initial = null,
   screen3Initial = null,
   showPostStopCount = false,
+  screen4Initial = null,
+  subjectCompanyName = null,
 }: QualifyWizardShellProps) {
   const title = QUALIFY_STEP_TITLES[step];
   const prevStep = step > 1 ? ((step - 1) as QualifyWizardStep) : null;
@@ -69,6 +77,13 @@ export function QualifyWizardShell({
           showPostStopCount={showPostStopCount}
           initialAnswers={screen3Initial}
         />
+      ) : step === 4 ? (
+        <Screen4CompanyForm
+          claimSubjectId={claimSubjectId}
+          claimId={claimId}
+          initialAnswers={screen4Initial}
+          initialCompanyName={subjectCompanyName}
+        />
       ) : (
         <p className="text-muted-foreground text-sm">
           Question forms for this screen ship in Phase 7.{step + 1}. Your progress
@@ -92,7 +107,7 @@ export function QualifyWizardShell({
             Previous step
           </Link>
         ) : null}
-        {nextStep && step !== 1 && step !== 2 && step !== 3 ? (
+        {nextStep && step !== 1 && step !== 2 && step !== 3 && step !== 4 ? (
           <Link
             className="text-primary text-sm underline underline-offset-2"
             href={buildQualifyPageHref({

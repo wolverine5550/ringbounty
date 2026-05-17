@@ -24,6 +24,7 @@ import {
 import { loadQualifyScreen1Answers } from "@/lib/qualify/screen-1-consent";
 import { loadQualifyScreen2Answers } from "@/lib/qualify/screen-2-stop-request";
 import { loadQualifyScreen3Answers } from "@/lib/qualify/screen-3-call-details";
+import { loadQualifyScreen4Answers } from "@/lib/qualify/screen-4-company-identification";
 import { createClient } from "@/lib/supabase/server";
 
 type QualifyPageProps = {
@@ -159,7 +160,7 @@ export default async function QualifyPage({
       ? await loadQualifyScreen1Answers(supabase, claimId)
       : null;
   const screen2Answers =
-    wizardStep === 2 || wizardStep === 3
+    wizardStep === 2 || wizardStep === 3 || wizardStep === 4
       ? await loadQualifyScreen2Answers(supabase, claimId)
       : null;
   const screen2Initial = wizardStep === 2 ? screen2Answers : null;
@@ -167,6 +168,14 @@ export default async function QualifyPage({
     wizardStep === 3 ? await loadQualifyScreen3Answers(supabase, claimId) : null;
   const showPostStopCount =
     wizardStep === 3 && screen2Answers?.stopRequestMade === true;
+  const screen4Initial =
+    wizardStep === 4
+      ? await loadQualifyScreen4Answers(
+          supabase,
+          claimId,
+          pageContext.subject.company_name,
+        )
+      : null;
 
   return (
     <QualifyPageLayout
@@ -184,6 +193,8 @@ export default async function QualifyPage({
         screen2Initial={screen2Initial}
         screen3Initial={screen3Initial}
         showPostStopCount={showPostStopCount}
+        screen4Initial={screen4Initial}
+        subjectCompanyName={pageContext.subject.company_name}
       />
     </QualifyPageLayout>
   );

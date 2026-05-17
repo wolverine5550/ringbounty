@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-17 (Phase 7.5 — Screen 4 company identification)
+
+- **§7.5:** Step 4 on [`/qualify/[claimSubjectId]?step=4`](src/app/(post-check)/qualify/[claimSubjectId]/page.tsx) — voicemail upload + OpenRouter STT/extract ([`POST /api/qualify/voicemail`](src/app/api/qualify/voicemail/route.ts), [`openrouter-voicemail.ts`](src/lib/company/openrouter-voicemail.ts)), Q13 company + context, Q14 `has_additional_evidence` ([`Screen4CompanyForm`](src/components/qualify/screen-4-company-form.tsx), [`POST /api/qualify/screen-4`](src/app/api/qualify/screen-4/route.ts)). Voicemail path sets `company_identified` via [`persistVoicemailCompanyIdentification`](src/lib/company/persist-voicemail-company-identification.ts); manual Q13 via [`persistUserCompanyIdentification`](src/lib/company/persist-user-company-identification.ts) + OpenCorporates soft verify. Env: `OPENROUTER_API_KEY`, `OPENCORPORATES_API_TOKEN`.
+
 ## 2026-05-17 (Phase 7.4 — Screen 3 call details)
 
 - **§7.4:** Step 3 on [`/qualify/[claimSubjectId]?step=3`](src/app/(post-check)/qualify/[claimSubjectId]/page.tsx) — Q8 call-count buckets, conditional Q9 post-stop count, Q10 most recent call date, Q11–Q12 time-of-day ([`Screen3CallDetailsForm`](src/components/qualify/screen-3-call-details-form.tsx), copy [`qualify-screen-3.ts`](src/lib/constants/qualify-screen-3.ts)). [`POST /api/qualify/screen-3`](src/app/api/qualify/screen-3/route.ts) persists `call_count_total`, `call_count_after_stop`, `most_recent_call_date`, `calls_before_8am`, `calls_after_9pm`, `calls_after_9pm_count` ([`screen-3-call-details.ts`](src/lib/qualify/screen-3-call-details.ts)) and calls [`recomputeFederalDncEligibility`](src/lib/dnc/recompute-federal-dnc-eligibility.ts) using `most_recent_call_date` as earliest-call proxy for the 31-day rule.
