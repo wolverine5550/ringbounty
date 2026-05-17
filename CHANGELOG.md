@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-05-17 (Phase 13.2 — Evidence PDF for firms)
+
+- **§13.2:** Evidence PDF compiler ([`generate-and-upload-evidence-pdf.ts`](src/lib/leads/evidence-pdf/generate-and-upload-evidence-pdf.ts)) — aggregates claim/subject data, qualification answers, spam/DNC summaries, registered agent, upload paths; renders via **pdfkit**; uploads to private `lead-packages` Storage bucket; sets `leads.evidence_pdf_url` (`bucket:path` ref). Triggered from [`run-evidence-pdf-job.ts`](src/lib/leads/run-evidence-pdf-job.ts) after attorney referral submit. Migration: [`20260517143000_lead_packages_storage.sql`](supabase/migrations/20260517143000_lead_packages_storage.sql).
+- **§13.2.4:** [`AttorneySharingChecklist`](src/components/results/attorney-sharing-checklist.tsx) on `/results` — transparency list of what may be shared with attorneys ([`attorney-sharing-checklist.ts`](src/lib/constants/attorney-sharing-checklist.ts)).
+- Vitest: `build-evidence-pdf-buffer.test.ts`, `format-qualification-lines.test.ts`, `constants.test.ts`.
+
 ## 2026-05-17 (Phase 13.1 — Consumer attorney path)
 
 - **§13.1:** [`/attorney-connect`](src/app/(post-check)/attorney-connect/page.tsx) — 48h contact expectation, informational contingency copy, lead-sharing consent ([`attorney-referral-expectations.ts`](src/lib/constants/attorney-referral-expectations.ts)). [`AttorneyReferralCta`](src/components/results/attorney-referral-cta.tsx) links eligible users from `/results`. [`POST /api/leads/attorney-referral`](src/app/api/leads/attorney-referral/route.ts) enforces [`canReferToAttorney`](src/lib/claims/can-refer-to-attorney.ts), inserts `leads` (`status=new`) with valuation snapshot, records eligible subject ids on `claim_events`, queues evidence PDF job stub ([`enqueue-evidence-pdf-job.ts`](src/lib/leads/enqueue-evidence-pdf-job.ts) → §13.2). Confirmation email via Resend when `RESEND_API_KEY` is set ([`send-attorney-referral-confirmation.ts`](src/lib/leads/send-attorney-referral-confirmation.ts)). Vitest: `create-attorney-lead.test.ts`.

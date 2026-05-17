@@ -1015,7 +1015,7 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 ### 10.5 PDF generation and storage *(moved to attorney evidence — §13.2)*
 
 - [ ] ~~**10.5.2–10.5.4** Demand letter PDF to `letters` bucket~~ — **Cancelled v0.1.**
-- [ ] **10.5.1** Choose PDF strategy for **evidence package** (§13.2) — same tech options apply.
+- [x] **10.5.1** Choose PDF strategy for **evidence package** (§13.2) — same tech options apply. <!-- done: pdfkit programmatic PDF (§13.2.1) -->
 
 
 **Docs — this subsection**
@@ -1181,15 +1181,15 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 13.2 Evidence PDF for firms *(v0.1)*
 
-- [ ] **13.2.1** Server job compiling claim_events, qualification answers, spam/DNC summary, company + registered agent, strength score, valuation bands, and uploaded evidence paths into a single PDF for firms.
-- [ ] **13.2.2** Upload to Storage; save URL on `leads.evidence_pdf_url`.
+- [x] **13.2.1** Server job compiling claim_events, qualification answers, spam/DNC summary, company + registered agent, strength score, valuation bands, and uploaded evidence paths into a single PDF for firms. <!-- done: `load-evidence-pdf-context.ts`, `build-evidence-pdf-buffer.ts` (pdfkit), `run-evidence-pdf-job.ts` -->
+- [x] **13.2.2** Upload to Storage; save URL on `leads.evidence_pdf_url`. <!-- done: `lead-packages` bucket migration `20260517143000_lead_packages_storage.sql`, `generate-and-upload-evidence-pdf.ts` -->
 - [ ] **13.2.3** Redact sensitive third-party PII if required by firm contract (future).
-- [ ] **13.2.4** User-facing summary on `/results`: “What we’re sharing with attorneys” checklist (transparency, not legal advice).
+- [x] **13.2.4** User-facing summary on `/results`: “What we’re sharing with attorneys” checklist (transparency, not legal advice). <!-- done: `attorney-sharing-checklist.ts`, `AttorneySharingChecklist` on results page -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README §13.2 -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG 2026-05-17 §13.2 -->
 
 ### 13.3 Stripe Connect onboarding *(v0.2)*
 

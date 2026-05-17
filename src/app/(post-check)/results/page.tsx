@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import { PostCheckPageFallback } from "@/components/post-check/post-check-page-fallback";
 import { AttorneyReferralCta } from "@/components/results/attorney-referral-cta";
+import { AttorneySharingChecklist } from "@/components/results/attorney-sharing-checklist";
 import { EmailCaptureModal } from "@/components/email-capture-modal";
 import { ResultsIneligiblePanel } from "@/components/results/results-ineligible-panel";
 import { ResultsStrengthHeader } from "@/components/results/results-strength-header";
@@ -83,6 +84,10 @@ async function ResultsPageContent({ searchParams }: ResultsPageProps) {
 
           {results.valuation ? (
             <ResultsValuationPanel valuation={results.valuation} />
+          ) : null}
+
+          {results.effectiveClaimStrength !== "ineligible" ? (
+            <AttorneySharingChecklist />
           ) : null}
 
           <section className="flex flex-col gap-3">

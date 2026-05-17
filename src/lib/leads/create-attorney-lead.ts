@@ -13,7 +13,7 @@ import {
   ATTORNEY_REFERRAL_EVENT_KEYS,
   ATTORNEY_REFERRAL_EVENT_TYPE,
 } from "@/lib/leads/attorney-referral-claim-events";
-import { enqueueEvidencePdfJob } from "@/lib/leads/enqueue-evidence-pdf-job";
+import { runEvidencePdfJob } from "@/lib/leads/run-evidence-pdf-job";
 import { sendAttorneyReferralConfirmation } from "@/lib/leads/send-attorney-referral-confirmation";
 import type { Database } from "@/types/database";
 
@@ -104,7 +104,7 @@ export async function createAttorneyLead(
 
   const { data: existingLead, error: existingError } = await admin
     .from("leads")
-    .select("id, status")
+    .select("id, status, evidence_pdf_url")
     .eq("claim_id", claim.id)
     .in("status", [...ACTIVE_LEAD_STATUSES])
     .order("created_at", { ascending: false })
@@ -116,6 +116,12 @@ export async function createAttorneyLead(
   }
 
   if (existingLead?.id) {
+    if (!existingLead.evidence_pdf_url?.trim()) {
+      await runEvidencePdfJob(admin, {
+        claimId: claim.id,
+        leadId: existingLead.id,
+      });
+    }
     return { status: "already_submitted", leadId: existingLead.id };
   }
 
@@ -168,7 +174,7 @@ export async function createAttorneyLead(
     throw eventsError;
   }
 
-  await enqueueEvidencePdfJob(admin, {
+  await runEvidencePdfJob(admin, {
     claimId: claim.id,
     leadId: inserted.id,
   });

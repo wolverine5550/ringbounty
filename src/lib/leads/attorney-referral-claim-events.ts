@@ -15,3 +15,5 @@ export const ATTORNEY_REFERRAL_EVENT_KEYS = {
 } as const;
 
 export const EVIDENCE_PDF_JOB_QUEUED = "queued" as const;
+export const EVIDENCE_PDF_JOB_COMPLETED = "completed" as const;
+export const EVIDENCE_PDF_JOB_FAILED = "failed" as const;
