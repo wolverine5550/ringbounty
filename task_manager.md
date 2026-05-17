@@ -797,15 +797,15 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 7.4 Screen 3 — Call details
 
-- [ ] **7.4.1** Q8 total call count control (slider buckets or numeric input per PRD).
-- [ ] **7.4.2** Q9 post-stop count (conditional).
-- [ ] **7.4.3** Q10 most recent call date (date picker); used for SOL. **§6.2 hook:** on save, call [`recomputeFederalDncEligibility`](src/lib/dnc/recompute-federal-dnc-eligibility.ts) with stored federal DNC attestation + this date as `earliestCallDate` (or pass `earliest_call_date` on federal-dnc POST if attestation and call date are submitted together).
-- [ ] **7.4.4** Q11–Q12 time-of-day violations counts.
+- [x] **7.4.1** Q8 total call count control (slider buckets or numeric input per PRD). <!-- done: `CALL_COUNT_TOTAL_BUCKETS` in `qualify-screen-3.ts`, `screen-3-call-details-form.tsx` -->
+- [x] **7.4.2** Q9 post-stop count (conditional). <!-- done: numeric input when Screen 2 `stop_request_made`; key `call_count_after_stop` -->
+- [x] **7.4.3** Q10 most recent call date (date picker); used for SOL. **§6.2 hook:** on save, call [`recomputeFederalDncEligibility`](src/lib/dnc/recompute-federal-dnc-eligibility.ts) with stored federal DNC attestation + this date as `earliestCallDate` (or pass `earliest_call_date` on federal-dnc POST if attestation and call date are submitted together). <!-- done: `persistQualifyScreen3Answers` → `recomputeFederalDncEligibility`; proxy earliest call via `most_recent_call_date` -->
+- [x] **7.4.4** Q11–Q12 time-of-day violations counts. <!-- done: `calls_before_8am`, `calls_after_9pm`, `calls_after_9pm_count` when Q12 Yes -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README §7.4 -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG 2026-05-17 §7.4 -->
 
 ### 7.5 Screen 4 — Company identification assist
 

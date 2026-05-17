@@ -23,6 +23,7 @@ import {
 } from "@/lib/qualify/qualify-step";
 import { loadQualifyScreen1Answers } from "@/lib/qualify/screen-1-consent";
 import { loadQualifyScreen2Answers } from "@/lib/qualify/screen-2-stop-request";
+import { loadQualifyScreen3Answers } from "@/lib/qualify/screen-3-call-details";
 import { createClient } from "@/lib/supabase/server";
 
 type QualifyPageProps = {
@@ -157,10 +158,15 @@ export default async function QualifyPage({
     wizardStep === 1
       ? await loadQualifyScreen1Answers(supabase, claimId)
       : null;
-  const screen2Initial =
-    wizardStep === 2
+  const screen2Answers =
+    wizardStep === 2 || wizardStep === 3
       ? await loadQualifyScreen2Answers(supabase, claimId)
       : null;
+  const screen2Initial = wizardStep === 2 ? screen2Answers : null;
+  const screen3Initial =
+    wizardStep === 3 ? await loadQualifyScreen3Answers(supabase, claimId) : null;
+  const showPostStopCount =
+    wizardStep === 3 && screen2Answers?.stopRequestMade === true;
 
   return (
     <QualifyPageLayout
@@ -176,6 +182,8 @@ export default async function QualifyPage({
         step={wizardStep}
         screen1Initial={screen1Initial}
         screen2Initial={screen2Initial}
+        screen3Initial={screen3Initial}
+        showPostStopCount={showPostStopCount}
       />
     </QualifyPageLayout>
   );

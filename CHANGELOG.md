@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-17 (Phase 7.4 — Screen 3 call details)
+
+- **§7.4:** Step 3 on [`/qualify/[claimSubjectId]?step=3`](src/app/(post-check)/qualify/[claimSubjectId]/page.tsx) — Q8 call-count buckets, conditional Q9 post-stop count, Q10 most recent call date, Q11–Q12 time-of-day ([`Screen3CallDetailsForm`](src/components/qualify/screen-3-call-details-form.tsx), copy [`qualify-screen-3.ts`](src/lib/constants/qualify-screen-3.ts)). [`POST /api/qualify/screen-3`](src/app/api/qualify/screen-3/route.ts) persists `call_count_total`, `call_count_after_stop`, `most_recent_call_date`, `calls_before_8am`, `calls_after_9pm`, `calls_after_9pm_count` ([`screen-3-call-details.ts`](src/lib/qualify/screen-3-call-details.ts)) and calls [`recomputeFederalDncEligibility`](src/lib/dnc/recompute-federal-dnc-eligibility.ts) using `most_recent_call_date` as earliest-call proxy for the 31-day rule.
+
 ## 2026-05-17 (Phase 7.3 — Screen 2 stop request / willful)
 
 - **§7.3:** Step 2 on [`/qualify/[claimSubjectId]?step=2`](src/app/(post-check)/qualify/[claimSubjectId]/page.tsx) — Q4 branches to Q5–Q7 when user asked company to stop ([`Screen2StopRequestForm`](src/components/qualify/screen-2-stop-request-form.tsx), copy [`qualify-screen-2.ts`](src/lib/constants/qualify-screen-2.ts)). [`POST /api/qualify/screen-2`](src/app/api/qualify/screen-2/route.ts) persists `qualification_answer` keys `stop_request_made`, `stop_request_method`, `stop_request_date`, `calls_after_stop_request` and updates `dnc_check_results.internal_dnc_*` ([`screen-2-stop-request.ts`](src/lib/qualify/screen-2-stop-request.ts)).

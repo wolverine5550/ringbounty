@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Screen1ConsentForm } from "@/components/qualify/screen-1-consent-form";
 import { Screen2StopRequestForm } from "@/components/qualify/screen-2-stop-request-form";
+import { Screen3CallDetailsForm } from "@/components/qualify/screen-3-call-details-form";
 import {
   QUALIFY_STEP_TITLES,
   QUALIFY_WIZARD_STEP_MAX,
@@ -10,6 +11,7 @@ import {
 import { buildQualifyPageHref } from "@/lib/qualify/qualify-step";
 import type { QualifyScreen1Answers } from "@/lib/qualify/screen-1-consent";
 import type { QualifyScreen2Answers } from "@/lib/qualify/screen-2-stop-request";
+import type { QualifyScreen3Answers } from "@/lib/qualify/screen-3-call-details";
 
 export type QualifyWizardShellProps = {
   claimSubjectId: string;
@@ -19,6 +21,10 @@ export type QualifyWizardShellProps = {
   screen1Initial?: QualifyScreen1Answers | null;
   /** Loaded from `claim_events` when step is 2 (§7.3). */
   screen2Initial?: QualifyScreen2Answers | null;
+  /** Loaded from `claim_events` when step is 3 (§7.4). */
+  screen3Initial?: QualifyScreen3Answers | null;
+  /** When Screen 2 stop request was made — show Q9 on step 3. */
+  showPostStopCount?: boolean;
 };
 
 /**
@@ -30,6 +36,8 @@ export function QualifyWizardShell({
   step,
   screen1Initial = null,
   screen2Initial = null,
+  screen3Initial = null,
+  showPostStopCount = false,
 }: QualifyWizardShellProps) {
   const title = QUALIFY_STEP_TITLES[step];
   const prevStep = step > 1 ? ((step - 1) as QualifyWizardStep) : null;
@@ -54,6 +62,13 @@ export function QualifyWizardShell({
           claimId={claimId}
           initialAnswers={screen2Initial}
         />
+      ) : step === 3 ? (
+        <Screen3CallDetailsForm
+          claimSubjectId={claimSubjectId}
+          claimId={claimId}
+          showPostStopCount={showPostStopCount}
+          initialAnswers={screen3Initial}
+        />
       ) : (
         <p className="text-muted-foreground text-sm">
           Question forms for this screen ship in Phase 7.{step + 1}. Your progress
@@ -77,7 +92,7 @@ export function QualifyWizardShell({
             Previous step
           </Link>
         ) : null}
-        {nextStep && step !== 1 && step !== 2 ? (
+        {nextStep && step !== 1 && step !== 2 && step !== 3 ? (
           <Link
             className="text-primary text-sm underline underline-offset-2"
             href={buildQualifyPageHref({
