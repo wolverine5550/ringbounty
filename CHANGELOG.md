@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-05-16 (Phase 6.3 — state DNC scaffold)
+
+- **§6.3.1 constants:** [`state-dnc-registries.ts`](src/lib/constants/state-dnc-registries.ts) — eleven PRD §7 Step 4 states (IN, TX, WY, CO, LA, MS, MO, OK, OR, PA, TN).
+- **§6.3.2 v0.1 without APIs:** [`deriveStateDncScaffoldFields`](src/lib/dnc/scaffold-state-dnc-row.ts) sets `state_dnc_applicable` + `state_dnc_state` on federal attestation persist; `state_dnc_registered` / `state_dnc_checked_at` stay null. [`StateDncComingSoon`](src/components/qualify/state-dnc-coming-soon.tsx) on qualify when applicable. `/check` submit includes `state_dnc` summary (generic copy until profile state known).
+- **§6.3.3 provider:** [`StateDncProvider`](src/lib/dnc/state-dnc-provider.ts) + `UnavailableStateDncProvider` (no fabricated +10; [`state-dnc-matrix-signal.ts`](src/lib/scoring/state-dnc-matrix-signal.ts)).
+
 ## 2026-05-16 (Phase 6.2 — federal DNC attestation wired)
 
 - **§6.2.1 qualify gate:** [`FederalDncAttestationForm`](src/components/qualify/federal-dnc-attestation-form.tsx) on [`/qualify/[claimSubjectId]`](src/app/(post-check)/qualify/[claimSubjectId]/page.tsx) — yes/no + registration date, donotcall.gov self-check copy, gate validation ([`federal-dnc-attestation-gate.ts`](src/lib/dnc/federal-dnc-attestation-gate.ts)). [`POST /api/qualify/federal-dnc`](src/app/api/qualify/federal-dnc/route.ts) persists to `dnc_check_results` + `claim_events` (`source: user_input`).

@@ -1,8 +1,13 @@
 import { notFound } from "next/navigation";
 
 import { FederalDncAttestationForm } from "@/components/qualify/federal-dnc-attestation-form";
+import { StateDncComingSoon } from "@/components/qualify/state-dnc-coming-soon";
 import { enforcePostCheckAccess } from "@/lib/claims/enforce-post-check-access";
 import { getFederalDncScreenshotPathFromMetadata } from "@/lib/dnc/federal-dnc-evidence";
+import {
+  deriveStateDncScaffoldFields,
+  getApplicableStateDncCode,
+} from "@/lib/dnc/scaffold-state-dnc-row";
 import { createClient } from "@/lib/supabase/server";
 
 type QualifyPageProps = {
@@ -27,6 +32,10 @@ export default async function QualifyPage({
   });
 
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const { data: subjectRow, error: loadError } = await supabase
     .from("claim_subjects")
     .select("id, phone_number, metadata")
@@ -43,9 +52,29 @@ export default async function QualifyPage({
 
   const { data: dncRow } = await supabase
     .from("dnc_check_results")
-    .select("federal_dnc_registered, federal_dnc_registration_date")
+    .select(
+      "federal_dnc_registered, federal_dnc_registration_date, state_dnc_applicable, state_dnc_state",
+    )
     .eq("claim_subject_id", claimSubjectId)
     .maybeSingle();
+
+  let applicableStateCode = getApplicableStateDncCode({
+    state_dnc_applicable: dncRow?.state_dnc_applicable ?? null,
+    state_dnc_registered: null,
+    state_dnc_state: dncRow?.state_dnc_state ?? null,
+    state_dnc_checked_at: null,
+  });
+
+  if (!applicableStateCode && user?.id) {
+    const { data: profile } = await supabase
+      .from("users")
+      .select("state")
+      .eq("id", user.id)
+      .maybeSingle();
+    applicableStateCode = getApplicableStateDncCode(
+      deriveStateDncScaffoldFields(profile?.state),
+    );
+  }
 
   return (
     <div className="mx-auto flex min-h-svh max-w-lg flex-col gap-6 p-8">
@@ -58,6 +87,9 @@ export default async function QualifyPage({
           questions (Phase 7).
         </p>
       </div>
+      {applicableStateCode ? (
+        <StateDncComingSoon stateCode={applicableStateCode} />
+      ) : null}
       <FederalDncAttestationForm
         claimSubjectId={claimSubjectId}
         phoneDisplay={subjectRow.phone_number}

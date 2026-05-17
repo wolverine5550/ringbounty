@@ -132,6 +132,17 @@ Marketing UI: [`src/components/marketing/`](src/components/marketing/). Unauthen
 | **Scoring** | PRD +25 only when `attestedByUser` + eligible ([`federal-dnc-matrix-signal.ts`](src/lib/scoring/federal-dnc-matrix-signal.ts)). |
 | **Optional evidence (§6.2.4)** | Optional FTC confirmation screenshot on qualify form → private `claim-evidence` bucket (`{user_id}/{claim_id}/{subject_id}/federal-dnc-confirmation.{ext}`); path in `claim_subjects.metadata` + `claim_events`. Max 5 MB; JPEG/PNG/WebP/GIF. Not required; not verified by RingBounty. |
 
+**Phase 6.3 — state DNC (scaffold only):**
+
+| Topic | Decision |
+|-------|----------|
+| **Registry states** | Eleven states per PRD §7 Step 4 — [`state-dnc-registries.ts`](src/lib/constants/state-dnc-registries.ts) (IN, TX, WY, CO, LA, MS, MO, OK, OR, PA, TN). |
+| **v0.1 APIs** | **Not integrated** — `state_dnc_registered` / `state_dnc_checked_at` stay null; no +10 scoring until a real lookup persists `state_dnc_registered: true` ([`state-dnc-matrix-signal.ts`](src/lib/scoring/state-dnc-matrix-signal.ts)). |
+| **Persistence** | On federal attestation save, [`deriveStateDncScaffoldFields`](src/lib/dnc/scaffold-state-dnc-row.ts) writes `state_dnc_applicable` + `state_dnc_state` from `public.users.state`. |
+| **Qualify UI** | [`StateDncComingSoon`](src/components/qualify/state-dnc-coming-soon.tsx) when the user's state has a registry. |
+| **`/check`** | Submit JSON includes `state_dnc` (generic “coming soon” copy; state-specific after profile is set). |
+| **Future** | [`StateDncProvider`](src/lib/dnc/state-dnc-provider.ts) interface for §13.7 per-state APIs. |
+
 Applies to the **consumer’s receiving number**, not spammer numbers entered on `/check`.
 
 Set **`SUPABASE_SECRET_KEY`** (`sb_secret_…` from [Settings → API Keys](https://supabase.com/dashboard/project/nktlhjjeqwpubzlvjpjv/settings/api-keys)) in `.env.local` (server-only; never commit) for the anonymous API and merge path. Supabase [recommends secret keys](https://supabase.com/docs/guides/api/api-keys) over the legacy JWT `service_role` key (browser-blocked, easier rotation). Legacy **`SUPABASE_SERVICE_ROLE_KEY`** still works as a fallback. Without either key, `POST /api/claims/anonymous` responds **503** and merge is skipped.

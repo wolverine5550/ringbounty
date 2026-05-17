@@ -665,14 +665,14 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 6.3 State DNC (defer to v0.2 if needed; scaffold optional)
 
-- [ ] **6.3.1** Constants: list of states with registries per PRD §7 Step 4.
-- [ ] **6.3.2** If v0.1 ships without state APIs: set `state_dnc_applicable` + nulls + UI “coming soon” or skip.
-- [ ] **6.3.3** Abstract `StateDncProvider` interface for future.
+- [x] **6.3.1** Constants: list of states with registries per PRD §7 Step 4. <!-- done: src/lib/constants/state-dnc-registries.ts (+ test) -->
+- [x] **6.3.2** If v0.1 ships without state APIs: set `state_dnc_applicable` + nulls + UI “coming soon” or skip. <!-- done: src/lib/dnc/scaffold-state-dnc-row.ts, persist-federal-dnc-attestation.ts (userState), src/components/qualify/state-dnc-coming-soon.tsx, qualify page, /check submit state_dnc JSON, state-dnc-access.ts -->
+- [x] **6.3.3** Abstract `StateDncProvider` interface for future. <!-- done: src/lib/dnc/state-dnc-provider.ts (+ UnavailableStateDncProvider, test) -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README.md Phase 6.3 -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG.md 2026-05-16 Phase 6.3 -->
 
 ### 6.4 Company identification
 

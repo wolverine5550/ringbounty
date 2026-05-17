@@ -5,7 +5,9 @@
 import type { ClaimEventSource } from "@/lib/constants/claimEvent";
 import { FEDERAL_DNC_CONFIRMATION_SCREENSHOT_METADATA_KEY } from "@/lib/dnc/federal-dnc-evidence";
 import { computeFederalDncEligibleFromDates } from "@/lib/dnc/federal-dnc-eligibility";
+import { deriveStateDncScaffoldFields } from "@/lib/dnc/scaffold-state-dnc-row";
 import { resolveFederalDncMatrixSignal } from "@/lib/scoring/federal-dnc-matrix-signal";
+import { resolveStateDncMatrixSignal } from "@/lib/scoring/state-dnc-matrix-signal";
 import type { Database, Json } from "@/types/database";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -30,6 +32,8 @@ export type PersistFederalDncAttestationParams = {
   earliestCallDate?: string | null;
   /** §6.2.4 — private Storage object path (not a public URL). */
   confirmationScreenshotPath?: string | null;
+  /** §6.3.2 — `public.users.state` for state DNC scaffold (nullable until profile set). */
+  userState?: string | null;
 };
 
 export type PersistFederalDncAttestationResult = {
@@ -65,6 +69,8 @@ function buildDncClaimEventRows(
   attestation: FederalDncAttestationInput,
   federalDncEligible: boolean | null,
   matrix: ReturnType<typeof resolveFederalDncMatrixSignal>,
+  stateMatrix: ReturnType<typeof resolveStateDncMatrixSignal>,
+  stateScaffold: ReturnType<typeof deriveStateDncScaffoldFields>,
   confirmationScreenshotPath?: string | null,
 ): Database["public"]["Tables"]["claim_events"]["Insert"][] {
   const rows: Database["public"]["Tables"]["claim_events"]["Insert"][] = [
@@ -128,6 +134,45 @@ function buildDncClaimEventRows(
     });
   }
 
+  if (stateScaffold.state_dnc_applicable !== null) {
+    rows.push({
+      claim_id: claimId,
+      event_type: DNC_CHECK_EVENT,
+      key: "state_dnc_applicable",
+      value: String(stateScaffold.state_dnc_applicable),
+      source: USER_INPUT_SOURCE,
+    });
+  }
+
+  if (stateScaffold.state_dnc_state) {
+    rows.push({
+      claim_id: claimId,
+      event_type: DNC_CHECK_EVENT,
+      key: "state_dnc_state",
+      value: stateScaffold.state_dnc_state,
+      source: USER_INPUT_SOURCE,
+    });
+  }
+
+  if (stateMatrix.points > 0) {
+    rows.push(
+      {
+        claim_id: claimId,
+        event_type: DNC_CHECK_EVENT,
+        key: "state_dnc_matrix_tier",
+        value: stateMatrix.tier,
+        source: USER_INPUT_SOURCE,
+      },
+      {
+        claim_id: claimId,
+        event_type: DNC_CHECK_EVENT,
+        key: "state_dnc_matrix_points",
+        value: String(stateMatrix.points),
+        source: USER_INPUT_SOURCE,
+      },
+    );
+  }
+
   return rows;
 }
 
@@ -148,6 +193,12 @@ export async function persistFederalDncAttestation(
     federalDncEligible: federalDncEligible === true,
   });
 
+  const stateScaffold = deriveStateDncScaffoldFields(params.userState);
+  const stateMatrix = resolveStateDncMatrixSignal({
+    stateDncApplicable: stateScaffold.state_dnc_applicable,
+    stateDncRegistered: stateScaffold.state_dnc_registered,
+  });
+
   const now = new Date().toISOString();
 
   const row: Database["public"]["Tables"]["dnc_check_results"]["Insert"] = {
@@ -158,6 +209,7 @@ export async function persistFederalDncAttestation(
     federal_dnc_registration_date: params.attestation.federalDncRegistrationDate,
     federal_dnc_eligible: federalDncEligible,
     federal_dnc_checked_at: now,
+    ...stateScaffold,
   };
 
   const { data: existing, error: loadError } = await supabase
@@ -178,6 +230,10 @@ export async function persistFederalDncAttestation(
         federal_dnc_registration_date: row.federal_dnc_registration_date,
         federal_dnc_eligible: row.federal_dnc_eligible,
         federal_dnc_checked_at: row.federal_dnc_checked_at,
+        state_dnc_applicable: row.state_dnc_applicable,
+        state_dnc_registered: row.state_dnc_registered,
+        state_dnc_state: row.state_dnc_state,
+        state_dnc_checked_at: row.state_dnc_checked_at,
       })
       .eq("id", existing.id);
 
@@ -227,6 +283,8 @@ export async function persistFederalDncAttestation(
     params.attestation,
     federalDncEligible,
     matrix,
+    stateMatrix,
+    stateScaffold,
     params.confirmationScreenshotPath,
   );
 

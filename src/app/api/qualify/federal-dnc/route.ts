@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { validateFederalDncAttestation } from "@/lib/dnc/federal-dnc-attestation-gate";
 import { persistFederalDncAttestation } from "@/lib/dnc/persist-federal-dnc-attestation";
+import { getStateDncCheckSummaryForUserState } from "@/lib/dnc/state-dnc-access";
 import { uploadFederalDncConfirmationScreenshot } from "@/lib/dnc/upload-federal-dnc-evidence";
 import { createClient } from "@/lib/supabase/server";
 
@@ -146,6 +147,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Claim subject not found" }, { status: 404 });
   }
 
+  const { data: profile } = await supabase
+    .from("users")
+    .select("state")
+    .eq("id", user.id)
+    .maybeSingle();
+
   let confirmationScreenshotPath: string | null = null;
 
   if (screenshotFile) {
@@ -171,7 +178,10 @@ export async function POST(request: NextRequest) {
       attestation: validated.value,
       earliestCallDate,
       confirmationScreenshotPath,
+      userState: profile?.state ?? null,
     });
+
+    const stateDnc = getStateDncCheckSummaryForUserState(profile?.state);
 
     return NextResponse.json({
       ok: true,
@@ -179,6 +189,7 @@ export async function POST(request: NextRequest) {
       federal_dnc_matrix_tier: result.matrixTier,
       federal_dnc_matrix_points: result.matrixPoints,
       federal_dnc_confirmation_screenshot_path: confirmationScreenshotPath,
+      state_dnc: stateDnc,
     });
   } catch (e) {
     console.error("POST /api/qualify/federal-dnc persist", e);

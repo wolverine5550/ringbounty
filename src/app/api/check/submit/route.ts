@@ -6,6 +6,7 @@ import {
 } from "@/lib/anonymous-session";
 import { CHECK_MAX_PHONE_ROWS } from "@/lib/check/constants";
 import { getFederalDncCheckSummaryForClient } from "@/lib/dnc/federal-dnc-access";
+import { getStateDncCheckSummaryForAnonymousCheck } from "@/lib/dnc/state-dnc-access";
 import { runSpamChecksForPhoneList } from "@/lib/spam/spam-check-pipeline";
 import {
   parseAndDedupePhoneNumberPayload,
@@ -246,6 +247,7 @@ export async function POST(request: NextRequest) {
         ? {
             number_checks: numberChecks,
             federal_dnc: getFederalDncCheckSummaryForClient(),
+            state_dnc: getStateDncCheckSummaryForAnonymousCheck(),
           }
         : {}),
     });
