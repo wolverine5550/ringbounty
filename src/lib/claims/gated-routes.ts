@@ -54,7 +54,8 @@ export function sanitizeLoginNextPath(
     isPostCheckGatedRoute(candidate) ||
     candidate === "/protected" ||
     candidate.startsWith("/protected/") ||
-    candidate === "/check"
+    candidate === "/check" ||
+    candidate.startsWith("/firms/")
   ) {
     return candidate;
   }

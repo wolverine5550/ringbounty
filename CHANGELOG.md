@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-05-17 (Phase 13.4 — Firm dashboard app)
+
+- **§13.4.1:** Firm portal routes under `/firms/*` in the same Next.js app; optional `firms.*` hostname rewrite via [`apply-firm-portal-proxy.ts`](src/lib/firms/apply-firm-portal-proxy.ts) + [`firm-portal-host.ts`](src/lib/firms/firm-portal-host.ts).
+- **§13.4.2:** Firm auth — [`/firms/login`](src/app/firms/login/page.tsx), [`linkFirmUserOnLogin`](src/lib/firms/link-firm-user-on-login.ts) on [`/auth/callback`](src/app/auth/callback/route.ts), ops invite [`POST /api/firms/invite`](src/app/api/firms/invite/route.ts) (`FIRM_OPS_INVITE_SECRET`).
+- **§13.4.3:** Lead inbox at [`/firms/leads`](src/app/firms/(portal)/leads/page.tsx) with state / min value / strength filters ([`apply-firm-lead-filters.ts`](src/lib/firms/apply-firm-lead-filters.ts)).
+- **§13.4.4:** **Pool model** RLS [`leads_select_firm_pool`](supabase/migrations/20260517210000_leads_firm_pool_rls.sql) (unassigned `new`/`reviewed` rows matching firm criteria) + Realtime INSERT subscription ([`FirmLeadsRealtime`](src/components/firms/firm-leads-realtime.tsx)); `leads` added to `supabase_realtime` publication.
+- Stripe return UI: [`/firms/onboarding/stripe/complete`](src/app/firms/(portal)/onboarding/stripe/complete/page.tsx), [`/refresh`](src/app/firms/(portal)/onboarding/stripe/refresh/page.tsx).
+
 ## 2026-05-17 (Phase 13.3 — Stripe Connect onboarding)
 
 - **§13.3.1:** **Express** Connect accounts for law firms ([`stripe/connect/constants.ts`](src/lib/stripe/connect/constants.ts)) — platform-hosted onboarding; supports application fees on lead accept (§13.5).

@@ -5,6 +5,12 @@ import {
   attachAnonymousSessionCookieIfNeeded,
   isAnonymousAllowedPath,
 } from "@/lib/anonymous-session";
+import {
+  applyFirmPortalProxy,
+  buildFirmPortalLoginRedirect,
+  shouldUseFirmPortalLogin,
+} from "@/lib/firms/apply-firm-portal-proxy";
+import { isFirmPortalPublicPath } from "@/lib/firms/firm-portal-host";
 import { isPublicMarketingPath } from "@/lib/marketing/public-routes";
 import type { Database } from "@/types/database";
 import { hasEnvVars } from "../utils";
@@ -80,14 +86,25 @@ export async function updateSession(request: NextRequest) {
   const user = data?.claims;
 
   const pathname = request.nextUrl.pathname;
+  const host = request.headers.get("host") ?? "";
+
+  const firmPortalResponse = applyFirmPortalProxy(request, supabaseResponse);
+  if (firmPortalResponse) {
+    return attachAnonymousSessionCookieIfNeeded(request, firmPortalResponse);
+  }
 
   if (
     !user &&
     !pathname.startsWith("/login") &&
     !pathname.startsWith("/auth") &&
+    !isFirmPortalPublicPath(pathname) &&
     !isPublicMarketingPath(pathname) &&
     !isAnonymousAllowedPath(pathname)
   ) {
+    if (shouldUseFirmPortalLogin(pathname, host)) {
+      return buildFirmPortalLoginRedirect(request);
+    }
+
     // RingBounty primary auth entry is magic link at `/login` (Phase 2.1).
     const url = request.nextUrl.clone();
     url.pathname = "/login";

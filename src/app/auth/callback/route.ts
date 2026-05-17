@@ -8,6 +8,7 @@ import {
 } from "@/lib/anonymous-session";
 import { mergeAnonymousDraftOnLogin } from "@/lib/claims/merge-anonymous-draft-on-login";
 import { sanitizeLoginNextPath } from "@/lib/claims/gated-routes";
+import { linkFirmUserOnLogin } from "@/lib/firms/link-firm-user-on-login";
 import { resolvePostMergeRedirectPath } from "@/lib/claims/post-merge-redirect";
 import type { Database } from "@/types/database";
 import {
@@ -68,6 +69,23 @@ export async function GET(request: NextRequest) {
         requestUrl.origin,
       ),
     );
+  }
+
+  // §13.4.2 — Link pre-provisioned `firm_users` row when email matches an invite.
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    const authUser = userData.user;
+    if (authUser?.id && authUser.email) {
+      const admin = createAdminClient();
+      await linkFirmUserOnLogin(admin, {
+        authUserId: authUser.id,
+        email: authUser.email,
+      });
+    }
+  } catch (e) {
+    if (!(e instanceof SupabaseAdminKeyMissingError)) {
+      console.error("linkFirmUserOnLogin", e);
+    }
   }
 
   // §2.6 — Attach anonymous draft; redirect to `/results?claim=` when merge succeeds (§2.6.5).

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { FIRM_PORTAL_LOGIN_PATH } from "@/lib/firms/firm-portal-host";
 import { SITE_NAME } from "@/lib/marketing/constants";
 
 import {
@@ -40,6 +41,12 @@ export function MarketingHeader() {
               {link.label}
             </Link>
           ))}
+          <Link
+            href={FIRM_PORTAL_LOGIN_PATH}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            Law firms
+          </Link>
           <Button asChild size="sm">
             <Link href="/check">Check a number</Link>
           </Button>

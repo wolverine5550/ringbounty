@@ -1204,15 +1204,15 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 13.4 Firm dashboard app *(v0.2)*
 
-- [ ] **13.4.1** Separate deploy or Next route group `firms.*` subdomain middleware host check.
-- [ ] **13.4.2** Firm user auth: map `firm_users.auth_user_id` to Supabase Auth invites.
-- [ ] **13.4.3** Lead list view with filters: state, min value, strength.
-- [ ] **13.4.4** Supabase Realtime subscription to `leads` insert where `assigned_firm_id` matches (or pool model — align with PRD).
+- [x] **13.4.1** Separate deploy or Next route group `firms.*` subdomain middleware host check. <!-- done: same deploy — `src/app/firms/*`, `apply-firm-portal-proxy.ts`, `firm-portal-host.ts` -->
+- [x] **13.4.2** Firm user auth: map `firm_users.auth_user_id` to Supabase Auth invites. <!-- done: `/firms/login`, `link-firm-user-on-login.ts`, `invite-firm-user.ts`, `POST /api/firms/invite`, auth callback hook -->
+- [x] **13.4.3** Lead list view with filters: state, min value, strength. <!-- done: `/firms/leads`, `load-firm-leads.ts`, `apply-firm-lead-filters.ts`, `FirmLeadFiltersForm` -->
+- [x] **13.4.4** Supabase Realtime subscription to `leads` insert where `assigned_firm_id` matches (or pool model — align with PRD). <!-- done: **pool model** — migration `20260517210000_leads_firm_pool_rls.sql` (`leads_select_firm_pool` + realtime publication), `FirmLeadsRealtime` -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README §13.4 -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG 2026-05-17 §13.4 -->
 
 ### 13.5 Lead accept and payment *(v0.2)*
 
@@ -1358,7 +1358,7 @@ Track resolutions here by checking items off and adding `<!-- done: decision rec
 - [ ] **Lead price** — $200–$500 validation with firms; premium for `strong` only?
 - [ ] **Firm outreach timing** — After N paying users (PRD said 10); confirm N.
 - [ ] **Chargeback / dispute** when user says firm did not contact after accept payment.
-- [ ] **Lead assignment model** — Broadcast to all matching firms vs single round-robin vs exclusive geography.
+- [x] **Lead assignment model** — Broadcast to all matching firms vs single round-robin vs exclusive geography. <!-- done (v0.2 interim): **broadcast pool** — `leads_select_firm_pool` RLS; `assigned_firm_id` reserved for §13.5 accept -->
 
 
 **Docs — this subsection**
