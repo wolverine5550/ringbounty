@@ -1,7 +1,5 @@
-import Link from "next/link";
 import { Suspense } from "react";
 
-import { CheckOutcomePanel } from "@/components/check-outcome-panel";
 import { CheckFunnelClient } from "@/components/check/check-funnel-client";
 import { CheckPageShell } from "@/components/check/check-page-shell";
 import { CheckSessionBootstrap } from "@/components/check-session-bootstrap";
@@ -41,31 +39,6 @@ export default function CheckPage() {
       >
         <CheckFunnelClient />
       </Suspense>
-
-      <Suspense
-        fallback={
-          <p className="text-muted-foreground text-sm" role="status">
-            Loading check status…
-          </p>
-        }
-      >
-        <CheckOutcomePanel />
-      </Suspense>
-
-      <footer className="flex flex-wrap gap-4 border-t border-border pt-4">
-        <Link
-          href="/"
-          className="text-primary text-sm font-medium underline-offset-4 hover:underline"
-        >
-          Back home
-        </Link>
-        <Link
-          href="/login"
-          className="text-primary text-sm font-medium underline-offset-4 hover:underline"
-        >
-          Sign in
-        </Link>
-      </footer>
     </CheckPageShell>
   );
 }

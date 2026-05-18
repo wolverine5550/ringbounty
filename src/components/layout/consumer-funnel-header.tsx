@@ -17,7 +17,7 @@ function ConsumerFunnelHeaderFallback() {
 }
 
 /**
- * Suspense-wrapped logged-in header for consumer funnel layouts (Next.js 16 — cookies via Supabase).
+ * Suspense-wrapped consumer funnel header (signed-in nav or anonymous sign-in).
  */
 export function ConsumerFunnelHeader() {
   return (

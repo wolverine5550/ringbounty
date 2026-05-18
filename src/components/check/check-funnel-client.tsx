@@ -665,8 +665,8 @@ export function CheckFunnelClient() {
 
           {requiresAccountWall ? (
             <p className="text-muted-foreground text-sm" role="status">
-              You&apos;ve used your free check. Sign in below to continue or check
-              another number after creating an account.
+              You&apos;ve used your free check. Use <strong>Sign in</strong> in the
+              header to continue, or check another number after creating an account.
             </p>
           ) : null}
 

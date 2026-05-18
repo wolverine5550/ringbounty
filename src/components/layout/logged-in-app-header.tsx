@@ -1,22 +1,21 @@
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { LoggedInAppHeaderNav } from "@/components/layout/logged-in-app-header-nav";
+import { MarketingHeaderAuth } from "@/components/marketing/marketing-header-auth";
 import { SITE_NAME } from "@/lib/marketing/constants";
 import { createClient } from "@/lib/supabase/server";
 
 /**
- * Sticky app chrome for authenticated consumers on `/check`, qualify, and results.
- * Renders nothing when there is no Supabase session (anonymous check funnel).
+ * Sticky app chrome on `/check`, qualify, and results.
+ * Signed-in: funnel nav (no "Check numbers" on `/check`) + sign out.
+ * Anonymous: brand + sign in only (no "Your results").
  */
 export async function LoggedInAppHeader() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const email =
     typeof data?.claims?.email === "string" ? data.claims.email : null;
-
-  if (!email) {
-    return null;
-  }
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -27,7 +26,25 @@ export async function LoggedInAppHeader() {
         >
           {SITE_NAME}
         </Link>
-        <LoggedInAppHeaderNav />
+        {email ? (
+          <LoggedInAppHeaderNav />
+        ) : (
+          <nav
+            className="flex items-center gap-3 text-sm sm:gap-5"
+            aria-label="App"
+          >
+            <Suspense
+              fallback={
+                <span
+                  className="bg-muted h-8 w-20 animate-pulse rounded-md"
+                  aria-hidden
+                />
+              }
+            >
+              <MarketingHeaderAuth />
+            </Suspense>
+          </nav>
+        )}
       </div>
     </header>
   );
