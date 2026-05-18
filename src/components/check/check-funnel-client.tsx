@@ -1,24 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
-import { CheckStepIndicator } from "@/components/check/check-step-indicator";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  CHECK_FLOW_STEPS,
   CHECK_MAX_PHONE_ROWS,
-  CHECK_STEP_ZERO_INTRO,
+  CHECK_NUMBER_ENTRY_HEADING,
   RB_CHECK_SUBMITTED_EVENT,
-  type CheckFlowStepId,
 } from "@/lib/check/constants";
-import { canContinueToNumberEntry } from "@/lib/check/evidence-checklist-gate";
-import {
-  CHECK_EVIDENCE_CHECKLIST_SUPPORT_COPY,
-  EVIDENCE_CHECKLIST_ITEMS,
-} from "@/lib/check/evidence-checklist-items";
 import {
   extractUsPhoneDigits,
   formatUsPhoneMask,
@@ -32,7 +24,16 @@ import {
   COMPANY_CNAM_HINT_PREFIX,
   COMPANY_UNIDENTIFIED_CHECK_MESSAGE,
 } from "@/lib/constants/company-identification";
-import { NO_SPAM_HIT_USER_MESSAGE } from "@/lib/constants/no-spam-hit";
+import {
+  CHECK_CONTINUE_TO_QUALIFY_HELP,
+  CHECK_CONTINUE_TO_QUALIFY_LABEL,
+  NO_SPAM_HIT_HEADLINE,
+  NO_SPAM_HIT_USER_MESSAGE,
+} from "@/lib/constants/no-spam-hit";
+import {
+  allNumberChecksExempt,
+  buildCheckFunnelContinueTarget,
+} from "@/lib/check/check-funnel-continue";
 import {
   getStateSosBusinessSearchUrl,
   OPENCORPORATES_RATE_LIMIT_USER_MESSAGE,
@@ -55,23 +56,11 @@ function checkSubmitRetryBackoffMs(failureCount: number): number {
   return Math.min(8000, 1000 * 2 ** (failureCount - 1));
 }
 
-const INITIAL_FUNNEL_STEP = 0 satisfies CheckFlowStepId;
-
 type PhoneRow = {
   id: string;
   /** Up to 10 NANP digits (national number, no country code stored). */
   digits: string;
 };
-
-function buildInitialCheckedMap(): Record<string, boolean> {
-  return Object.fromEntries(
-    EVIDENCE_CHECKLIST_ITEMS.map((item) => [item.id, false]),
-  );
-}
-
-function newEmptyPhoneRow(): PhoneRow {
-  return { id: crypto.randomUUID(), digits: "" };
-}
 
 /** Duplicate rows keyed by validated E.164 (task_manager §4.3.3 + §4.4 NANP validation). */
 function digitLengthIssue(digits: string): "incomplete" | null {
@@ -116,15 +105,16 @@ function computeDuplicateRowIds(rows: PhoneRow[]): Set<string> {
 }
 
 /**
- * Step 0 evidence checklist (§4.2); Step 1 masked US NANP rows, validation + submit (§4.3–4.4).
+ * `/check` — masked US NANP rows, validation + submit (§4.3–4.6).
+ * Evidence preservation runs on `/attorney-connect` before referral (PRD §10).
  */
 export function CheckFunnelClient() {
-  const [funnelStep, setFunnelStep] =
-    useState<CheckFlowStepId>(INITIAL_FUNNEL_STEP);
-  const [checkedMap, setCheckedMap] = useState(buildInitialCheckedMap);
-  const [continueAnyway, setContinueAnyway] = useState(false);
+  /** Stable across SSR + hydration (do not use `crypto.randomUUID()` for row keys). */
+  const phoneRowIdPrefix = useId();
+  const nextPhoneRowIndexRef = useRef(1);
+
   const [phoneRows, setPhoneRows] = useState<PhoneRow[]>(() => [
-    newEmptyPhoneRow(),
+    { id: `${phoneRowIdPrefix}-0`, digits: "" },
   ]);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [rateLimitMessage, setRateLimitMessage] = useState<string | null>(null);
@@ -137,7 +127,23 @@ export function CheckFunnelClient() {
   const [federalDncMessage, setFederalDncMessage] = useState<string | null>(
     null,
   );
+  const [lastClaimId, setLastClaimId] = useState<string | null>(null);
+  const [lastClaimSubjectIds, setLastClaimSubjectIds] = useState<string[]>([]);
+  const [requiresAccountWall, setRequiresAccountWall] = useState(false);
   const stepOneRef = useRef<HTMLElement | null>(null);
+
+  const refreshGateStatus = useCallback(async () => {
+    const res = await fetch("/api/claims/anonymous/status", {
+      credentials: "include",
+    });
+    if (!res.ok) {
+      return;
+    }
+    const body = (await res.json()) as {
+      requires_account_wall?: boolean;
+    };
+    setRequiresAccountWall(body.requires_account_wall === true);
+  }, []);
 
   const validPhoneRowsForSubmit = useMemo(
     () => phoneRows.filter((r) => normalizeUsPhoneToE164(r.digits) !== null),
@@ -149,24 +155,6 @@ export function CheckFunnelClient() {
     [phoneRows],
   );
 
-  const checkedCount = EVIDENCE_CHECKLIST_ITEMS.filter(
-    (item) => checkedMap[item.id],
-  ).length;
-
-  const canContinue = canContinueToNumberEntry(
-    checkedCount,
-    EVIDENCE_CHECKLIST_ITEMS.length,
-    continueAnyway,
-  );
-
-  const toggleItem = useCallback((id: string, checked: boolean) => {
-    setCheckedMap((prev) => ({ ...prev, [id]: checked }));
-  }, []);
-
-  const handleContinue = useCallback(() => {
-    setFunnelStep(1);
-  }, []);
-
   const changeRowDigits = useCallback((rowId: string, raw: string) => {
     setSubmitError(null);
     setNumberChecks(null);
@@ -177,25 +165,34 @@ export function CheckFunnelClient() {
   }, []);
 
   const addPhoneRow = useCallback(() => {
-    setPhoneRows((prev) =>
-      prev.length >= CHECK_MAX_PHONE_ROWS
-        ? prev
-        : [...prev, newEmptyPhoneRow()],
-    );
-  }, []);
-
-  const removePhoneRow = useCallback((rowId: string) => {
     setPhoneRows((prev) => {
-      if (prev.length <= 1) {
-        const only = prev[0];
-        if (!only) {
-          return [newEmptyPhoneRow()];
-        }
-        return [{ id: only.id, digits: "" }];
+      if (prev.length >= CHECK_MAX_PHONE_ROWS) {
+        return prev;
       }
-      return prev.filter((r) => r.id !== rowId);
+      const index = nextPhoneRowIndexRef.current;
+      nextPhoneRowIndexRef.current += 1;
+      return [
+        ...prev,
+        { id: `${phoneRowIdPrefix}-${String(index)}`, digits: "" },
+      ];
     });
-  }, []);
+  }, [phoneRowIdPrefix]);
+
+  const removePhoneRow = useCallback(
+    (rowId: string) => {
+      setPhoneRows((prev) => {
+        if (prev.length <= 1) {
+          const only = prev[0];
+          if (!only) {
+            return [{ id: `${phoneRowIdPrefix}-0`, digits: "" }];
+          }
+          return [{ id: only.id, digits: "" }];
+        }
+        return prev.filter((r) => r.id !== rowId);
+      });
+    },
+    [phoneRowIdPrefix],
+  );
 
   const runCheckSubmit = useCallback(
     async (options?: { isBackoffRetry?: boolean }) => {
@@ -240,6 +237,8 @@ export function CheckFunnelClient() {
     setCheckSubmitting(true);
     setNumberChecks(null);
     setFederalDncMessage(null);
+    setLastClaimId(null);
+    setLastClaimSubjectIds([]);
     try {
       const res = await fetch("/api/check/submit", {
         method: "POST",
@@ -274,10 +273,19 @@ export function CheckFunnelClient() {
 
       setSubmitFailureCount(0);
 
+      if (typeof body.claim_id === "string" && body.claim_id.length > 0) {
+        setLastClaimId(body.claim_id);
+      }
+      if (Array.isArray(body.claim_subject_ids)) {
+        setLastClaimSubjectIds(body.claim_subject_ids);
+      }
+
       const checks = Array.isArray(body.number_checks)
         ? body.number_checks
         : null;
       setNumberChecks(checks ?? []);
+
+      await refreshGateStatus();
 
       const dncMsg = body.federal_dnc?.user_message?.trim();
       setFederalDncMessage(
@@ -302,356 +310,323 @@ export function CheckFunnelClient() {
       setCheckSubmitting(false);
     }
     },
-    [duplicateRowIds.size, phoneRows, submitFailureCount],
+    [duplicateRowIds.size, phoneRows, refreshGateStatus, submitFailureCount],
   );
 
-  useEffect(() => {
-    if (funnelStep !== 1) {
-      return;
+  const continueTarget = useMemo(() => {
+    if (!lastClaimId || !numberChecks?.length) {
+      return null;
     }
+    return buildCheckFunnelContinueTarget({
+      claimId: lastClaimId,
+      claimSubjectIds: lastClaimSubjectIds,
+      numberChecks,
+      requiresAccountWall,
+    });
+  }, [lastClaimId, lastClaimSubjectIds, numberChecks, requiresAccountWall]);
+
+  useEffect(() => {
     const node = stepOneRef.current;
     if (!node) {
       return;
     }
     node.focus({ preventScroll: true });
-    node.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [funnelStep]);
-
-  const stepZeroMeta = CHECK_FLOW_STEPS[0];
-  const stepOneMeta = CHECK_FLOW_STEPS[1];
+  }, []);
 
   return (
     <>
-      <CheckStepIndicator currentStep={funnelStep} />
-
       <section
-        aria-labelledby="check-step-0-heading"
-        className="flex flex-col gap-4"
+        ref={stepOneRef}
+        id="check-number-entry"
+        tabIndex={-1}
+        aria-labelledby="check-number-entry-heading"
+        className="flex flex-col gap-4 rounded-lg border border-border bg-muted/10 p-4 outline-none"
       >
-        <div className="flex flex-col gap-2">
-          <h2
-            id="check-step-0-heading"
-            className="text-lg font-semibold tracking-tight"
-          >
-            {stepZeroMeta.heading}
-          </h2>
-          <p className="text-muted-foreground text-sm leading-relaxed">
-            {CHECK_STEP_ZERO_INTRO}
-          </p>
-        </div>
+          <div className="flex flex-col gap-2">
+            <h2
+              id="check-number-entry-heading"
+              className="text-lg font-semibold tracking-tight"
+            >
+              {CHECK_NUMBER_ENTRY_HEADING}
+            </h2>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              U.S. numbers only. Formatting is added as you type; the server stores
+              a normalized +1-form number and optionally your masked display string.
+            </p>
+          </div>
 
-        <p className="text-muted-foreground text-sm leading-relaxed">
-          {CHECK_EVIDENCE_CHECKLIST_SUPPORT_COPY}
-        </p>
-
-        <fieldset className="bg-card/40 flex flex-col gap-3 rounded-lg border border-border p-4">
-          <legend className="sr-only">Evidence preservation checklist</legend>
           <ul className="flex flex-col gap-3">
-            {EVIDENCE_CHECKLIST_ITEMS.map((item) => {
-              const inputId = `evidence-check-${item.id}`;
+            {phoneRows.map((row, index) => {
+              const dup = duplicateRowIds.has(row.id);
+              const validityHint = dup ? null : rowValidityHint(row.digits);
+              const alertText = dup
+                ? "Duplicate number — change or remove this row."
+                : validityHint;
+              const inputId = `check-phone-${row.id}`;
               return (
-                <li key={item.id} className="flex gap-3">
-                  <Checkbox
-                    id={inputId}
-                    checked={checkedMap[item.id] ?? false}
-                    onCheckedChange={(value) =>
-                      toggleItem(item.id, value === true)
-                    }
-                  />
-                  <Label
-                    htmlFor={inputId}
-                    className="text-muted-foreground cursor-pointer text-sm font-normal leading-snug"
+                <li key={row.id} className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:gap-2">
+                  <div className="min-w-0 flex-1">
+                    <Label htmlFor={inputId} className="sr-only">
+                      Phone number {index + 1}
+                    </Label>
+                    <Input
+                      id={inputId}
+                      type="tel"
+                      inputMode="numeric"
+                      autoComplete="tel-national"
+                      placeholder="(555) 555-5555"
+                      aria-invalid={alertText !== null}
+                      value={formatUsPhoneMask(row.digits)}
+                      onChange={(e) => changeRowDigits(row.id, e.target.value)}
+                      className="font-mono"
+                    />
+                    {alertText !== null ? (
+                      <p
+                        className="text-destructive mt-1 text-xs"
+                        role="alert"
+                      >
+                        {alertText}
+                      </p>
+                    ) : null}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0 self-stretch sm:mt-0"
+                    disabled={phoneRows.length <= 1}
+                    onClick={() => removePhoneRow(row.id)}
                   >
-                    {item.label}
-                  </Label>
+                    Remove
+                  </Button>
                 </li>
               );
             })}
           </ul>
-        </fieldset>
 
-        <div className="bg-muted/15 flex gap-3 rounded-lg border border-dashed border-border p-4">
-          <Checkbox
-            id="evidence-checklist-continue-anyway"
-            checked={continueAnyway}
-            onCheckedChange={(value) => setContinueAnyway(value === true)}
-          />
-          <Label
-            htmlFor="evidence-checklist-continue-anyway"
-            className="text-muted-foreground cursor-pointer text-sm font-normal leading-snug"
-          >
-            I understand I have not finished every checklist item above and
-            still want to continue to enter numbers.
-          </Label>
-        </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={phoneRows.length >= CHECK_MAX_PHONE_ROWS}
+              onClick={addPhoneRow}
+            >
+              Add number
+            </Button>
+            <p className="text-muted-foreground text-xs">
+              Up to {String(CHECK_MAX_PHONE_ROWS)} numbers per check.
+            </p>
+          </div>
 
-        <Button type="button" disabled={!canContinue} onClick={handleContinue}>
-          Continue to enter numbers
-        </Button>
+          {rateLimitMessage ? (
+            <p className="text-warning text-sm" role="alert">
+              {rateLimitMessage}
+            </p>
+          ) : null}
 
-        {funnelStep >= 1 ? (
-          <section
-            ref={stepOneRef}
-            id="check-step-1-numbers"
-            tabIndex={-1}
-            aria-labelledby="check-step-1-heading"
-            className="flex flex-col gap-4 rounded-lg border border-border bg-muted/10 p-4 outline-none"
-          >
-            <div className="flex flex-col gap-2">
-              <h2
-                id="check-step-1-heading"
-                className="text-lg font-semibold tracking-tight"
-              >
-                {stepOneMeta.heading}
-              </h2>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                U.S. numbers only. Formatting is added as you type; the server stores
-                a normalized +1-form number and optionally your masked display string.
-              </p>
-            </div>
+          {submitError ? (
+            <p
+              className={
+                numberChecks?.some((r) => r.had_provider_failure)
+                  ? "text-warning text-sm"
+                  : "text-destructive text-sm"
+              }
+              role="alert"
+            >
+              {submitError}
+            </p>
+          ) : null}
 
-            <ul className="flex flex-col gap-3">
-              {phoneRows.map((row, index) => {
-                const dup = duplicateRowIds.has(row.id);
-                const validityHint = dup ? null : rowValidityHint(row.digits);
-                const alertText = dup
-                  ? "Duplicate number — change or remove this row."
-                  : validityHint;
-                const inputId = `check-phone-${row.id}`;
-                return (
-                  <li key={row.id} className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:gap-2">
-                    <div className="min-w-0 flex-1">
-                      <Label htmlFor={inputId} className="sr-only">
-                        Phone number {index + 1}
-                      </Label>
-                      <Input
-                        id={inputId}
-                        type="tel"
-                        inputMode="numeric"
-                        autoComplete="tel-national"
-                        placeholder="(555) 555-5555"
-                        aria-invalid={alertText !== null}
-                        value={formatUsPhoneMask(row.digits)}
-                        onChange={(e) => changeRowDigits(row.id, e.target.value)}
-                        className="font-mono"
-                      />
-                      {alertText !== null ? (
-                        <p
-                          className="text-destructive mt-1 text-xs"
-                          role="alert"
-                        >
-                          {alertText}
-                        </p>
-                      ) : null}
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="shrink-0 self-stretch sm:mt-0"
-                      disabled={phoneRows.length <= 1}
-                      onClick={() => removePhoneRow(row.id)}
-                    >
-                      Remove
-                    </Button>
-                  </li>
-                );
-              })}
-            </ul>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                disabled={phoneRows.length >= CHECK_MAX_PHONE_ROWS}
-                onClick={addPhoneRow}
-              >
-                Add number
-              </Button>
+          {checkSubmitting ? (
+            <div
+              className="flex flex-col gap-2"
+              aria-busy="true"
+              aria-label="Check status by number"
+            >
               <p className="text-muted-foreground text-xs">
-                Up to {String(CHECK_MAX_PHONE_ROWS)} numbers per check.
+                Running checks (parallel per number)…
               </p>
+              <ul className="flex flex-col gap-2">
+                {validPhoneRowsForSubmit.map((row) => (
+                  <li
+                    key={row.id}
+                    className="flex flex-col gap-2 rounded-md border border-border p-3 sm:flex-row sm:items-center"
+                  >
+                    <div className="bg-muted h-4 w-32 shrink-0 animate-pulse rounded" />
+                    <div className="flex flex-1 flex-wrap gap-2">
+                      {Array.from({ length: 2 }).map((_, i) => (
+                        <div
+                          key={`${row.id}-sk-${String(i)}`}
+                          className="bg-muted h-7 min-w-[7rem] flex-1 animate-pulse rounded-md"
+                        />
+                      ))}
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
+          ) : null}
 
-            {rateLimitMessage ? (
-              <p className="text-warning text-sm" role="alert">
-                {rateLimitMessage}
-              </p>
-            ) : null}
+          {federalDncMessage ? (
+            <p
+              className="text-muted-foreground text-xs leading-relaxed"
+              role="status"
+            >
+              {federalDncMessage}
+            </p>
+          ) : null}
 
-            {submitError ? (
-              <p
-                className={
-                  numberChecks?.some((r) => r.had_provider_failure)
-                    ? "text-warning text-sm"
-                    : "text-destructive text-sm"
-                }
-                role="alert"
-              >
-                {submitError}
-              </p>
-            ) : null}
-
-            {checkSubmitting ? (
-              <div
-                className="flex flex-col gap-2"
-                aria-busy="true"
-                aria-label="Check status by number"
-              >
-                <p className="text-muted-foreground text-xs">
-                  Running checks (parallel per number)…
-                </p>
-                <ul className="flex flex-col gap-2">
-                  {validPhoneRowsForSubmit.map((row) => (
-                    <li
-                      key={row.id}
-                      className="flex flex-col gap-2 rounded-md border border-border p-3 sm:flex-row sm:items-center"
-                    >
-                      <div className="bg-muted h-4 w-32 shrink-0 animate-pulse rounded" />
-                      <div className="flex flex-1 flex-wrap gap-2">
-                        {Array.from({ length: 2 }).map((_, i) => (
-                          <div
-                            key={`${row.id}-sk-${String(i)}`}
-                            className="bg-muted h-7 min-w-[7rem] flex-1 animate-pulse rounded-md"
-                          />
-                        ))}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-
-            {federalDncMessage ? (
-              <p
-                className="text-muted-foreground text-xs leading-relaxed"
-                role="status"
-              >
-                {federalDncMessage}
-              </p>
-            ) : null}
-
-            {numberChecks !== null && numberChecks.length > 0 ? (
-              <div className="flex flex-col gap-2">
-                <p className="text-sm font-medium">Check results</p>
-                <ul className="flex flex-col gap-3">
-                  {numberChecks.map((row) => (
-                    <li
-                      key={row.phone_number_normalized}
-                      className="rounded-md border border-border bg-card/30 p-3 text-sm"
-                    >
-                      <p className="font-mono text-xs">
-                        {row.phone_number_normalized}
+          {numberChecks !== null && numberChecks.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              <p className="text-sm font-medium">Check results</p>
+              <ul className="flex flex-col gap-3">
+                {numberChecks.map((row) => (
+                  <li
+                    key={row.phone_number_normalized}
+                    className="rounded-md border border-border bg-card/30 p-3 text-sm"
+                  >
+                    <p className="font-mono text-xs">
+                      {row.phone_number_normalized}
+                    </p>
+                    {row.is_debt_collection ? (
+                      <p
+                        className="text-muted-foreground mt-2 text-xs leading-relaxed"
+                        role="status"
+                      >
+                        {FDCPA_DEBT_COLLECTION_USER_MESSAGE}
                       </p>
-                      {row.is_debt_collection ? (
-                        <p
-                          className="text-muted-foreground mt-2 text-xs leading-relaxed"
-                          role="status"
-                        >
-                          {FDCPA_DEBT_COLLECTION_USER_MESSAGE}
+                    ) : row.is_exempt ? (
+                      <p
+                        className="text-muted-foreground mt-2 text-xs leading-relaxed"
+                        role="status"
+                      >
+                        {EXEMPT_TCPA_USER_MESSAGE}
+                      </p>
+                    ) : row.is_known_spammer === false ? (
+                      <div className="mt-2 flex flex-col gap-1" role="status">
+                        <p className="text-foreground text-xs font-medium">
+                          {NO_SPAM_HIT_HEADLINE}
                         </p>
-                      ) : row.is_exempt ? (
-                        <p
-                          className="text-muted-foreground mt-2 text-xs leading-relaxed"
-                          role="status"
-                        >
-                          {EXEMPT_TCPA_USER_MESSAGE}
-                        </p>
-                      ) : row.is_known_spammer === false ? (
-                        <p
-                          className="text-muted-foreground mt-2 text-xs leading-relaxed"
-                          role="status"
-                        >
+                        <p className="text-muted-foreground text-xs leading-relaxed">
                           {NO_SPAM_HIT_USER_MESSAGE}
                         </p>
-                      ) : row.company_identified === false ? (
-                        <p
-                          className="text-muted-foreground mt-2 text-xs leading-relaxed"
-                          role="status"
+                      </div>
+                    ) : row.company_identified === false ? (
+                      <p
+                        className="text-muted-foreground mt-2 text-xs leading-relaxed"
+                        role="status"
+                      >
+                        {COMPANY_UNIDENTIFIED_CHECK_MESSAGE}
+                      </p>
+                    ) : null}
+                    {row.company_identified === true && row.company_name ? (
+                      <p className="text-muted-foreground mt-2 text-xs">
+                        Company identified:{" "}
+                        <span className="text-foreground font-medium">
+                          {row.company_name}
+                        </span>
+                      </p>
+                    ) : null}
+                    {row.registered_agent_rate_limited ? (
+                      <p
+                        className="text-muted-foreground mt-2 text-xs leading-relaxed"
+                        role="status"
+                      >
+                        {OPENCORPORATES_RATE_LIMIT_USER_MESSAGE}
+                      </p>
+                    ) : row.registered_agent_found &&
+                      row.registered_agent_name ? (
+                      <p className="text-muted-foreground mt-2 text-xs">
+                        Registered agent:{" "}
+                        <span className="text-foreground font-medium">
+                          {row.registered_agent_name}
+                        </span>
+                      </p>
+                    ) : row.registered_agent_manual_lookup_required ? (
+                      <p
+                        className="text-muted-foreground mt-2 text-xs leading-relaxed"
+                        role="status"
+                      >
+                        {REGISTERED_AGENT_MANUAL_LOOKUP_MESSAGE}{" "}
+                        <a
+                          href={getStateSosBusinessSearchUrl(
+                            row.user_state_code,
+                          )}
+                          className="text-primary underline underline-offset-2"
+                          target="_blank"
+                          rel="noopener noreferrer"
                         >
-                          {COMPANY_UNIDENTIFIED_CHECK_MESSAGE}
-                        </p>
-                      ) : null}
-                      {row.company_identified === true && row.company_name ? (
-                        <p className="text-muted-foreground mt-2 text-xs">
-                          Company identified:{" "}
-                          <span className="text-foreground font-medium">
-                            {row.company_name}
-                          </span>
-                        </p>
-                      ) : null}
-                      {row.registered_agent_rate_limited ? (
-                        <p
-                          className="text-muted-foreground mt-2 text-xs leading-relaxed"
-                          role="status"
+                          Look up on your state&apos;s business registry
+                        </a>
+                        .
+                      </p>
+                    ) : null}
+                    {row.company_name_hint ? (
+                      <p className="text-muted-foreground mt-2 text-xs leading-relaxed">
+                        {COMPANY_CNAM_HINT_PREFIX}{" "}
+                        <span className="text-foreground font-medium">
+                          {row.company_name_hint}
+                        </span>
+                        . This is not verified — you will still confirm the
+                        company during qualification.
+                      </p>
+                    ) : null}
+                    <ul className="mt-2 flex flex-col gap-1.5">
+                      {row.providers.map((p) => (
+                        <li
+                          key={p.provider_id}
+                          className="text-muted-foreground flex flex-wrap items-baseline justify-between gap-2 text-xs"
                         >
-                          {OPENCORPORATES_RATE_LIMIT_USER_MESSAGE}
-                        </p>
-                      ) : row.registered_agent_found &&
-                        row.registered_agent_name ? (
-                        <p className="text-muted-foreground mt-2 text-xs">
-                          Registered agent:{" "}
-                          <span className="text-foreground font-medium">
-                            {row.registered_agent_name}
+                          <span>
+                            {PROVIDER_CHECK_LABEL[p.provider_id] ?? p.provider_id}
                           </span>
-                        </p>
-                      ) : row.registered_agent_manual_lookup_required ? (
-                        <p
-                          className="text-muted-foreground mt-2 text-xs leading-relaxed"
-                          role="status"
-                        >
-                          {REGISTERED_AGENT_MANUAL_LOOKUP_MESSAGE}{" "}
-                          <a
-                            href={getStateSosBusinessSearchUrl(
-                              row.user_state_code,
-                            )}
-                            className="text-primary underline underline-offset-2"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            Look up on your state&apos;s business registry
-                          </a>
-                          .
-                        </p>
-                      ) : null}
-                      {row.company_name_hint ? (
-                        <p className="text-muted-foreground mt-2 text-xs leading-relaxed">
-                          {COMPANY_CNAM_HINT_PREFIX}{" "}
-                          <span className="text-foreground font-medium">
-                            {row.company_name_hint}
-                          </span>
-                          . This is not verified — you will still confirm the
-                          company during qualification.
-                        </p>
-                      ) : null}
-                      <ul className="mt-2 flex flex-col gap-1.5">
-                        {row.providers.map((p) => (
-                          <li
-                            key={p.provider_id}
-                            className="text-muted-foreground flex flex-wrap items-baseline justify-between gap-2 text-xs"
-                          >
-                            <span>
-                              {PROVIDER_CHECK_LABEL[p.provider_id] ?? p.provider_id}
+                          {p.status === "ok" ? (
+                            <span className="text-success font-medium">
+                              Received
                             </span>
-                            {p.status === "ok" ? (
-                              <span className="text-success font-medium">
-                                Received
-                              </span>
-                            ) : (
-                              <span className="text-warning font-medium">
-                                Unavailable ({p.error_code})
-                              </span>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
+                          ) : (
+                            <span className="text-warning font-medium">
+                              Unavailable ({p.error_code})
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
 
+          {continueTarget && numberChecks && !allNumberChecksExempt(numberChecks) ? (
+            <div className="flex flex-col gap-3 rounded-md border border-primary/30 bg-primary/5 p-4">
+              <div className="flex flex-col gap-1">
+                <p className="text-sm font-medium">Next step</p>
+                <p className="text-muted-foreground text-xs leading-relaxed">
+                  {CHECK_CONTINUE_TO_QUALIFY_HELP}
+                </p>
+              </div>
+              <Button asChild className="w-full sm:w-auto">
+                <Link
+                  href={
+                    continueTarget.signInHref ?? continueTarget.qualifyHref
+                  }
+                >
+                  {continueTarget.signInHref
+                    ? "Sign in to continue"
+                    : CHECK_CONTINUE_TO_QUALIFY_LABEL}
+                </Link>
+              </Button>
+            </div>
+          ) : numberChecks && allNumberChecksExempt(numberChecks) ? (
+            <p className="text-muted-foreground text-sm" role="status">
+              These numbers look TCPA-exempt. Try a different number if you
+              want to continue, or sign in to review your saved claim.
+            </p>
+          ) : null}
+
+          {numberChecks === null ? (
             <div className="flex flex-wrap items-center gap-2">
               <Button
                 type="button"
@@ -666,9 +641,7 @@ export function CheckFunnelClient() {
                 }
                 onClick={() => void runCheckSubmit()}
               >
-                {checkSubmitting || retryWaiting
-                  ? "Running check…"
-                  : "Run check"}
+                {checkSubmitting || retryWaiting ? "Running check…" : "Run check"}
               </Button>
               {submitFailureCount > 0 ? (
                 <Button
@@ -685,8 +658,7 @@ export function CheckFunnelClient() {
                 </Button>
               ) : null}
             </div>
-          </section>
-        ) : null}
+          ) : null}
       </section>
     </>
   );

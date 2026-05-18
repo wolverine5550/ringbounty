@@ -11,7 +11,7 @@ type CheckPageProps = {
 };
 
 /**
- * Anonymous funnel entry (Phase §2.3 / §4.1–4.2). Step 0 — evidence preservation before number entry (PRD §10).
+ * Anonymous funnel entry (Phase §2.3 / §4.1–4.6). Number check first; evidence preservation before attorney referral (PRD §10).
  */
 export default function CheckPage({ searchParams }: CheckPageProps) {
   return (
@@ -39,7 +39,6 @@ export default function CheckPage({ searchParams }: CheckPageProps) {
           </p>
         }
       >
-        {/* Next.js 16: `crypto.randomUUID()` in funnel row ids must defer behind Suspense for prerender. */}
         <CheckFunnelClient />
       </Suspense>
 

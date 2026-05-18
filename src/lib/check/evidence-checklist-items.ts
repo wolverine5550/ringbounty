@@ -1,10 +1,21 @@
 /**
- * Six evidence-preservation prompts from PRD §10, shown before number entry (`/check`, task_manager §4.2).
+ * Six evidence-preservation prompts from PRD §10, shown on `/attorney-connect` before referral (task_manager §4.2).
  * `prd.md` is not checked into this repo — keep wording aligned with legal/product review.
  *
  * Optional persistence: insert `claim_events` with `event_type: "evidence_checklist_ack"` (see `claimEvent.ts`)
- * once anonymous + service-role plumbing exists; RLS today is ownership-based for authenticated users only.
+ * when referral submit persists checklist acknowledgement.
  */
+
+/** Section heading on attorney connect. */
+export const EVIDENCE_PRESERVATION_HEADLINE = "Preserve your evidence";
+
+/** Intro before attorney referral (PRD §10). */
+export const EVIDENCE_PRESERVATION_INTRO =
+  "Before we share your claim summary with attorneys, take a moment to save what you already have. Stronger evidence usually means a stronger profile — we do not guarantee any outcome.";
+
+/** Continue-anyway acknowledgement on attorney connect. */
+export const EVIDENCE_PRESERVATION_CONTINUE_ANYWAY_LABEL =
+  "I understand I have not finished every checklist item above and still want to continue.";
 
 export type EvidenceChecklistItem = {
   /** Stable key for checkbox state and tests. */

@@ -8,7 +8,6 @@ import { EmailCaptureModal } from "@/components/email-capture-modal";
 import { Button } from "@/components/ui/button";
 import type { EmailCaptureReason } from "@/lib/claims/email-capture-trigger";
 import { RB_CHECK_SUBMITTED_EVENT } from "@/lib/check/constants";
-import { RATE_LIMIT_USER_MESSAGE } from "@/lib/rate-limit/constants";
 
 type GateStatusResponse = {
   claim_id: string | null;
@@ -36,15 +35,12 @@ async function fetchGateStatus(): Promise<GateStatusResponse> {
 
 /**
  * Polls anonymous claim gate status after session bootstrap (§2.5 / §2.5.3 / §2.8).
- * Full phone-check UI arrives in Phase 4; this panel wires the account wall and email capture.
+ * Account wall, optional email capture, and secondary navigation after the main check UI.
  */
 export function CheckOutcomePanel({ showRetryHint }: CheckOutcomePanelProps) {
   const [status, setStatus] = useState<GateStatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [notifyOverlayOpen, setNotifyOverlayOpen] = useState(false);
-  const [rateLimitMessage, setRateLimitMessage] = useState<string | null>(null);
-  const [checkSubmitting, setCheckSubmitting] = useState(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -95,31 +91,6 @@ export function CheckOutcomePanel({ showRetryHint }: CheckOutcomePanelProps) {
     };
   }, []);
 
-  const runCheckSubmit = useCallback(async () => {
-    setCheckSubmitting(true);
-    setRateLimitMessage(null);
-    try {
-      const res = await fetch("/api/check/submit", {
-        method: "POST",
-        credentials: "include",
-      });
-      const body = (await res.json().catch(() => ({}))) as { error?: string };
-      if (res.status === 429) {
-        setRateLimitMessage(body.error ?? RATE_LIMIT_USER_MESSAGE);
-        return;
-      }
-      if (!res.ok) {
-        setError(body.error ?? `Check failed (${res.status})`);
-        return;
-      }
-      await refresh();
-    } catch {
-      setError("Could not run check. Please try again.");
-    } finally {
-      setCheckSubmitting(false);
-    }
-  }, [refresh]);
-
   if (loading) {
     return (
       <p className="text-muted-foreground text-sm" role="status">
@@ -164,50 +135,13 @@ export function CheckOutcomePanel({ showRetryHint }: CheckOutcomePanelProps) {
           : "No account is required yet for this check. When we find a potential claim, you will be asked to sign in to continue."}
       </p>
 
-      {rateLimitMessage ? (
-        <p className="text-warning text-sm" role="alert">
-          {rateLimitMessage}
-        </p>
-      ) : null}
-
       {status.show_email_capture && emailReason ? (
         <EmailCaptureModal claimId={status.claim_id} reason={emailReason} />
       ) : null}
 
-      <div className="flex flex-wrap gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={checkSubmitting}
-          onClick={() => void runCheckSubmit()}
-        >
-          {checkSubmitting ? "Running…" : "Run check (preview)"}
-        </Button>
-        <Button type="button" variant="outline" size="sm" onClick={() => void refresh()}>
-          Refresh status
-        </Button>
-        <Button asChild variant="secondary" size="sm">
-          <Link href="/check">Check another number</Link>
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => setNotifyOverlayOpen(true)}
-        >
-          Notify me
-        </Button>
-      </div>
-
-      {notifyOverlayOpen ? (
-        <EmailCaptureModal
-          claimId={status.claim_id}
-          reason="notify_me_cta"
-          asOverlay
-          onClose={() => setNotifyOverlayOpen(false)}
-        />
-      ) : null}
+      <Button asChild variant="secondary" size="sm" className="w-fit">
+        <Link href="/check">Check another number</Link>
+      </Button>
     </div>
   );
 }

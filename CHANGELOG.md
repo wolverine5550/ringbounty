@@ -1,5 +1,28 @@
 # Changelog
 
+## 2026-05-18 (Pre-launch — Consumer funnel UX: `/check`, evidence, header)
+
+### Consumer flow (intended path)
+
+1. **`/check`** — Enter U.S. number(s), run spam screening, continue to qualification when appropriate.
+2. **`/qualify/...`** — Factual questions (DNC, stop requests, company, line type, etc.).
+3. **`/results?claim=…`** — Informational strength and valuation; optional attorney CTA.
+4. **`/attorney-connect?claim=…`** — PRD §10 **Preserve your evidence** checklist, then consent, then referral + evidence PDF for firms.
+
+### `/check` (screening first)
+
+- **Removed Step 0** — PRD §10 evidence preservation no longer blocks number entry. `/check` is a single **Enter numbers** step ([`CHECK_NUMBER_ENTRY_HEADING`](src/lib/check/constants.ts) in [`constants.ts`](src/lib/check/constants.ts)); deleted [`CheckStepIndicator`](src/components/check/check-step-indicator.tsx) and the step-0 / step-1 wizard in [`CheckFunnelClient`](src/components/check/check-funnel-client.tsx).
+- **No spam-database hit (§5.6):** Clearer per-number headline + body ([`no-spam-hit.ts`](src/lib/constants/no-spam-hit.ts)). After submit, **Next step** → **Continue to questions** links to `/qualify/[subjectId]?claim=…` ([`check-funnel-continue.ts`](src/lib/check/check-funnel-continue.ts)); account-wall path shows **Sign in to continue**. **Run check** hides after results (no “run again”); [`CheckOutcomePanel`](src/components/check-outcome-panel.tsx) trimmed to status copy + **Check another number** only.
+- **Hydration:** Phone row DOM ids use React [`useId()`](src/components/check/check-funnel-client.tsx) instead of `crypto.randomUUID()` (fixes SSR/client `htmlFor` mismatch).
+
+### Evidence preservation (before attorney referral)
+
+- **Moved to `/attorney-connect`** — Six checklist items ([`evidence-checklist-items.ts`](src/lib/check/evidence-checklist-items.ts)) render in [`EvidencePreservationChecklist`](src/components/evidence/evidence-preservation-checklist.tsx) on [`AttorneyConnectForm`](src/components/results/attorney-connect-form.tsx). User must check all items or acknowledge **continue anyway** ([`canProceedPastEvidenceChecklist`](src/lib/check/evidence-checklist-gate.ts)) before submit — aligns evidence gathering with building the profile shared via the §13.2 evidence PDF.
+
+### Logged-in app header
+
+- [`ConsumerFunnelHeader`](src/components/layout/consumer-funnel-header.tsx) + [`LoggedInAppHeader`](src/components/layout/logged-in-app-header.tsx) on [`check/layout.tsx`](src/app/check/layout.tsx) and [`(post-check)/layout.tsx`](src/app/(post-check)/layout.tsx): brand, **Check numbers** (hidden on `/check`), **Your results**, **Sign out**. Anonymous `/check` has no app header (marketing pages use [`MarketingHeader`](src/components/marketing/marketing-header.tsx)).
+
 ## 2026-05-18 (§7.2 — Qualify wizard step 1 reorder)
 
 - **Step 1** is now an **orientation screen** only ([`screen-1-intro-form.tsx`](src/components/qualify/screen-1-intro-form.tsx), [`POST /api/qualify/screen-1-intro`](src/app/api/qualify/screen-1-intro/route.ts)) — no consent questions before the caller is named.

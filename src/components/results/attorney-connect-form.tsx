@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { EvidencePreservationChecklist } from "@/components/evidence/evidence-preservation-checklist";
 import { DisclaimerBlock } from "@/components/marketing/disclaimer-block";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -36,6 +37,7 @@ export function AttorneyConnectForm({
 }: AttorneyConnectFormProps) {
   const router = useRouter();
   const requiresWeakAck = effectiveClaimStrength === "weak";
+  const [evidenceChecklistComplete, setEvidenceChecklistComplete] = useState(false);
   const [shareConsent, setShareConsent] = useState(false);
   const [ackConsent, setAckConsent] = useState(false);
   const [weakAcknowledged, setWeakAcknowledged] = useState(false);
@@ -44,6 +46,7 @@ export function AttorneyConnectForm({
   const [submitted, setSubmitted] = useState(false);
 
   const canSubmit =
+    evidenceChecklistComplete &&
     shareConsent &&
     ackConsent &&
     (!requiresWeakAck || weakAcknowledged) &&
@@ -102,6 +105,10 @@ export function AttorneyConnectForm({
 
   return (
     <form className="flex flex-col gap-6" onSubmit={(ev) => void handleSubmit(ev)}>
+      <EvidencePreservationChecklist
+        onCanProceedChange={setEvidenceChecklistComplete}
+      />
+
       <section className="flex flex-col gap-3 text-sm leading-relaxed">
         <p>{ATTORNEY_REFERRAL_CONTACT_WINDOW}</p>
         <p>{ATTORNEY_REFERRAL_CONTINGENCY_INFO}</p>

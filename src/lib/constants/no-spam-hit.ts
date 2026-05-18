@@ -5,6 +5,17 @@
  * Does not block the funnel or trigger the account wall by itself.
  */
 
-/** Shown on `/check` when merged spam check found no known-spammer signal and the row is not exempt. */
+/** Short status line under the phone number on `/check`. */
+export const NO_SPAM_HIT_HEADLINE =
+  "Not listed in the spam databases we checked";
+
+/** Supporting copy — points users to the qualification step as the real signal. */
 export const NO_SPAM_HIT_USER_MESSAGE =
-  "We didn't find this number in our spam databases. You can still continue with qualification — other factors (Do Not Call registration, stop requests, and call patterns) may still matter. A database match can strengthen a claim, but it isn't required to answer the next questions.";
+  "That is common. Whether your number is on the Do Not Call Registry, whether you asked the caller to stop, and your call history matter more than this lookup alone.";
+
+/** Primary CTA after a completed check when the user can enter qualify. */
+export const CHECK_CONTINUE_TO_QUALIFY_LABEL = "Continue to questions";
+
+/** Helper line under the continue CTA on `/check`. */
+export const CHECK_CONTINUE_TO_QUALIFY_HELP =
+  "Short questions about your number and the calls — usually 5–10 minutes. Informational only, not legal advice.";
