@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { FileText, PhoneCall, Scale } from "lucide-react";
+import { Handshake, PhoneCall, Scale } from "lucide-react";
 
 /** Informational stats for the landing trust band (no customer logos / testimonials). */
 export const LANDING_STATS = [
@@ -18,10 +18,10 @@ export const LANDING_STATS = [
     percent: 100,
   },
   {
-    id: "diy",
-    label: "Self-serve letter path",
-    value: "5 steps",
-    detail: "Check → qualify → pay → letter → file yourself.",
+    id: "attorney",
+    label: "Attorney connection",
+    value: "Free opt-in",
+    detail: "Eligible users may connect with participating firms — no consumer fee in v0.1.",
     percent: 70,
   },
 ] as const;
@@ -38,7 +38,7 @@ export const LANDING_FEATURES: readonly LandingFeature[] = [
     id: "check",
     title: "Screen spam numbers",
     description:
-      "Enter a U.S. phone number and run informational TCPA-style screening. See whether a call may be worth exploring before you commit time or money.",
+      "Enter a U.S. phone number and run informational TCPA-style screening. See whether a call may be worth exploring before you commit time.",
     icon: PhoneCall,
   },
   {
@@ -49,11 +49,11 @@ export const LANDING_FEATURES: readonly LandingFeature[] = [
     icon: Scale,
   },
   {
-    id: "letter",
-    title: "Generate a DIY demand letter",
+    id: "attorney",
+    title: "Connect with an attorney",
     description:
-      "Purchase a template letter built from your inputs. You choose the demand scenario; you send and track correspondence — we do not represent you.",
-    icon: FileText,
+      "When your facts look eligible, opt in to share a structured summary with participating law firms. RingBounty does not represent you or charge a referral fee to consumers.",
+    icon: Handshake,
   },
 ] as const;
 
@@ -66,19 +66,19 @@ export const LANDING_INTEGRATIONS = [
 
 export const LANDING_TRUST_BADGES = [
   "Not a law firm",
-  "No contingency fees",
+  "No contingency fees to consumers",
   "Estimates ≠ guarantees",
 ] as const;
 
 export const LANDING_PROBLEM_POINTS = [
   "Unwanted robocalls and texts waste your time and may violate federal rules when autodialers or prerecorded messages are involved.",
   "Statutory damages exist under the TCPA for many violations — but whether your specific calls qualify depends on consent, exemptions, and evidence.",
-  "Hiring counsel is not always necessary for a first demand letter, yet the law is fact-specific and outcomes vary.",
+  "Understanding your options takes time; many consumers want organized facts before deciding whether to contact a lawyer.",
 ] as const;
 
 export const LANDING_SOLUTION_POINTS = [
-  "RingBounty helps you screen numbers, structure facts, and prepare a DIY demand letter from general legal background — without promising any outcome.",
-  "You stay in control: we provide information and document tooling; you decide whether and how to pursue a claim.",
+  "RingBounty helps you screen numbers, structure facts, and see informational claim strength — without promising any outcome.",
+  "When you are ready, you may opt in to a free attorney connection so participating firms can review your summary.",
 ] as const;
 
 /** Homepage anchor ids (header nav scroll targets). */
@@ -93,25 +93,21 @@ export const LANDING_FLOW_STEPS = [
   },
   {
     title: "Qualify",
-    body: "Answer factual questions about the calls. We estimate claim strength and statutory ranges from your inputs. Estimates are educational, not promises.",
+    body: "Answer factual questions about the calls. Your answers feed educational strength signals and evidence summaries — not legal advice.",
   },
   {
-    title: "Pay",
-    body: "Purchase a DIY demand letter when you are ready. Pricing is shown before you pay.",
+    title: "Results",
+    body: "See informational claim strength and statutory estimate bands on your results page. These are educational only, not guarantees.",
   },
   {
-    title: "Letter",
-    body: "We generate a template letter from the facts you provide. You choose a demand scenario; we do not recommend which amount to request.",
-  },
-  {
-    title: "File",
-    body: "You send and track the letter yourself. RingBounty explains the general process; we do not file on your behalf.",
+    title: "Connect",
+    body: "If eligible, opt in to share your claim summary with participating attorneys. Firms decide whether to contact you; we do not promise representation.",
   },
 ] as const;
 
 /** Risk-reducer lines beside primary CTAs (wireframe “above button” copy). */
 export const LANDING_RISK_REDUCERS = [
   "No account required to start a check",
-  "Pay only if you choose to buy a letter",
+  "No payment to screen numbers or opt into attorney connection",
   "General information — not legal advice",
 ] as const;

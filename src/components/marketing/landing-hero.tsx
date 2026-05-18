@@ -26,8 +26,9 @@ export function LandingHero() {
           </h1>
           <p className="text-muted-foreground text-base leading-relaxed sm:text-lg">
             Billions of robocalls hit U.S. phones every year. RingBounty helps you
-            learn what the TCPA generally says, screen numbers for free, and prepare a
-            DIY demand letter — informational tools only, not legal representation.
+            learn what the TCPA generally says, screen numbers for free, and see whether
+            an attorney connection may be worth exploring — informational tools only,
+            not legal representation.
           </p>
           <div className="flex flex-col gap-3">
             <Button asChild size="lg" className="w-fit">
@@ -50,7 +51,7 @@ export function LandingHero() {
         <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-border bg-muted/40 shadow-sm lg:aspect-square">
           <Image
             src="/opengraph-image.png"
-            alt="RingBounty — TCPA screening and DIY demand letters"
+            alt="RingBounty — TCPA screening and attorney connection"
             fill
             className="object-cover"
             priority

@@ -15,9 +15,10 @@ export function LandingCtaBand() {
             Ready to screen your first number?
           </h2>
           <p className="text-muted-foreground max-w-xl text-sm leading-relaxed sm:text-base">
-            Start with a free check. If the facts look promising, continue to qualify
-            and optionally purchase a DIY demand letter — on your timeline, with clear
-            informational disclaimers at every step.
+            Start with a free check. If the facts look promising, continue to qualify,
+            see informational strength on your results page, and optionally connect
+            with a participating attorney — on your timeline, with clear informational
+            disclaimers at every step.
           </p>
           <ul className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-xs">
             {LANDING_RISK_REDUCERS.map((line) => (

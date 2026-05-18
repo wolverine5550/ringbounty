@@ -26,8 +26,9 @@ export default function CheckPage({ searchParams }: CheckPageProps) {
           Check your spam calls
         </h1>
         <p className="text-muted-foreground text-sm leading-relaxed">
-          Screen numbers for potential TCPA issues and prepare a DIY demand letter path.
-          Informational tools only — not legal advice.
+          Screen numbers for potential TCPA issues, organize your facts, and see whether
+          an attorney connection may be worth exploring. Informational tools only — not
+          legal advice.
         </p>
       </header>
 

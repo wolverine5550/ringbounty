@@ -11,7 +11,7 @@ export function LandingFaqPreview() {
     <LandingSection
       id={LANDING_FAQ_SECTION_ID}
       title="Frequently asked questions"
-      description="Quick answers about cost, legality, outcomes, and DIY letters."
+      description="Quick answers about cost, legality, outcomes, and attorney connection."
     >
       <div className="mx-auto flex max-w-3xl flex-col gap-3">
         {FAQ_ENTRIES.map((entry) => (

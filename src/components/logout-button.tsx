@@ -1,17 +1,8 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import { SignOutButton } from "@/components/sign-out-button";
 
+/** Legacy name — starter template compatibility; redirects to login after sign-out. */
 export function LogoutButton() {
-  const router = useRouter();
-
-  const logout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/login");
-  };
-
-  return <Button onClick={logout}>Logout</Button>;
+  return <SignOutButton redirectTo="/login" />;
 }

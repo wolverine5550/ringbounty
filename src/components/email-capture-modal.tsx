@@ -57,7 +57,7 @@ function descriptionForReason(reason: EmailCaptureModalProps["reason"]): string 
     case "exempt_only":
       return "Exempt callers are not covered by this TCPA path. We can email you if we add support for other violation types.";
     case "debt_collection_interest":
-      return "TCPA demand letters are not available for debt collection calls on this check. If you want occasional updates about consumer-rights topics related to debt collection calls, leave your email. We do not guarantee any specific product, timeline, or legal outcome.";
+      return "TCPA attorney referrals are not available for debt collection calls on this check. If you want occasional updates about consumer-rights topics related to debt collection calls, leave your email. We do not guarantee any specific product, timeline, or legal outcome.";
     case "notify_me_cta":
       return "Tell us where to reach you when we expand coverage or launch new tools.";
     default:

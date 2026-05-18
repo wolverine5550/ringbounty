@@ -1,10 +1,9 @@
--- Phase 13.4.4 — Firm pool visibility + Realtime on `leads`.
--- Hosted note: if this version was skipped but `firm_lead_accept_decline` (20260517220000)
--- already ran, pool RLS + Realtime are live — backfill schema_migrations only (no re-run).
--- Model: broadcast pool (unassigned `new`/`reviewed` rows matching firm criteria) plus
--- existing `leads_select_firm_assigned` for rows with `assigned_firm_id` set (§13.5 accept).
+-- Fix infinite RLS recursion on `leads` (42P17).
+-- `leads_select_firm_pool` joined `users`; `users_select_for_firm_assigned_lead` reads `leads` → cycle.
+-- Use denormalized `consumer_state` on `leads` (§13.5) instead of joining `public.users`.
 
--- Pool: matching firms may read unassigned pipeline leads (no consumer PII columns widened here).
+drop policy if exists leads_select_firm_pool on public.leads;
+
 create policy leads_select_firm_pool
   on public.leads
   for select
@@ -12,15 +11,21 @@ create policy leads_select_firm_pool
   using (
     assigned_firm_id is null
     and status in ('new', 'reviewed')
+    and not exists (
+      select 1
+      from public.firm_lead_declines as d
+      join public.firm_users as fu on fu.firm_id = d.firm_id
+      where d.lead_id = leads.id
+        and fu.auth_user_id = (select auth.uid())
+    )
     and exists (
       select 1
       from public.firm_users as fu
       join public.law_firms as lf on lf.id = fu.firm_id
-      join public.users as u on u.id = leads.user_id
       where fu.auth_user_id = (select auth.uid())
         and lf.is_active = true
-        and u.state is not null
-        and (lf.target_states is null or u.state = any (lf.target_states))
+        and leads.consumer_state is not null
+        and (lf.target_states is null or leads.consumer_state = any (lf.target_states))
         and (
           lf.violation_types is null
           or leads.violation_type = any (lf.violation_types)
@@ -46,6 +51,3 @@ create policy leads_select_firm_pool
         )
     )
   );
-
--- Realtime: firm dashboard INSERT notifications (RLS still applies to payloads).
-alter publication supabase_realtime add table public.leads;

@@ -1,5 +1,28 @@
 # Changelog
 
+## 2026-05-18 (Pre-launch — Marketing header auth, PKCE UX, leads RLS fix)
+
+- **Marketing header auth:** [`MarketingHeader`](src/components/marketing/marketing-header.tsx) renders [`MarketingHeaderAuth`](src/components/marketing/marketing-header-auth.tsx) inside `<Suspense>` on all public marketing pages — **Sign in** when logged out, **Sign out** when a session exists (no email label in the header). Shared client control: [`SignOutButton`](src/components/sign-out-button.tsx); [`LogoutButton`](src/components/logout-button.tsx) wraps it for starter-template compatibility (`redirectTo=/login`).
+- **Magic-link PKCE UX:** [`/auth/error`](src/app/auth/error/page.tsx) detects “PKCE code verifier” failures and shows same-browser recovery steps + link to `/login`. [`MagicLinkLoginForm`](src/components/magic-link-login-form.tsx) warns users to open the link in the same browser tab after send.
+- **Database (§13.4 pool RLS):** Migration [`20260518140000_fix_leads_pool_rls_recursion.sql`](supabase/migrations/20260518140000_fix_leads_pool_rls_recursion.sql) — `leads_select_firm_pool` uses denormalized `leads.consumer_state` instead of joining `public.users`, fixing Postgres `42P17` infinite recursion with `users_select_for_firm_assigned_lead` (blocked signed-in consumers on `/results` during pre-launch testing). Comment added to [`20260517210000_leads_firm_pool_rls.sql`](supabase/migrations/20260517210000_leads_firm_pool_rls.sql).
+
+## 2026-05-17 (Docs — Pre-launch testing checklist)
+
+- Added [`docs/pre-launch-testing-checklist.md`](docs/pre-launch-testing-checklist.md) — migrations, env tiers (A–E), consumer manual test path, firm portal notes, production gates. Linked from README.
+
+## 2026-05-17 (Phase 3.7 — Marketing copy pivot, legacy `/letter` redirect)
+
+- **§3.7.1–3.7.3:** Replaced DIY demand-letter copy with evidence → strength → attorney referral across landing ([`landing-content.ts`](src/lib/marketing/landing-content.ts), hero, features, CTA), [`faq.ts`](src/lib/marketing/faq.ts), [`account-wall.tsx`](src/components/account-wall.tsx), and [`/check`](src/app/check/page.tsx).
+- **§3.7.4:** Updated [`privacy.ts`](src/lib/marketing/privacy.ts) (lead sharing with firms) and [`terms.ts`](src/lib/marketing/terms.ts) (attorney connection; removed letter purchase/refund sections).
+- **Legacy routes:** [`/letter/*`](src/app/(post-check)/letter/[[...slug]]/page.tsx) redirects to `/results` (like `/summary`). Removed `/letter` from post-check gated routes ([`gated-routes.ts`](src/lib/claims/gated-routes.ts)). `public.letters` table retained in DB (unused in v0.1).
+
+## 2026-05-17 (Post-MVP — Firm landing + CI fix)
+
+- **Firm marketing:** Public [`/firms`](src/app/firms/page.tsx) landing for law firms and attorneys ([`firms-landing-content.ts`](src/lib/marketing/firms-landing-content.ts)) — value proposition, how referrals work, contact CTA. Header **Law firms** links here.
+- **Portal sign-in closed:** [`/firms/login`](src/app/firms/login/page.tsx) redirects to `/firms`. Unauthenticated portal routes redirect to the landing ([`require-firm-user.ts`](src/lib/firms/require-firm-user.ts), [`apply-firm-portal-proxy.ts`](src/lib/firms/apply-firm-portal-proxy.ts)). Invited firms can still use `/firms/leads` when already authenticated.
+- **CI:** [`claimEvent.test.ts`](src/lib/constants/claimEvent.test.ts) expects 8 `claim_event` types including `firm_lead_dispute` (§13.8).
+- **Backlog:** Bot protection (Cloudflare Turnstile + WAF) tracked in [`docs/ongoing_task_manager.md`](docs/ongoing_task_manager.md).
+
 ## 2026-05-17 (Phase 13.8 — Firm contact disputes placeholder)
 
 - **§13.8.1:** Consumers with an accepted firm assignment can report firm contact issues on [`/results`](src/app/(post-check)/results/page.tsx) via [`FirmContactDisputeForm`](src/components/results/firm-contact-dispute-form.tsx) → [`POST /api/leads/[leadId]/firm-contact-dispute`](src/app/api/leads/[leadId]/firm-contact-dispute/route.ts). Persists `claim_events` (`event_type=firm_lead_dispute`, `source=user_input`) via [`record-firm-contact-dispute.ts`](src/lib/leads/record-firm-contact-dispute.ts).

@@ -6,7 +6,7 @@ import {
 } from "./company-identification";
 
 describe("company-identification (§6.4)", () => {
-  it("blocks letter when company not identified and not exempt", () => {
+  it("blocks attorney referral when company not identified and not exempt", () => {
     expect(
       isTcpaLetterBlockedForUnidentifiedCompany({
         companyIdentified: false,

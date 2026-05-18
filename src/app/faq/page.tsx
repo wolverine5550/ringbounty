@@ -27,7 +27,7 @@ export default function FaqPage() {
   return (
     <MarketingDocPage
       title="Frequently asked questions"
-      intro="Common questions about RingBounty, TCPA screening, and DIY demand letters. Answers are educational — not a substitute for advice from a licensed attorney."
+      intro="Common questions about RingBounty, TCPA screening, and attorney connection. Answers are educational — not a substitute for advice from a licensed attorney."
     >
       <FaqList entries={FAQ_ENTRIES} />
       <div className="mt-10">

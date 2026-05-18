@@ -1,8 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
-  FIRM_PORTAL_HOME_PATH,
-  FIRM_PORTAL_LOGIN_PATH,
+  FIRM_LANDING_PATH,
   FIRM_PORTAL_PATH_PREFIX,
   isFirmPortalHostname,
   isFirmPortalPath,
@@ -35,7 +34,7 @@ export function applyFirmPortalProxy(
 
   if (onFirmHost && pathname === "/") {
     const url = request.nextUrl.clone();
-    url.pathname = FIRM_PORTAL_HOME_PATH;
+    url.pathname = FIRM_LANDING_PATH;
     return withPriorCookies(request, prior, NextResponse.redirect(url));
   }
 
@@ -43,7 +42,7 @@ export function applyFirmPortalProxy(
     const rewriteUrl = request.nextUrl.clone();
     rewriteUrl.pathname =
       pathname === "/"
-        ? FIRM_PORTAL_HOME_PATH
+        ? FIRM_LANDING_PATH
         : `${FIRM_PORTAL_PATH_PREFIX}${pathname}`;
     return withPriorCookies(
       request,
@@ -59,15 +58,13 @@ export function applyFirmPortalProxy(
   return null;
 }
 
-/** Firm-portal login redirect when session is missing. */
+/** Firm-portal redirect when session is missing (public landing while sign-in is closed). */
 export function buildFirmPortalLoginRedirect(
   request: NextRequest,
 ): NextResponse {
   const url = request.nextUrl.clone();
-  const returnPath = `${url.pathname}${url.search}`;
-  url.pathname = FIRM_PORTAL_LOGIN_PATH;
+  url.pathname = FIRM_LANDING_PATH;
   url.search = "";
-  url.searchParams.set("next", returnPath);
   return NextResponse.redirect(url);
 }
 

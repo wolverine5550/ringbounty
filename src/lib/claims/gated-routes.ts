@@ -9,14 +9,11 @@ export const RESULTS_PATH = "/results";
 /** Attorney expectation + consent before `leads` insert (Phase 13.1). */
 export const ATTORNEY_CONNECT_PATH = "/attorney-connect";
 
-/** Multi-subject summary before letter purchase. */
+/** Legacy summary path — redirects to `/results` (v0.1). */
 export const SUMMARY_PATH = "/summary";
 
 /** Per-subject qualification wizard (Phase 7). */
 export const QUALIFY_PATH_PREFIX = "/qualify/";
-
-/** Letter preview / purchase / download (Phase 9–10). */
-export const LETTER_PATH_PREFIX = "/letter/";
 
 /** Dedicated account-wall landing (no PII in path; optional `claim` query param). */
 export const ACCOUNT_REQUIRED_PATH = "/check/account-required";
@@ -26,7 +23,6 @@ const GATED_PREFIXES = [
   ATTORNEY_CONNECT_PATH,
   SUMMARY_PATH,
   QUALIFY_PATH_PREFIX,
-  LETTER_PATH_PREFIX,
 ] as const;
 
 /**

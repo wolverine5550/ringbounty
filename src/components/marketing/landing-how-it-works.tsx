@@ -10,9 +10,9 @@ export function LandingHowItWorks() {
     <LandingSection
       id={LANDING_HOW_IT_WORKS_SECTION_ID}
       title="How it works"
-      description="An informational path from screening a number to sending your own demand letter — you stay in control at every step."
+      description="An informational path from screening a number to optional attorney connection — you stay in control at every step."
     >
-      <ol className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
+      <ol className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {LANDING_FLOW_STEPS.map((step, index) => (
           <li key={step.title} className="flex flex-col gap-2">
             <span

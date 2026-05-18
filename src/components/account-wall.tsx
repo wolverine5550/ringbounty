@@ -28,14 +28,14 @@ export function AccountWall({ claimId, returnPath = "/results" }: AccountWallPro
         <CardTitle className="text-xl">Create a free account to continue</CardTitle>
         <CardDescription>
           We found a potential TCPA claim. Sign in to see your results, run qualification,
-          and purchase a demand letter — estimates only, not legal advice.
+          and explore informational strength — estimates only, not legal advice.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <ul className="text-muted-foreground list-disc space-y-2 pl-5 text-sm">
           <li>Save your check and continue on any device</li>
           <li>See company matches and claim strength details</li>
-          <li>Generate a demand letter when you are ready</li>
+          <li>Opt in to connect with a participating attorney when eligible</li>
         </ul>
         <Button asChild className="w-full">
           <Link href={loginHref}>Continue with email</Link>

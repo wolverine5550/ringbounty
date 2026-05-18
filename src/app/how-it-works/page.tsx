@@ -14,7 +14,7 @@ import { LANDING_FLOW_STEPS } from "@/lib/marketing/landing-content";
 export const metadata: Metadata = {
   title: `How it works — ${SITE_NAME}`,
   description:
-    "Informational overview of the RingBounty flow: check a number, qualify, pay for a letter, and file yourself — general TCPA information only.",
+    "Informational overview of the RingBounty flow: check a number, qualify, see strength, and optionally connect with an attorney — general TCPA information only.",
   openGraph: {
     title: `How ${SITE_NAME} works`,
     description: DEFAULT_MARKETING_DESCRIPTION,
@@ -79,7 +79,7 @@ export default function HowItWorksPage() {
             >
               Read the FAQ
             </Link>{" "}
-            for common questions about cost, timing, and DIY letters.
+            for common questions about cost, timing, and attorney connection.
           </p>
         </section>
 

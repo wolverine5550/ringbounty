@@ -15,12 +15,12 @@ describe("fdcpa-debt-collection (§5.7)", () => {
     expect(isDebtCollectionCallCategory(null)).toBe(false);
   });
 
-  it("blocks TCPA letter path for debt collection", () => {
+  it("blocks TCPA attorney referral for debt collection", () => {
     expect(isTcpaLetterBlockedForCallCategory("debt_collector")).toBe(true);
     expect(isTcpaLetterBlockedForCallCategory("telemarketer")).toBe(false);
   });
 
-  it("mentions FDCPA and no TCPA letter without product promises", () => {
+  it("mentions FDCPA and no TCPA referral without product promises", () => {
     expect(FDCPA_DEBT_COLLECTION_USER_MESSAGE).toMatch(/FDCPA/i);
     expect(FDCPA_DEBT_COLLECTION_USER_MESSAGE).toMatch(/cannot offer a TCPA/i);
     expect(FDCPA_DEBT_COLLECTION_USER_MESSAGE).not.toMatch(/coming soon|we will offer|launch/i);

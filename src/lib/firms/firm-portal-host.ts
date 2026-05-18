@@ -1,10 +1,13 @@
 /** Path prefix for the in-app firm portal (same Next.js deploy as consumer). */
 export const FIRM_PORTAL_PATH_PREFIX = "/firms" as const;
 
+/** Public marketing landing for firms (portal sign-in deferred). */
+export const FIRM_LANDING_PATH = FIRM_PORTAL_PATH_PREFIX;
+
 /** Default landing after firm sign-in. */
 export const FIRM_PORTAL_HOME_PATH = `${FIRM_PORTAL_PATH_PREFIX}/leads` as const;
 
-/** Public firm auth entry (magic link). */
+/** Public firm auth entry (magic link) — redirects to {@link FIRM_LANDING_PATH} while sign-in is closed. */
 export const FIRM_PORTAL_LOGIN_PATH = `${FIRM_PORTAL_PATH_PREFIX}/login` as const;
 
 /**
@@ -27,6 +30,7 @@ export function isFirmPortalPath(pathname: string): boolean {
 /** True when unauthenticated visitors may view the route. */
 export function isFirmPortalPublicPath(pathname: string): boolean {
   return (
+    pathname === FIRM_LANDING_PATH ||
     pathname === FIRM_PORTAL_LOGIN_PATH ||
     pathname.startsWith(`${FIRM_PORTAL_PATH_PREFIX}/onboarding/stripe/`)
   );

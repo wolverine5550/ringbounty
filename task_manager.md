@@ -15,7 +15,7 @@ Living checklist for building RingBounty from `prd.md` and product decisions.
 2. **Show informational case strength** — PRD §8 matrix → `strong` \| `moderate` \| `weak` \| `ineligible` plus SOL/valuation bands on `/results` (Phase 8). Present as **probability / strength language**, not legal advice or guaranteed outcomes.
 3. **Route to attorney** — eligible users opt into **free attorney connection** (promoted from old Phase 13.1); firms receive structured lead + evidence package (old 13.2).
 
-**Codebase carryover (do not delete yet):** `letters` table, `/letter/*` routes, `tcpa_letter_blocked` events, and marketing “DIY letter” copy remain until a dedicated cleanup pass updates README, marketing, and constants. New work should **not** extend letter purchase or generation.
+**Codebase carryover:** `public.letters` table and `claim_events.tcpa_letter_blocked` key name remain in schema (unused in v0.1). Marketing copy pivot (§3.7) and `/letter/*` → `/results` redirect shipped 2026-05-17. New work should **not** extend letter purchase or generation.
 
 **Reprioritized engineering (after §6.5):** §**6.6** `canReferToAttorney` (replaces `canPurchaseLetter`) → Phase **7** qualification → Phase **8** scoring/results → **Phase 13.1–13.2** attorney path + evidence PDF (v0.1). Phases **9–10** cancelled for v0.1 (see banners below).
 
@@ -486,16 +486,16 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 3.7 Product copy pivot — no DIY demand letters *(2026-05-17)*
 
-- [ ] **3.7.1** Landing + hero + how-it-works: replace “DIY demand letter” / “pay for letter” with evidence → strength → attorney referral ([`landing-content.ts`](src/lib/marketing/landing-content.ts), [`landing-hero.tsx`](src/components/marketing/landing-hero.tsx), [`how-it-works`](src/app/how-it-works/page.tsx)).
-- [ ] **3.7.2** FAQ: remove paid-letter pricing answers; add attorney-referral expectations ([`faq.ts`](src/lib/marketing/faq.ts)).
-- [ ] **3.7.3** [`account-wall.tsx`](src/components/account-wall.tsx) + [`check/page.tsx`](src/app/check/page.tsx): benefits list — qualify + see strength + connect with attorney (not “purchase a demand letter”).
-- [ ] **3.7.4** Privacy/terms: lead-sharing with law firms; remove digital letter product sections where obsolete.
-- [ ] **3.7.5** README + CHANGELOG entry when copy pivot ships.
+- [x] **3.7.1** Landing + hero + how-it-works: replace “DIY demand letter” / “pay for letter” with evidence → strength → attorney referral ([`landing-content.ts`](src/lib/marketing/landing-content.ts), [`landing-hero.tsx`](src/components/marketing/landing-hero.tsx), [`how-it-works`](src/app/how-it-works/page.tsx)).
+- [x] **3.7.2** FAQ: remove paid-letter pricing answers; add attorney-referral expectations ([`faq.ts`](src/lib/marketing/faq.ts)).
+- [x] **3.7.3** [`account-wall.tsx`](src/components/account-wall.tsx) + [`check/page.tsx`](src/app/check/page.tsx): benefits list — qualify + see strength + connect with attorney (not “purchase a demand letter”).
+- [x] **3.7.4** Privacy/terms: lead-sharing with law firms; remove digital letter product sections where obsolete. <!-- done: `privacy.ts`, `terms.ts` -->
+- [x] **3.7.5** README + CHANGELOG entry when copy pivot ships. <!-- done: README, CHANGELOG; `/letter/*` → `/results` redirect -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG 2026-05-17 §3.7 -->
 
 ---
 

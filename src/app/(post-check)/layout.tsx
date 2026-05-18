@@ -1,6 +1,6 @@
 import { DisclaimerBanner } from "@/components/marketing/disclaimer-banner";
 
-/** Post-check funnel layout — disclaimer on results, qualify, summary, letter (§3.6.2). */
+/** Post-check funnel layout — disclaimer on results, qualify, summary (§3.6.2). */
 export default function PostCheckLayout({
   children,
 }: {

@@ -53,7 +53,9 @@ export function MagicLinkLoginForm({
         },
       });
       if (signInError) throw signInError;
-      setInfo("Check your email for the sign-in link.");
+      setInfo(
+        "Check your email for the sign-in link. Open it in this same browser tab — switching browsers or devices will fail.",
+      );
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {

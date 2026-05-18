@@ -8,7 +8,7 @@ import { SITE_NAME } from "@/lib/marketing/constants";
 export const metadata: Metadata = {
   title: `Terms of service — ${SITE_NAME}`,
   description:
-    "Terms for using RingBounty: eligibility, acceptable use, digital letter purchases, refunds, and limitation of liability.",
+    "Terms for using RingBounty: eligibility, acceptable use, attorney connection and lead sharing, and limitation of liability.",
 };
 
 /** Terms of service (Phase §3.5). Draft for legal review. */

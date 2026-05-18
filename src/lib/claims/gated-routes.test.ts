@@ -13,7 +13,7 @@ describe("gated-routes", () => {
     expect(isPostCheckGatedRoute("/results")).toBe(true);
     expect(isPostCheckGatedRoute("/summary")).toBe(true);
     expect(isPostCheckGatedRoute("/qualify/abc")).toBe(true);
-    expect(isPostCheckGatedRoute("/letter/preview")).toBe(true);
+    expect(isPostCheckGatedRoute("/letter/preview")).toBe(false);
     expect(isPostCheckGatedRoute("/check")).toBe(false);
     expect(isPostCheckGatedRoute("/login")).toBe(false);
   });

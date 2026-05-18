@@ -4,13 +4,14 @@ export type LegalSection = {
   paragraphs: readonly string[];
 };
 
-/** Plain-English privacy policy sections (Phase §3.4). Lawyer review pending. */
+/** Plain-English privacy policy sections (Phase §3.4, updated §3.7). Lawyer review pending. */
 export const PRIVACY_SECTIONS: readonly LegalSection[] = [
   {
     id: "collect",
     title: "What we collect",
     paragraphs: [
-      "Phone numbers you enter for screening, answers to qualification questions, account email and profile fields when you sign in, payment metadata from Stripe (we do not store full card numbers), technical logs (IP address, browser type, timestamps), and optional marketing email if you join the waitlist.",
+      "Phone numbers you enter for screening, answers to qualification questions, account email and profile fields when you sign in, technical logs (IP address, browser type, timestamps), and optional marketing email if you join the waitlist.",
+      "If you opt in to an attorney connection, we collect your consent and the claim data needed to share a structured summary with participating law firms.",
       "Anonymous visitors receive a random session identifier in an HTTP-only cookie (`rb_anonymous_sid`) so we can rate-limit abuse and attach draft claims before you create an account.",
     ],
   },
@@ -18,7 +19,7 @@ export const PRIVACY_SECTIONS: readonly LegalSection[] = [
     id: "why",
     title: "Why we collect it",
     paragraphs: [
-      "To run TCPA-style screening, estimate informational claim strength, generate demand-letter drafts you request, prevent fraud and abuse, comply with law, and improve the product.",
+      "To run TCPA-style screening, estimate informational claim strength, facilitate optional attorney referrals, prevent fraud and abuse, comply with law, and improve the product.",
       "We use your email for magic-link sign-in and, if you opt in, occasional product updates about new violation types or states.",
     ],
   },
@@ -34,8 +35,9 @@ export const PRIVACY_SECTIONS: readonly LegalSection[] = [
     id: "third-parties",
     title: "Third parties",
     paragraphs: [
-      "Supabase hosts our database and authentication. Stripe processes payments. An AI vendor (e.g. OpenRouter or equivalent) may process text you submit for letter generation under our instructions. Phone/reputation vendors may be used for screening as features ship.",
-      "These providers process data only to deliver the service. We do not sell your personal information to data brokers or advertisers.",
+      "Supabase hosts our database and authentication. Stripe may process firm-side payments when law firms use the firm portal. An AI vendor (e.g. OpenRouter or equivalent) may process voicemail audio you upload for transcription under our instructions. Phone/reputation vendors (e.g. Nomorobo, Twilio) may be used for screening.",
+      "When you opt in to an attorney connection, participating law firms receive the claim summary described at sign-up. They process that information under their own policies.",
+      "These providers process data to deliver the service. We do not sell your personal information to data brokers or advertisers.",
     ],
   },
   {

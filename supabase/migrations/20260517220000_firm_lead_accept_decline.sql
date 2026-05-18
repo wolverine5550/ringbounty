@@ -79,11 +79,11 @@ create policy leads_select_firm_pool
       select 1
       from public.firm_users as fu
       join public.law_firms as lf on lf.id = fu.firm_id
-      join public.users as u on u.id = leads.user_id
       where fu.auth_user_id = (select auth.uid())
         and lf.is_active = true
-        and u.state is not null
-        and (lf.target_states is null or u.state = any (lf.target_states))
+        -- Use leads.consumer_state (not public.users) to avoid RLS recursion — see 20260518140000_fix_leads_pool_rls_recursion.sql
+        and leads.consumer_state is not null
+        and (lf.target_states is null or leads.consumer_state = any (lf.target_states))
         and (
           lf.violation_types is null
           or leads.violation_type = any (lf.violation_types)

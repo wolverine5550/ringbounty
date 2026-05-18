@@ -15,4 +15,4 @@ export const COPYRIGHT_YEAR = 2026;
 
 /** Default marketing meta description (§3.1.5). */
 export const DEFAULT_MARKETING_DESCRIPTION =
-  "Understand whether spam calls may fall under the TCPA, explore informational damage estimates, and prepare a DIY demand letter — general information only, not legal advice.";
+  "Screen spam calls for potential TCPA issues, see informational claim strength, and optionally connect with a participating attorney — general information only, not legal advice.";

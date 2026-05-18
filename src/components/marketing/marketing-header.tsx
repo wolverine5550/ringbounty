@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { Suspense } from "react";
 
+import { MarketingHeaderAuth } from "@/components/marketing/marketing-header-auth";
 import { Button } from "@/components/ui/button";
-import { FIRM_PORTAL_LOGIN_PATH } from "@/lib/firms/firm-portal-host";
+import { FIRM_LANDING_PATH } from "@/lib/firms/firm-portal-host";
 import { SITE_NAME } from "@/lib/marketing/constants";
 
 import {
@@ -42,11 +44,21 @@ export function MarketingHeader() {
             </Link>
           ))}
           <Link
-            href={FIRM_PORTAL_LOGIN_PATH}
+            href={FIRM_LANDING_PATH}
             className="text-muted-foreground hover:text-foreground"
           >
             Law firms
           </Link>
+          <Suspense
+            fallback={
+              <span
+                className="bg-muted h-8 w-20 animate-pulse rounded-md"
+                aria-hidden
+              />
+            }
+          >
+            <MarketingHeaderAuth />
+          </Suspense>
           <Button asChild size="sm">
             <Link href="/check">Check a number</Link>
           </Button>

@@ -1,7 +1,7 @@
 /**
  * Phase 7.5 — Soft validation after Q13 `user_input` company name (OpenCorporates).
  *
- * Letter generation is allowed for both verified and unverified; UI shows warning when unverified.
+ * Attorney referral is allowed for both verified and unverified; UI shows warning when unverified.
  */
 
 /** `claim_events.key` for post-Q13 OpenCorporates soft check. */
@@ -20,9 +20,9 @@ export const COMPANY_NAME_VERIFICATION_STATUS_VALUES = [
   USER_INPUT_UNVERIFIED,
 ] as const;
 
-/** Shown after Q13 when OpenCorporates finds no match (letter still allowed). */
+/** Shown after Q13 when OpenCorporates finds no match (referral still allowed). */
 export const COMPANY_NAME_UNVERIFIED_WARNING =
-  "We couldn't verify this company name. Make sure you have the correct legal name before sending your letter.";
+  "We couldn't verify this company name. Make sure you have the correct legal name before sharing your claim with an attorney.";
 
 export function isCompanyNameVerificationStatus(
   value: unknown,

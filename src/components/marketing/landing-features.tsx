@@ -15,7 +15,7 @@ export function LandingFeatures() {
       id="features"
       variant="muted"
       title="Key features"
-      description="Everything you need to explore TCPA issues and prepare a demand letter — in one informational workflow."
+      description="Everything you need to explore TCPA issues and organize facts for an optional attorney connection — in one informational workflow."
     >
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {LANDING_FEATURES.map((feature) => {

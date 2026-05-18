@@ -17,7 +17,7 @@ import {
 } from "@/lib/marketing/constants";
 
 export const metadata: Metadata = {
-  title: `${SITE_NAME} — TCPA information and DIY demand letters`,
+  title: `${SITE_NAME} — TCPA screening and attorney connection`,
   description: DEFAULT_MARKETING_DESCRIPTION,
   openGraph: {
     title: `${SITE_NAME} — Understand spam-call rights under TCPA`,

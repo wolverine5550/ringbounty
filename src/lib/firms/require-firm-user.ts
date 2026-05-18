@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { loadFirmUserMembership } from "@/lib/firms/load-firm-user-membership";
 import { createClient } from "@/lib/supabase/server";
 
-import { FIRM_PORTAL_LOGIN_PATH } from "./firm-portal-host";
+import { FIRM_LANDING_PATH } from "./firm-portal-host";
 
 export type FirmSessionContext = {
   authUserId: string;
@@ -14,7 +14,7 @@ export type FirmSessionContext = {
  * Server guard for firm portal routes — requires Auth session + linked `firm_users` row.
  */
 export async function requireFirmUser(
-  redirectTo: string = FIRM_PORTAL_LOGIN_PATH,
+  redirectTo: string = FIRM_LANDING_PATH,
 ): Promise<FirmSessionContext> {
   const supabase = await createClient();
   const {
@@ -28,7 +28,7 @@ export async function requireFirmUser(
 
   const membership = await loadFirmUserMembership(supabase, user.id);
   if (!membership) {
-    redirect(`${FIRM_PORTAL_LOGIN_PATH}?error=not_linked`);
+    redirect(`${FIRM_LANDING_PATH}?error=not_linked`);
   }
 
   return { authUserId: user.id, membership };

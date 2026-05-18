@@ -19,7 +19,8 @@ describe("firm-portal-host (§13.4.1)", () => {
     expect(isFirmPortalPath("/results")).toBe(false);
   });
 
-  it("marks login and stripe return paths public", () => {
+  it("marks landing, login, and stripe return paths public", () => {
+    expect(isFirmPortalPublicPath("/firms")).toBe(true);
     expect(isFirmPortalPublicPath("/firms/login")).toBe(true);
     expect(
       isFirmPortalPublicPath("/firms/onboarding/stripe/complete"),

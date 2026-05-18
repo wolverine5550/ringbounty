@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
-import { FIRM_PORTAL_LOGIN_PATH } from "@/lib/firms/firm-portal-host";
+import { FIRM_LANDING_PATH } from "@/lib/firms/firm-portal-host";
 
 export function FirmSignOutButton() {
   const router = useRouter();
@@ -17,7 +17,7 @@ export function FirmSignOutButton() {
       onClick={async () => {
         const supabase = createClient();
         await supabase.auth.signOut();
-        router.push(FIRM_PORTAL_LOGIN_PATH);
+        router.push(FIRM_LANDING_PATH);
       }}
     >
       Sign out
