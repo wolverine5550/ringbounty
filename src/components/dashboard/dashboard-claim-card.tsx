@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { getClaimStatusDisplayLabel } from "@/lib/claims/claim-status-display";
 import type { DashboardClaimSummary } from "@/lib/claims/load-user-claims-dashboard";
 import { cn } from "@/lib/utils";
 
@@ -12,19 +13,6 @@ function formatClaimDate(iso: string): string {
   return new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
   }).format(new Date(iso));
-}
-
-function statusLabel(status: string): string {
-  switch (status) {
-    case "draft":
-      return "In progress";
-    case "qualified":
-      return "Qualified";
-    case "referred":
-      return "Referred";
-    default:
-      return status.replaceAll("_", " ");
-  }
 }
 
 const STRENGTH_BADGE: Record<string, string> = {
@@ -75,7 +63,7 @@ export function DashboardClaimCard({ claim }: DashboardClaimCardProps) {
               </span>
             ) : null}
             <span className="text-muted-foreground text-xs">
-              {statusLabel(claim.status)}
+              {getClaimStatusDisplayLabel(claim.status)}
               <span className="text-muted-foreground/50 mx-1.5">·</span>
               Updated {formatClaimDate(claim.updatedAt)}
             </span>

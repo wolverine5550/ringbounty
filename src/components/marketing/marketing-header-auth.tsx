@@ -2,10 +2,11 @@ import Link from "next/link";
 
 import { SignOutButton } from "@/components/sign-out-button";
 import { Button } from "@/components/ui/button";
+import { POST_LOGIN_DASHBOARD_PATH } from "@/lib/claims/post-login-redirect";
 import { createClient } from "@/lib/supabase/server";
 
 /**
- * Auth affordances for public marketing pages: sign-in link or sign-out when session exists.
+ * Auth affordances for public marketing pages: sign-in, or dashboard + sign-out when session exists.
  */
 export async function MarketingHeaderAuth() {
   const supabase = await createClient();
@@ -21,5 +22,15 @@ export async function MarketingHeaderAuth() {
     );
   }
 
-  return <SignOutButton redirectTo="/" />;
+  return (
+    <>
+      <Link
+        href={POST_LOGIN_DASHBOARD_PATH}
+        className="text-muted-foreground hover:text-foreground"
+      >
+        Dashboard
+      </Link>
+      <SignOutButton redirectTo="/" />
+    </>
+  );
 }

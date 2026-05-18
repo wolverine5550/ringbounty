@@ -3,7 +3,9 @@
  */
 
 import { formatUsPhoneMask } from "@/lib/check/us-phone";
+import { isClaimPendingQualification } from "@/lib/claims/claim-status-display";
 import { getResultsStrengthDisplay } from "@/lib/constants/results-strength";
+import { buildQualifyPageHref } from "@/lib/qualify/qualify-step";
 import type { ClaimStrengthGate } from "@/lib/claims/successful-query";
 import type { Database } from "@/types/database";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -78,9 +80,13 @@ function mapClaim(row: ClaimRow): DashboardClaimSummary | null {
     .filter((value): value is string => Boolean(value));
 
   const resultsHref = `/results?claim=${row.id}`;
+  const firstSubjectId = subjects[0]?.id;
   const qualifyHref =
-    row.status === "draft" && subjects[0]?.id
-      ? `/qualify/${subjects[0].id}`
+    isClaimPendingQualification(row.status) && firstSubjectId
+      ? buildQualifyPageHref({
+          claimSubjectId: firstSubjectId,
+          claimId: row.id,
+        })
       : null;
 
   return {

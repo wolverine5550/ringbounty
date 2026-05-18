@@ -47,7 +47,46 @@ describe("loadUserClaimsDashboard", () => {
     expect(dashboard.totalNumbers).toBe(1);
     expect(dashboard.claims[0]?.phoneLabels).toEqual(["(212) 555-0199"]);
     expect(dashboard.claims[0]?.companyNames).toEqual(["Acme Co"]);
-    expect(dashboard.claims[0]?.qualifyHref).toBe("/qualify/sub-1");
+    expect(dashboard.claims[0]?.qualifyHref).toBe(
+      "/qualify/sub-1?claim=claim-1",
+    );
     expect(dashboard.claims[0]?.resultsHref).toBe("/results?claim=claim-1");
+  });
+
+  it("offers qualify link when status is checking after screen", async () => {
+    const supabase = {
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            order: vi.fn().mockResolvedValue({
+              data: [
+                {
+                  id: "claim-2",
+                  status: "checking",
+                  claim_strength: null,
+                  created_at: "2026-01-03T00:00:00Z",
+                  updated_at: "2026-01-04T00:00:00Z",
+                  claim_subjects: [
+                    {
+                      id: "sub-2",
+                      phone_number: "(954) 206-4747",
+                      phone_number_normalized: "+19542064747",
+                      company_name: "UNKNOWN",
+                    },
+                  ],
+                },
+              ],
+              error: null,
+            }),
+          }),
+        }),
+      }),
+    };
+
+    const dashboard = await loadUserClaimsDashboard(supabase as never, "user-1");
+
+    expect(dashboard.claims[0]?.qualifyHref).toBe(
+      "/qualify/sub-2?claim=claim-2",
+    );
   });
 });
