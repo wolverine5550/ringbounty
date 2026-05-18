@@ -5,7 +5,9 @@ import type { Database } from "@/types/database";
 /** Consumer-visible lead status snapshot (§13.6.2). */
 export type ConsumerLeadStatus = {
   leadId: string;
+  claimId: string;
   status: string;
+  assignedFirmId: string | null;
   acceptedAt: string | null;
   contactedAt: string | null;
   retainedAt: string | null;
@@ -22,7 +24,7 @@ export async function loadConsumerLeadStatus(
   const { data, error } = await supabase
     .from("leads")
     .select(
-      "id, status, accepted_at, contacted_at, retained_at, closed_at, user_id",
+      "id, claim_id, status, assigned_firm_id, accepted_at, contacted_at, retained_at, closed_at, user_id",
     )
     .eq("claim_id", params.claimId)
     .order("created_at", { ascending: false })
@@ -39,7 +41,9 @@ export async function loadConsumerLeadStatus(
 
   return {
     leadId: data.id,
+    claimId: data.claim_id,
     status: data.status,
+    assignedFirmId: data.assigned_firm_id,
     acceptedAt: data.accepted_at,
     contactedAt: data.contacted_at,
     retainedAt: data.retained_at,

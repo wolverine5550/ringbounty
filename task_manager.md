@@ -1249,13 +1249,13 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 13.8 Disputes placeholder
 
-- [ ] **13.8.1** In-app “Issue with firm contact” form storing `claim_events` on lead.
-- [ ] **13.8.2** Internal admin view (deferred) or email to ops.
+- [x] **13.8.1** In-app “Issue with firm contact” form storing `claim_events` on lead. <!-- done: `firm-contact-dispute-form.tsx`, `record-firm-contact-dispute.ts`, `POST /api/leads/[leadId]/firm-contact-dispute` -->
+- [x] **13.8.2** Internal admin view (deferred) or email to ops. <!-- done: ops email `send-firm-contact-dispute-ops-email.ts`, `OPS_DISPUTE_EMAIL`; admin UI deferred -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README §13.8 -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG 2026-05-17 §13.8 -->
 
 ---
 

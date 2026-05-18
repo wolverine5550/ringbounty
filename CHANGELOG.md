@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-05-17 (Phase 13.8 — Firm contact disputes placeholder)
+
+- **§13.8.1:** Consumers with an accepted firm assignment can report firm contact issues on [`/results`](src/app/(post-check)/results/page.tsx) via [`FirmContactDisputeForm`](src/components/results/firm-contact-dispute-form.tsx) → [`POST /api/leads/[leadId]/firm-contact-dispute`](src/app/api/leads/[leadId]/firm-contact-dispute/route.ts). Persists `claim_events` (`event_type=firm_lead_dispute`, `source=user_input`) via [`record-firm-contact-dispute.ts`](src/lib/leads/record-firm-contact-dispute.ts).
+- **§13.8.2:** Ops notification email when `OPS_DISPUTE_EMAIL` + `RESEND_API_KEY` are set ([`send-firm-contact-dispute-ops-email.ts`](src/lib/leads/send-firm-contact-dispute-ops-email.ts)). Internal admin UI deferred.
+
 ## 2026-05-17 (Phase 13.7 — State DNC integrations scaffold)
 
 - **§13.7.1:** Per-state spike checklist for eleven registry states ([`docs/spikes/20260517300000-state-dnc-integrations.md`](docs/spikes/20260517300000-state-dnc-integrations.md)) — telemarketer-scrub model; no public API confirmed.
