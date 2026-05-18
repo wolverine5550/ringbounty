@@ -7,6 +7,7 @@ const PRODUCTION_DISALLOW_PATHS = [
   "/api/",
   "/auth/",
   "/protected/",
+  "/dashboard",
   "/results",
   "/qualify/",
   "/summary",

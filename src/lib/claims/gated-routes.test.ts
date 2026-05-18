@@ -23,7 +23,8 @@ describe("gated-routes", () => {
       "/results?claim=abc",
     );
     expect(sanitizeLoginNextPath("/protected")).toBe("/protected");
-    expect(sanitizeLoginNextPath("https://evil.test")).toBe("/protected");
+    expect(sanitizeLoginNextPath("/dashboard")).toBe("/dashboard");
+    expect(sanitizeLoginNextPath("https://evil.test")).toBe("/check");
   });
 
   it("sanitizes return paths against open redirects", () => {

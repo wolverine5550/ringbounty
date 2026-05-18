@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-05-18 (Pre-launch — Post-login home: `/check` or `/dashboard`)
+
+- **Smart sign-in redirect** — Magic link callback ([`auth/callback`](src/app/auth/callback/route.ts)) sends users to [`/check`](src/app/check/page.tsx) when they have no screened numbers yet, or [`/dashboard`](src/app/dashboard/page.tsx) when they do ([`resolvePostLoginRedirectPath`](src/lib/claims/post-login-redirect.ts)). Legacy [`/protected`](src/app/protected/page.tsx) forwards to the same resolver (starter template page removed).
+- **Consumer dashboard** — Lists prior checks with phone labels, status, strength, and links to **View results** / **Continue qualifying** ([`ClaimsDashboard`](src/components/dashboard/claims-dashboard.tsx), [`loadUserClaimsDashboard`](src/lib/claims/load-user-claims-dashboard.ts)).
+- **Header nav** — Logged-in funnel chrome shows **Dashboard** + **Check numbers** (each hidden on its own route) instead of a bare **Your results** link without a claim id.
+
 ## 2026-05-18 (Pre-launch — One free anonymous lookup on `/check`)
 
 ### One free check before sign-in

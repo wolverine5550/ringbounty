@@ -24,7 +24,7 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
           }
         >
           {searchParams.then(({ next }) => (
-            <MagicLinkLoginForm redirectNext={next ?? "/protected"} />
+            <MagicLinkLoginForm redirectNext={next} />
           ))}
         </Suspense>
       </div>

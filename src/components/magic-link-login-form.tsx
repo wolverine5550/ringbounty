@@ -26,7 +26,7 @@ type MagicLinkLoginFormProps = {
  */
 export function MagicLinkLoginForm({
   className,
-  redirectNext = "/protected",
+  redirectNext,
   ...props
 }: MagicLinkLoginFormProps) {
   const [email, setEmail] = useState("");
@@ -41,8 +41,10 @@ export function MagicLinkLoginForm({
     setInfo(null);
 
     const supabase = createClient();
-    const nextParam = redirectNext.startsWith("/") ? redirectNext : "/protected";
-    const emailRedirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextParam)}`;
+    const emailRedirectTo =
+      redirectNext && redirectNext.startsWith("/")
+        ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectNext)}`
+        : `${window.location.origin}/auth/callback`;
 
     try {
       const { error: signInError } = await supabase.auth.signInWithOtp({

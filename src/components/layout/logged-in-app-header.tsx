@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 /**
  * Sticky app chrome on `/check`, qualify, and results.
  * Signed-in: funnel nav (no "Check numbers" on `/check`) + sign out.
- * Anonymous: brand + sign in only (no "Your results").
+ * Anonymous: brand + sign in only.
  */
 export async function LoggedInAppHeader() {
   const supabase = await createClient();

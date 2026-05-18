@@ -9,6 +9,10 @@ import {
 import { mergeAnonymousDraftOnLogin } from "@/lib/claims/merge-anonymous-draft-on-login";
 import { sanitizeLoginNextPath } from "@/lib/claims/gated-routes";
 import { linkFirmUserOnLogin } from "@/lib/firms/link-firm-user-on-login";
+import {
+  isLegacyPostLoginPath,
+  resolvePostLoginRedirectPath,
+} from "@/lib/claims/post-login-redirect";
 import { resolvePostMergeRedirectPath } from "@/lib/claims/post-merge-redirect";
 import type { Database } from "@/types/database";
 import {
@@ -30,7 +34,7 @@ type CookieToSet = {
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
-  const nextPath = requestUrl.searchParams.get("next") ?? "/protected";
+  const nextPath = requestUrl.searchParams.get("next");
 
   if (!code) {
     return NextResponse.redirect(
@@ -41,8 +45,6 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const safeNext = nextPath.startsWith("/") ? nextPath : "/protected";
-  let redirectTarget = sanitizeLoginNextPath(safeNext);
   const cookiesToSet: CookieToSet[] = [];
 
   const supabase = createServerClient<Database>(
@@ -71,14 +73,29 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const { data: userData } = await supabase.auth.getUser();
+  const authUser = userData.user;
+  const authUserId = authUser?.id;
+
+  let redirectTarget: string;
+  if (nextPath) {
+    const safeNext = nextPath.startsWith("/") ? nextPath : "/check";
+    redirectTarget = sanitizeLoginNextPath(safeNext);
+    if (isLegacyPostLoginPath(redirectTarget) && authUserId) {
+      redirectTarget = await resolvePostLoginRedirectPath(supabase, authUserId);
+    }
+  } else if (authUserId) {
+    redirectTarget = await resolvePostLoginRedirectPath(supabase, authUserId);
+  } else {
+    redirectTarget = "/check";
+  }
+
   // §13.4.2 — Link pre-provisioned `firm_users` row when email matches an invite.
   try {
-    const { data: userData } = await supabase.auth.getUser();
-    const authUser = userData.user;
-    if (authUser?.id && authUser.email) {
+    if (authUserId && authUser?.email) {
       const admin = createAdminClient();
       await linkFirmUserOnLogin(admin, {
-        authUserId: authUser.id,
+        authUserId,
         email: authUser.email,
       });
     }
@@ -94,8 +111,6 @@ export async function GET(request: NextRequest) {
 
   if (isValidAnonymousSessionId(anonymousRaw)) {
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      const authUserId = userData.user?.id;
       if (authUserId) {
         const admin = createAdminClient();
         const { mergedClaimId } = await mergeAnonymousDraftOnLogin(admin, {

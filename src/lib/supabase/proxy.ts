@@ -45,8 +45,8 @@ export async function updateSession(request: NextRequest) {
     target.pathname = "/auth/callback";
     target.searchParams.delete("code");
     target.searchParams.set("code", pkceCode);
-    if (!target.searchParams.has("next")) {
-      target.searchParams.set("next", path === "/" ? "/" : "/protected");
+    if (!target.searchParams.has("next") && path !== "/" && path !== "/protected") {
+      target.searchParams.set("next", path);
     }
     return NextResponse.redirect(target);
   }

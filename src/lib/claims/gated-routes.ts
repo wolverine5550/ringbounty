@@ -1,3 +1,5 @@
+import { POST_LOGIN_DASHBOARD_PATH } from "./post-login-redirect";
+
 /**
  * Post-check routes that require authentication after a **successful query** (§2.5.2).
  * Anonymous users may reach these URLs only to be redirected to the account wall or login.
@@ -37,11 +39,11 @@ export function isPostCheckGatedRoute(pathnameOrUrl: string): boolean {
 }
 
 /**
- * Safe magic-link `next` target: gated funnel paths and `/protected`, not open redirects.
+ * Safe magic-link `next` target: gated funnel paths, dashboard, and legacy `/protected`.
  */
 export function sanitizeLoginNextPath(
   candidate: string | null | undefined,
-  fallback: string = "/protected",
+  fallback: string = "/check",
 ): string {
   if (!candidate || !candidate.startsWith("/") || candidate.startsWith("//")) {
     return fallback;
@@ -50,7 +52,10 @@ export function sanitizeLoginNextPath(
     isPostCheckGatedRoute(candidate) ||
     candidate === "/protected" ||
     candidate.startsWith("/protected/") ||
+    candidate === POST_LOGIN_DASHBOARD_PATH ||
+    candidate.startsWith(`${POST_LOGIN_DASHBOARD_PATH}/`) ||
     candidate === "/check" ||
+    candidate.startsWith("/check/") ||
     candidate.startsWith("/firms/")
   ) {
     return candidate;

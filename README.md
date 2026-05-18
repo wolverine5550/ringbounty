@@ -72,7 +72,8 @@ Create `.env.local` from `.env.example` and set values from your [Supabase proje
 | Route | Purpose |
 |-------|---------|
 | [`/login`](src/app/login/page.tsx) (+ [`loading.tsx`](src/app/login/loading.tsx)) | Magic link (email OTP): sends a sign-in link via `signInWithOtp` → user lands on `/auth/callback` for PKCE `code` exchange. Uses `searchParams.then(…)` inside `<Suspense>` for Cache Components. After send, UI warns to open the link in the **same browser** ([`magic-link-login-form.tsx`](src/components/magic-link-login-form.tsx)). |
-| [`/auth/callback`](src/app/auth/callback/route.ts) | Server route: `exchangeCodeForSession` then redirect (cookies set on the redirect response). |
+| [`/auth/callback`](src/app/auth/callback/route.ts) | Server route: `exchangeCodeForSession` then redirect — **`/check`** if the user has no screened numbers yet, else **`/dashboard`** ([`resolvePostLoginRedirectPath`](src/lib/claims/post-login-redirect.ts)); explicit `?next=` still honored for funnel deep links. |
+| [`/dashboard`](src/app/dashboard/page.tsx) | Signed-in home listing prior checks (phones, status, strength) with links to `/results?claim=…` and qualify. |
 | [`/auth/error`](src/app/auth/error/page.tsx) | Auth failure page; detects PKCE verifier mismatch (“open link in same browser”) with recovery steps. |
 | `/auth/login`, `/auth/sign-up`, … | Starter **email + password** flows from the template. |
 
@@ -371,7 +372,8 @@ In an emergency, hooks can be skipped with `HUSKY=0 git commit ...`, but this sh
 This app ships on **Next.js 16.2.x** with **Cache Components** enabled. Request-time APIs (`cookies()`, `headers()`, and **awaiting** page `searchParams` / `params` promises in the wrong place) can trigger the dev overlay [“Route … was accessed outside `<Suspense>`”](https://nextjs.org/docs/messages/blocking-route). RingBounty follows the **Next.js 16.2** streaming guidance:
 
 - **[`/login`](src/app/login/page.tsx)** — Sync page component; `<Suspense>` wraps `searchParams.then(({ next }) => …)` so the magic-link form receives `next` without blocking the segment. **[`src/app/login/loading.tsx`](src/app/login/loading.tsx)** provides the route `loading` fallback.
-- **[`/protected`](src/app/protected/layout.tsx)** — Layout wraps **[`ProtectedShellWithAuth`](src/app/protected/protected-shell-with-auth.tsx)** (which calls `requireUser()` → Supabase server client → `cookies()`) in `<Suspense>` with a shell fallback. **[`src/app/protected/loading.tsx`](src/app/protected/loading.tsx)** covers the segment during navigation.
+- **[`/protected`](src/app/protected/page.tsx)** — Legacy starter route; **redirects** to `/check` or `/dashboard` (same resolver as post-login). The old template UI is gone.
+- **[`/dashboard`](src/app/dashboard/page.tsx)** — Consumer dashboard (see Auth routes table). Uses the same logged-in header as `/check` and post-check routes.
 - **Post-check funnel** ([`/results`](src/app/(post-check)/results/page.tsx), [`/qualify/...`](src/app/(post-check)/qualify/[claimSubjectId]/page.tsx), [`/summary`](src/app/(post-check)/summary/page.tsx); legacy `/letter/*` → `/results`) — Sync page shell + inner async component inside `<Suspense>` so [`enforcePostCheckAccess`](src/lib/claims/enforce-post-check-access.ts) (`cookies()`) does not block the static shell. Segment fallback: [`src/app/(post-check)/loading.tsx`](src/app/(post-check)/loading.tsx).
 - **[`/[slug]`](src/app/[slug]/page.tsx)** (company SEO, §11.3) — `connection()` + `<Suspense>` until `COMPANY_SEO_PAGES` has entries (Cache Components forbids empty `generateStaticParams`).
 
