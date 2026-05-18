@@ -67,11 +67,13 @@ export async function loadClaimGateStatusByClaimId(
 
   const successful = isSuccessfulQuery(snapshot);
   const emailCapture = getEmailCaptureTrigger(snapshot);
+  const hasSubjects = snapshot.subjects.length > 0;
   return {
     claimId: claim.id,
     snapshot,
     isSuccessfulQuery: successful,
-    requiresAccountWall: successful,
+    /** Anonymous users must sign in after their one free check (any outcome). */
+    requiresAccountWall: hasSubjects,
     showEmailCapture: emailCapture.showEmailCapture,
     emailCaptureReason: emailCapture.emailCaptureReason,
   };

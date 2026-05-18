@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 import { AccountWall } from "@/components/account-wall";
@@ -17,11 +16,6 @@ type GateStatusResponse = {
   email_capture_reason: EmailCaptureReason | null;
 };
 
-type CheckOutcomePanelProps = {
-  /** When true, show gentle copy encouraging another number (§2.5.3). */
-  showRetryHint?: boolean;
-};
-
 async function fetchGateStatus(): Promise<GateStatusResponse> {
   const res = await fetch("/api/claims/anonymous/status", {
     credentials: "include",
@@ -34,10 +28,10 @@ async function fetchGateStatus(): Promise<GateStatusResponse> {
 }
 
 /**
- * Polls anonymous claim gate status after session bootstrap (§2.5 / §2.5.3 / §2.8).
- * Account wall, optional email capture, and secondary navigation after the main check UI.
+ * Polls anonymous claim gate status after session bootstrap (§2.5 / §2.8).
+ * Shows account wall after the one free check; optional email capture when eligible.
  */
-export function CheckOutcomePanel({ showRetryHint }: CheckOutcomePanelProps) {
+export function CheckOutcomePanel() {
   const [status, setStatus] = useState<GateStatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -111,12 +105,7 @@ export function CheckOutcomePanel({ showRetryHint }: CheckOutcomePanelProps) {
   }
 
   if (!status?.claim_id) {
-    return (
-      <p className="text-muted-foreground text-sm">
-        Your anonymous session is ready. The full number-check flow will appear here in a
-        later release.
-      </p>
-    );
+    return null;
   }
 
   if (status.requires_account_wall) {
@@ -126,22 +115,9 @@ export function CheckOutcomePanel({ showRetryHint }: CheckOutcomePanelProps) {
   }
 
   const emailReason = status.email_capture_reason;
+  if (status.show_email_capture && emailReason) {
+    return <EmailCaptureModal claimId={status.claim_id} reason={emailReason} />;
+  }
 
-  return (
-    <div className="flex flex-col gap-4 rounded-lg border border-dashed p-4">
-      <p className="text-sm">
-        {showRetryHint
-          ? "This number does not look like a claim yet. You can try another number without signing in."
-          : "No account is required yet for this check. When we find a potential claim, you will be asked to sign in to continue."}
-      </p>
-
-      {status.show_email_capture && emailReason ? (
-        <EmailCaptureModal claimId={status.claim_id} reason={emailReason} />
-      ) : null}
-
-      <Button asChild variant="secondary" size="sm" className="w-fit">
-        <Link href="/check">Check another number</Link>
-      </Button>
-    </div>
-  );
+  return null;
 }

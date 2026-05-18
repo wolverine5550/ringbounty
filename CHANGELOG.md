@@ -1,18 +1,28 @@
 # Changelog
 
+## 2026-05-18 (Pre-launch — One free anonymous lookup on `/check`)
+
+### One free check before sign-in
+
+- **Single number, single run** — Anonymous `/check` accepts **one** U.S. phone per session ([`CHECK_FREE_LOOKUP_MAX_PHONES`](src/lib/check/constants.ts) = 1). “Add number” / multi-row UI removed for anonymous funnel; heading is **Enter a number**.
+- **Account wall after any completed check** — [`loadClaimGateStatusByClaimId`](src/lib/claims/load-claim-query-snapshot.ts) sets `requires_account_wall` when `claim_subjects.length > 0` (spam hit or no-hit). Second submit blocked with **403** in [`POST /api/check/submit`](src/app/api/check/submit/route.ts).
+- **Copy** — Intro on [`/check`](src/app/check/page.tsx) via [`CHECK_FREE_LOOKUP_INTRO`](src/lib/check/constants.ts). Removed dashed-panel “No account is required yet…” from [`CheckOutcomePanel`](src/components/check-outcome-panel.tsx); panel now shows [`AccountWall`](src/components/account-wall.tsx) (or optional email capture) only after the free check.
+- **Signed-in `/check`** — [`GET /api/claims/anonymous/status`](src/app/api/claims/anonymous/status/route.ts) returns `requires_account_wall: false` when a session exists (avoids wall copy for logged-in users).
+- **Gated routes** — Dropped `/check?retry=1` redirect for no-hit retries in [`enforce-post-check-access.ts`](src/lib/claims/enforce-post-check-access.ts). Vitest: [`load-claim-query-snapshot.test.ts`](src/lib/claims/load-claim-query-snapshot.test.ts).
+
 ## 2026-05-18 (Pre-launch — Consumer funnel UX: `/check`, evidence, header)
 
 ### Consumer flow (intended path)
 
-1. **`/check`** — Enter U.S. number(s), run spam screening, continue to qualification when appropriate.
+1. **`/check`** — Enter one U.S. number (free anonymous lookup), run spam screening, then sign in to continue.
 2. **`/qualify/...`** — Factual questions (DNC, stop requests, company, line type, etc.).
 3. **`/results?claim=…`** — Informational strength and valuation; optional attorney CTA.
 4. **`/attorney-connect?claim=…`** — PRD §10 **Preserve your evidence** checklist, then consent, then referral + evidence PDF for firms.
 
 ### `/check` (screening first)
 
-- **Removed Step 0** — PRD §10 evidence preservation no longer blocks number entry. `/check` is a single **Enter numbers** step ([`CHECK_NUMBER_ENTRY_HEADING`](src/lib/check/constants.ts) in [`constants.ts`](src/lib/check/constants.ts)); deleted [`CheckStepIndicator`](src/components/check/check-step-indicator.tsx) and the step-0 / step-1 wizard in [`CheckFunnelClient`](src/components/check/check-funnel-client.tsx).
-- **No spam-database hit (§5.6):** Clearer per-number headline + body ([`no-spam-hit.ts`](src/lib/constants/no-spam-hit.ts)). After submit, **Next step** → **Continue to questions** links to `/qualify/[subjectId]?claim=…` ([`check-funnel-continue.ts`](src/lib/check/check-funnel-continue.ts)); account-wall path shows **Sign in to continue**. **Run check** hides after results (no “run again”); [`CheckOutcomePanel`](src/components/check-outcome-panel.tsx) trimmed to status copy + **Check another number** only.
+- **Removed Step 0** — PRD §10 evidence preservation no longer blocks number entry. `/check` is a single **Enter a number** step ([`CHECK_NUMBER_ENTRY_HEADING`](src/lib/check/constants.ts)); deleted [`CheckStepIndicator`](src/components/check/check-step-indicator.tsx) and the step-0 / step-1 wizard in [`CheckFunnelClient`](src/components/check/check-funnel-client.tsx).
+- **No spam-database hit (§5.6):** Clearer per-number headline + body ([`no-spam-hit.ts`](src/lib/constants/no-spam-hit.ts)). After the free check, **Next step** → **Sign in to continue** when the account wall applies ([`check-funnel-continue.ts`](src/lib/check/check-funnel-continue.ts)). **Run check** hides after results and after the free lookup is used; [`CheckOutcomePanel`](src/components/check-outcome-panel.tsx) shows **AccountWall** (or email capture when eligible).
 - **Hydration:** Phone row DOM ids use React [`useId()`](src/components/check/check-funnel-client.tsx) instead of `crypto.randomUUID()` (fixes SSR/client `htmlFor` mismatch).
 
 ### Evidence preservation (before attorney referral)

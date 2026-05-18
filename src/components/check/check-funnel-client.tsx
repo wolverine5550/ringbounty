@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  CHECK_MAX_PHONE_ROWS,
+  CHECK_FREE_LOOKUP_MAX_PHONES,
   CHECK_NUMBER_ENTRY_HEADING,
   RB_CHECK_SUBMITTED_EVENT,
 } from "@/lib/check/constants";
@@ -166,7 +166,7 @@ export function CheckFunnelClient() {
 
   const addPhoneRow = useCallback(() => {
     setPhoneRows((prev) => {
-      if (prev.length >= CHECK_MAX_PHONE_ROWS) {
+      if (prev.length >= CHECK_FREE_LOOKUP_MAX_PHONES) {
         return prev;
       }
       const index = nextPhoneRowIndexRef.current;
@@ -196,6 +196,10 @@ export function CheckFunnelClient() {
 
   const runCheckSubmit = useCallback(
     async (options?: { isBackoffRetry?: boolean }) => {
+    if (requiresAccountWall) {
+      return;
+    }
+
     setSubmitError(null);
     setRateLimitMessage(null);
 
@@ -310,7 +314,13 @@ export function CheckFunnelClient() {
       setCheckSubmitting(false);
     }
     },
-    [duplicateRowIds.size, phoneRows, refreshGateStatus, submitFailureCount],
+    [
+      duplicateRowIds.size,
+      phoneRows,
+      refreshGateStatus,
+      requiresAccountWall,
+      submitFailureCount,
+    ],
   );
 
   const continueTarget = useMemo(() => {
@@ -324,6 +334,28 @@ export function CheckFunnelClient() {
       requiresAccountWall,
     });
   }, [lastClaimId, lastClaimSubjectIds, numberChecks, requiresAccountWall]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/claims/anonymous/status", { credentials: "include" })
+      .then(async (res) => {
+        if (!res.ok || cancelled) {
+          return null;
+        }
+        return (await res.json()) as { requires_account_wall?: boolean };
+      })
+      .then((body) => {
+        if (!cancelled && body) {
+          setRequiresAccountWall(body.requires_account_wall === true);
+        }
+      })
+      .catch(() => {
+        /* Gate status is optional on first paint */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const node = stepOneRef.current;
@@ -376,6 +408,7 @@ export function CheckFunnelClient() {
                       autoComplete="tel-national"
                       placeholder="(555) 555-5555"
                       aria-invalid={alertText !== null}
+                      disabled={requiresAccountWall || checkSubmitting}
                       value={formatUsPhoneMask(row.digits)}
                       onChange={(e) => changeRowDigits(row.id, e.target.value)}
                       className="font-mono"
@@ -389,35 +422,39 @@ export function CheckFunnelClient() {
                       </p>
                     ) : null}
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="shrink-0 self-stretch sm:mt-0"
-                    disabled={phoneRows.length <= 1}
-                    onClick={() => removePhoneRow(row.id)}
-                  >
-                    Remove
-                  </Button>
+                  {CHECK_FREE_LOOKUP_MAX_PHONES > 1 ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0 self-stretch sm:mt-0"
+                      disabled={phoneRows.length <= 1}
+                      onClick={() => removePhoneRow(row.id)}
+                    >
+                      Remove
+                    </Button>
+                  ) : null}
                 </li>
               );
             })}
           </ul>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              disabled={phoneRows.length >= CHECK_MAX_PHONE_ROWS}
-              onClick={addPhoneRow}
-            >
-              Add number
-            </Button>
-            <p className="text-muted-foreground text-xs">
-              Up to {String(CHECK_MAX_PHONE_ROWS)} numbers per check.
-            </p>
-          </div>
+          {CHECK_FREE_LOOKUP_MAX_PHONES > 1 ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                disabled={phoneRows.length >= CHECK_FREE_LOOKUP_MAX_PHONES}
+                onClick={addPhoneRow}
+              >
+                Add number
+              </Button>
+              <p className="text-muted-foreground text-xs">
+                Up to {String(CHECK_FREE_LOOKUP_MAX_PHONES)} numbers per check.
+              </p>
+            </div>
+          ) : null}
 
           {rateLimitMessage ? (
             <p className="text-warning text-sm" role="alert">
@@ -621,12 +658,19 @@ export function CheckFunnelClient() {
             </div>
           ) : numberChecks && allNumberChecksExempt(numberChecks) ? (
             <p className="text-muted-foreground text-sm" role="status">
-              These numbers look TCPA-exempt. Try a different number if you
-              want to continue, or sign in to review your saved claim.
+              This number looks TCPA-exempt. Sign in to review your saved claim
+              and explore next steps.
             </p>
           ) : null}
 
-          {numberChecks === null ? (
+          {requiresAccountWall ? (
+            <p className="text-muted-foreground text-sm" role="status">
+              You&apos;ve used your free check. Sign in below to continue or check
+              another number after creating an account.
+            </p>
+          ) : null}
+
+          {!requiresAccountWall && numberChecks === null ? (
             <div className="flex flex-wrap items-center gap-2">
               <Button
                 type="button"

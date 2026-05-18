@@ -5,15 +5,12 @@ import { CheckOutcomePanel } from "@/components/check-outcome-panel";
 import { CheckFunnelClient } from "@/components/check/check-funnel-client";
 import { CheckPageShell } from "@/components/check/check-page-shell";
 import { CheckSessionBootstrap } from "@/components/check-session-bootstrap";
-
-type CheckPageProps = {
-  searchParams: Promise<{ retry?: string }>;
-};
+import { CHECK_FREE_LOOKUP_INTRO } from "@/lib/check/constants";
 
 /**
  * Anonymous funnel entry (Phase §2.3 / §4.1–4.6). Number check first; evidence preservation before attorney referral (PRD §10).
  */
-export default function CheckPage({ searchParams }: CheckPageProps) {
+export default function CheckPage() {
   return (
     <CheckPageShell>
       <CheckSessionBootstrap />
@@ -29,6 +26,9 @@ export default function CheckPage({ searchParams }: CheckPageProps) {
           Screen numbers for potential TCPA issues, organize your facts, and see whether
           an attorney connection may be worth exploring. Informational tools only — not
           legal advice.
+        </p>
+        <p className="text-muted-foreground text-sm leading-relaxed">
+          {CHECK_FREE_LOOKUP_INTRO}
         </p>
       </header>
 
@@ -49,9 +49,7 @@ export default function CheckPage({ searchParams }: CheckPageProps) {
           </p>
         }
       >
-        {searchParams.then(({ retry }) => (
-          <CheckOutcomePanel showRetryHint={retry === "1"} />
-        ))}
+        <CheckOutcomePanel />
       </Suspense>
 
       <footer className="flex flex-wrap gap-4 border-t border-border pt-4">

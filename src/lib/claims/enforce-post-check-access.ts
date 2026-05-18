@@ -28,8 +28,8 @@ export type EnforcePostCheckAccessOptions = {
 /**
  * Server layout guard for §2.5.2:
  * - Authenticated users pass through.
- * - Anonymous + successful query → account wall.
- * - Anonymous + no successful query → `/check` (retry) or login when no draft.
+ * - Anonymous + completed free check (claim has subjects) → account wall.
+ * - Anonymous + no check yet → login when hitting gated routes without a claim.
  */
 export async function enforcePostCheckAccess(
   options: EnforcePostCheckAccessOptions,
@@ -57,10 +57,6 @@ export async function enforcePostCheckAccess(
         redirect(
           buildAccountRequiredHref({ claimId: gate.claimId, returnTo: returnPath }),
         );
-      }
-
-      if (gate && !gate.isSuccessfulQuery) {
-        redirect("/check?retry=1");
       }
     }
 

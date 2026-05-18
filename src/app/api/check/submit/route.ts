@@ -4,7 +4,8 @@ import {
   ANONYMOUS_SESSION_COOKIE_NAME,
   isValidAnonymousSessionId,
 } from "@/lib/anonymous-session";
-import { CHECK_MAX_PHONE_ROWS } from "@/lib/check/constants";
+import { CHECK_FREE_LOOKUP_MAX_PHONES } from "@/lib/check/constants";
+import { loadAnonymousDraftGateStatus } from "@/lib/claims/load-claim-query-snapshot";
 import { getFederalDncCheckSummaryForClient } from "@/lib/dnc/federal-dnc-access";
 import { getStateDncCheckSummaryForAnonymousCheck } from "@/lib/dnc/state-dnc-access";
 import { runSpamChecksForPhoneList } from "@/lib/spam/spam-check-pipeline";
@@ -43,7 +44,7 @@ function jsonErrorForPhoneParse(error: PhonePayloadError): NextResponse {
     case "too_many":
       return NextResponse.json(
         {
-          error: `You can submit at most ${String(CHECK_MAX_PHONE_ROWS)} phone numbers per check.`,
+          error: `You can submit at most ${String(CHECK_FREE_LOOKUP_MAX_PHONES)} phone number per free check.`,
         },
         { status },
       );
@@ -202,7 +203,7 @@ export async function POST(request: NextRequest) {
 
       const parsed = parseAndDedupePhoneNumberPayload(
         rawList,
-        CHECK_MAX_PHONE_ROWS,
+        CHECK_FREE_LOOKUP_MAX_PHONES,
         displayInputs,
       );
       if (!parsed.ok) {
@@ -215,6 +216,19 @@ export async function POST(request: NextRequest) {
   try {
     const admin = createAdminClient();
     await assertCheckSubmissionAllowed(admin, request, raw);
+
+    if (phonePayload && phonePayload.length > 0) {
+      const existingGate = await loadAnonymousDraftGateStatus(admin, raw);
+      if (existingGate && existingGate.snapshot.subjects.length > 0) {
+        return NextResponse.json(
+          {
+            error:
+              "You've used your free check. Sign in to continue or run another check after creating an account.",
+          },
+          { status: 403 },
+        );
+      }
+    }
 
     let claimId: string | undefined;
     let claimSubjectIds: string[] | undefined;

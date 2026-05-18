@@ -10,6 +10,7 @@ import {
   createAdminClient,
   SupabaseAdminKeyMissingError,
 } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * §2.5 — Returns anonymous draft gate state for the account wall UI.
@@ -29,6 +30,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const supabase = await createClient();
+    const { data: authClaims } = await supabase.auth.getClaims();
+    const isSignedIn = Boolean(authClaims?.claims);
+
     const admin = createAdminClient();
     await createOrGetActiveClaimForSession(admin, raw);
     const gate = await loadAnonymousDraftGateStatus(admin, raw);
@@ -38,13 +43,15 @@ export async function GET(request: NextRequest) {
         claim_id: null,
         is_successful_query: false,
         requires_account_wall: false,
+        show_email_capture: false,
+        email_capture_reason: null,
       });
     }
 
     return NextResponse.json({
       claim_id: gate.claimId,
       is_successful_query: gate.isSuccessfulQuery,
-      requires_account_wall: gate.requiresAccountWall,
+      requires_account_wall: isSignedIn ? false : gate.requiresAccountWall,
       show_email_capture: gate.showEmailCapture,
       email_capture_reason: gate.emailCaptureReason,
     });
