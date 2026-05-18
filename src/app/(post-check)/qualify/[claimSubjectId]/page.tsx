@@ -200,7 +200,7 @@ async function QualifyPageContent({
     redirect(
       buildQualifyPageHref({
         claimSubjectId: pageContext.subject.id,
-        step: 4,
+        step: 6,
         claimId,
       }),
     );

@@ -37,8 +37,11 @@ const SCREEN_4_LOAD_KEYS = [
   "company_name",
 ] as const;
 
+/** Recorded when the user leaves company name blank on Screen 4. */
+export const QUALIFY_COMPANY_NAME_UNKNOWN_KEY = "company_name_unknown" as const;
+
 export type QualifyScreen4Answers = {
-  companyName: string;
+  companyName: string | null;
   companyCallbackPhone: string | null;
   companyProductPitch: string | null;
   hasAdditionalEvidence: boolean;
@@ -52,16 +55,22 @@ export type PersistQualifyScreen4Result = {
   verificationStatus: CompanyNameVerificationStatus | null;
 };
 
-/** Validates Q13 company name (2–200 chars). */
+/** Validates optional Q13 company name (empty allowed; 2–200 chars when provided). */
 export function parseQualifyCompanyName(
   value: unknown,
-): string | { error: string } {
+): string | null | { error: string } {
+  if (value === undefined || value === null) {
+    return null;
+  }
   if (typeof value !== "string") {
     return { error: "company_name must be a string" };
   }
   const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return null;
+  }
   if (trimmed.length < 2) {
-    return { error: "company_name must be at least 2 characters" };
+    return { error: "company_name must be at least 2 characters when provided" };
   }
   if (trimmed.length > 200) {
     return { error: "company_name must be 200 characters or fewer" };
@@ -129,14 +138,13 @@ export async function loadQualifyScreen4Answers(
   }
 
   const eventCompanyName = latest.get("company_name")?.trim();
+  const subjectName = subjectCompanyName?.trim() ?? "";
   const companyName =
     eventCompanyName && eventCompanyName.length > 0
       ? eventCompanyName
-      : subjectCompanyName?.trim() ?? "";
-
-  if (!companyName) {
-    return null;
-  }
+      : subjectName.length > 0
+        ? subjectName
+        : null;
 
   const verificationRaw = latest.get(COMPANY_NAME_VERIFICATION_STATUS_KEY);
   const verificationStatus = isCompanyNameVerificationStatus(verificationRaw)
@@ -189,27 +197,33 @@ export async function persistQualifyScreen4Answers(
   let showUnverifiedWarning =
     verificationStatus === "user_input_unverified";
 
-  if (!params.skipUserCompanyPersist) {
-    const companyResult = await persistUserCompanyIdentification(admin, {
-      claimId,
-      claimSubjectId,
-      companyName: answers.companyName,
-      userStateCode: params.userStateCode,
-    });
-    verificationStatus = companyResult.verificationStatus;
-    showUnverifiedWarning = companyResult.showUnverifiedWarning;
-  } else {
-    const { error: nameUpdateError } = await admin
-      .from("claim_subjects")
-      .update({ company_name: answers.companyName })
-      .eq("id", claimSubjectId);
+  if (answers.companyName) {
+    if (!params.skipUserCompanyPersist) {
+      const companyResult = await persistUserCompanyIdentification(admin, {
+        claimId,
+        claimSubjectId,
+        companyName: answers.companyName,
+        userStateCode: params.userStateCode,
+      });
+      verificationStatus = companyResult.verificationStatus;
+      showUnverifiedWarning = companyResult.showUnverifiedWarning;
+    } else {
+      const { error: nameUpdateError } = await admin
+        .from("claim_subjects")
+        .update({ company_name: answers.companyName })
+        .eq("id", claimSubjectId);
 
-    if (nameUpdateError) {
-      throw nameUpdateError;
+      if (nameUpdateError) {
+        throw nameUpdateError;
+      }
+
+      await admin.from("claim_events").insert(
+        qualificationEventRow(claimId, "company_name", answers.companyName),
+      );
     }
-
+  } else {
     await admin.from("claim_events").insert(
-      qualificationEventRow(claimId, "company_name", answers.companyName),
+      qualificationEventRow(claimId, QUALIFY_COMPANY_NAME_UNKNOWN_KEY, "true"),
     );
   }
 
@@ -255,10 +269,11 @@ export async function persistQualifyScreen4Answers(
 export function parseQualifyScreen4Body(
   body: Record<string, unknown>,
 ): QualifyScreen4Answers | { error: string } {
-  const companyName = parseQualifyCompanyName(body.company_name);
-  if (typeof companyName === "object") {
-    return companyName;
+  const companyNameParsed = parseQualifyCompanyName(body.company_name);
+  if (companyNameParsed !== null && typeof companyNameParsed === "object") {
+    return companyNameParsed;
   }
+  const companyName = companyNameParsed;
 
   const hasAdditionalEvidence = body.has_additional_evidence;
   if (hasAdditionalEvidence !== true && hasAdditionalEvidence !== false) {

@@ -6,9 +6,12 @@
 export const QUALIFY_VOICEMAIL_PROMPT =
   "Do you have a voicemail from this number you can upload?";
 
-/** Q13 — company name when voicemail missing or extraction failed. */
+/** Q13 — optional company name (many callers are unknown at this stage). */
 export const QUALIFY_Q13_PROMPT =
-  "Do you know the name of this company? Check your voicemail or try calling the number back.";
+  "If you know who called, enter the company or caller name. Check your voicemail or try calling the number back.";
+
+export const QUALIFY_Q13_OPTIONAL_HINT =
+  "Optional — leave blank if you do not know yet. You can still continue; attorney referral may require a company name later.";
 
 /** Optional callback number from the call or voicemail. */
 export const QUALIFY_Q13_CALLBACK_PROMPT =

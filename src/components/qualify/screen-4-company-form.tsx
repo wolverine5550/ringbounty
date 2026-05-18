@@ -10,6 +10,7 @@ import { COMPANY_NAME_UNVERIFIED_WARNING } from "@/lib/constants/company-name-ve
 import {
   QUALIFY_Q13_CALLBACK_PROMPT,
   QUALIFY_Q13_PITCH_PROMPT,
+  QUALIFY_Q13_OPTIONAL_HINT,
   QUALIFY_Q13_PROMPT,
   QUALIFY_Q14_PROMPT,
   QUALIFY_VOICEMAIL_PROMPT,
@@ -95,15 +96,14 @@ export function Screen4CompanyForm({
   const [isUploadingVoicemail, setIsUploadingVoicemail] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const canSubmit =
-    companyName.trim().length >= 2 && hasAdditionalEvidence !== null;
+  const canSubmit = hasAdditionalEvidence !== null;
 
-  const goToStep5 = () => {
+  const goToNextStep = (namedCompany: boolean) => {
     router.push(
       buildQualifyPageHref({
         claimSubjectId,
         claimId,
-        step: 5,
+        step: namedCompany ? 5 : 6,
       }),
     );
     router.refresh();
@@ -190,9 +190,10 @@ export function Screen4CompanyForm({
     setIsSubmitting(true);
     setSubmitError(null);
 
+    const trimmedCompany = companyName.trim();
     const payload: Record<string, unknown> = {
       claim_subject_id: claimSubjectId,
-      company_name: companyName.trim(),
+      company_name: trimmedCompany,
       has_additional_evidence: hasAdditionalEvidence,
     };
 
@@ -229,7 +230,7 @@ export function Screen4CompanyForm({
         setShowUnverifiedWarning(true);
       }
 
-      goToStep5();
+      goToNextStep(trimmedCompany.length >= 2);
     } catch {
       setSubmitError("Network error. Please try again.");
     } finally {
@@ -289,9 +290,9 @@ export function Screen4CompanyForm({
           id="company-name"
           value={companyName}
           onChange={(e) => setCompanyName(e.target.value)}
-          placeholder="Company name"
-          required
+          placeholder="Company name (optional)"
         />
+        <p className="text-muted-foreground text-xs">{QUALIFY_Q13_OPTIONAL_HINT}</p>
       </div>
 
       <div className="flex flex-col gap-2">

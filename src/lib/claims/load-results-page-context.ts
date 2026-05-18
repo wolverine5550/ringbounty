@@ -218,7 +218,8 @@ export async function loadResultsPageContext(
     claimId: claim.id,
     effectiveClaimStrength,
     strengthDisplay: getResultsStrengthDisplay(strengthForDisplay),
-    valuation: scoring.valuation,
+    valuation:
+      effectiveClaimStrength === "ineligible" ? null : scoring.valuation,
     subjects,
     anyCanRefer: subjects.some((s) => s.referral.ok),
     ineligibleReasons: collectIneligibleReasons({

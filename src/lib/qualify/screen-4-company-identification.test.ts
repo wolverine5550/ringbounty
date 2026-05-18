@@ -10,9 +10,26 @@ describe("screen-4-company-identification (§7.5)", () => {
     expect(parseQualifyCompanyName("  Acme Corp  ")).toBe("Acme Corp");
   });
 
-  it("rejects short company names", () => {
+  it("allows empty company name", () => {
+    expect(parseQualifyCompanyName("")).toBeNull();
+    expect(parseQualifyCompanyName("   ")).toBeNull();
+  });
+
+  it("rejects too-short non-empty company names", () => {
     expect(parseQualifyCompanyName("A")).toEqual({
-      error: "company_name must be at least 2 characters",
+      error: "company_name must be at least 2 characters when provided",
+    });
+  });
+
+  it("parses body with omitted company name", () => {
+    expect(
+      parseQualifyScreen4Body({
+        company_name: "",
+        has_additional_evidence: false,
+      }),
+    ).toMatchObject({
+      companyName: null,
+      hasAdditionalEvidence: false,
     });
   });
 

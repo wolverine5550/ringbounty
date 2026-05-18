@@ -83,8 +83,9 @@ async function ResultsPageContent({ searchParams }: ResultsPageProps) {
       <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold tracking-tight">Your results</h1>
         <p className="text-muted-foreground text-sm">
-          Informational claim strength and statutory estimate ranges based on your
-          qualification answers. This is not legal advice.
+          {results?.effectiveClaimStrength === "ineligible"
+            ? "Informational claim strength based on your qualification answers. This is not legal advice."
+            : "Informational claim strength and statutory estimate ranges based on your qualification answers. This is not legal advice."}
         </p>
       </header>
 
