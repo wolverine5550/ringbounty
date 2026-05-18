@@ -18,6 +18,7 @@ const ALLOWED_MIME_TYPES = new Set([
   "image/png",
   "image/webp",
   "image/gif",
+  "application/pdf",
 ]);
 
 const MIME_TO_EXT: Record<string, string> = {
@@ -26,6 +27,7 @@ const MIME_TO_EXT: Record<string, string> = {
   "image/png": ".png",
   "image/webp": ".webp",
   "image/gif": ".gif",
+  "application/pdf": ".pdf",
 };
 
 export type FederalDncEvidenceValidation =
@@ -44,7 +46,7 @@ export function validateFederalDncEvidenceFile(
   if (file.size > FEDERAL_DNC_EVIDENCE_MAX_BYTES) {
     return {
       ok: false,
-      error: "Screenshot must be 5 MB or smaller.",
+      error: "File must be 5 MB or smaller.",
     };
   }
 
@@ -52,20 +54,20 @@ export function validateFederalDncEvidenceFile(
   if (!ALLOWED_MIME_TYPES.has(mime)) {
     return {
       ok: false,
-      error: "Screenshot must be a JPEG, PNG, WebP, or GIF image.",
+      error: "File must be a JPEG, PNG, WebP, GIF image, or PDF.",
     };
   }
 
   const extension = MIME_TO_EXT[mime] ?? extensionFromFilename(file.name);
   if (!extension) {
-    return { ok: false, error: "Could not determine image type." };
+    return { ok: false, error: "Could not determine file type." };
   }
 
   return { ok: true, mimeType: mime, extension };
 }
 
 function extensionFromFilename(name: string): string | null {
-  const match = /\.(jpe?g|png|webp|gif)$/i.exec(name.trim());
+  const match = /\.(jpe?g|png|webp|gif|pdf)$/i.exec(name.trim());
   if (!match) {
     return null;
   }

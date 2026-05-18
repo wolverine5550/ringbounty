@@ -167,12 +167,12 @@ async function QualifyPageContent({
 
   const resumeStep = await loadQualifyResumeStep(supabase, claimId);
   const wizardStep = resolveQualifyWizardStep({ urlStep, resumeStep });
-  const screen1Initial =
-    wizardStep === 1
-      ? await loadQualifyScreen1Answers(supabase, claimId)
-      : null;
   const screen2Answers =
-    wizardStep === 2 || wizardStep === 3 || wizardStep === 4 || wizardStep === 5
+    wizardStep === 2 ||
+    wizardStep === 3 ||
+    wizardStep === 4 ||
+    wizardStep === 5 ||
+    wizardStep === 6
       ? await loadQualifyScreen2Answers(supabase, claimId)
       : null;
   const screen2Initial = wizardStep === 2 ? screen2Answers : null;
@@ -188,13 +188,28 @@ async function QualifyPageContent({
           pageContext.subject.company_name,
         )
       : null;
-  const screen5Initial =
-    wizardStep === 5 ? await loadQualifyScreen5Answers(supabase, claimId) : null;
+  const screen5ConsentInitial =
+    wizardStep === 5 ? await loadQualifyScreen1Answers(supabase, claimId) : null;
+  const screen6LineInitial =
+    wizardStep === 6 ? await loadQualifyScreen5Answers(supabase, claimId) : null;
+
+  const companyNameForConsent =
+    pageContext.subject.company_name?.trim() ?? "";
+
+  if (wizardStep === 5 && companyNameForConsent.length < 2) {
+    redirect(
+      buildQualifyPageHref({
+        claimSubjectId: pageContext.subject.id,
+        step: 4,
+        claimId,
+      }),
+    );
+  }
 
   return (
     <QualifyPageLayout
       title="Qualify your claim"
-      subtitle={`Screen ${wizardStep} of 5 — answer questions about this number.`}
+      subtitle={`Screen ${wizardStep} of 6 — answer questions about this number.`}
     >
       {applicableStateCode ? (
         <StateDncComingSoon stateCode={applicableStateCode} />
@@ -203,13 +218,13 @@ async function QualifyPageContent({
         claimSubjectId={pageContext.subject.id}
         claimId={claimId}
         step={wizardStep}
-        screen1Initial={screen1Initial}
         screen2Initial={screen2Initial}
         screen3Initial={screen3Initial}
         showPostStopCount={showPostStopCount}
         screen4Initial={screen4Initial}
         subjectCompanyName={pageContext.subject.company_name}
-        screen5Initial={screen5Initial}
+        screen5ConsentInitial={screen5ConsentInitial}
+        screen5Initial={screen6LineInitial}
       />
     </QualifyPageLayout>
   );

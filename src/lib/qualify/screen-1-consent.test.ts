@@ -35,15 +35,14 @@ describe("screen-1-consent (§7.2)", () => {
     ).toBe(false);
   });
 
-  it("parses valid API body", () => {
+  it("parses valid API body without third-party field (defaults false)", () => {
     const parsed = parseQualifyScreen1Body({
       gave_direct_consent: false,
-      third_party_consent_possible: true,
       has_existing_relationship: false,
     });
     expect("error" in parsed).toBe(false);
     if (!("error" in parsed)) {
-      expect(parsed.thirdPartyConsentPossible).toBe(true);
+      expect(parsed.thirdPartyConsentPossible).toBe(false);
     }
   });
 
@@ -52,7 +51,7 @@ describe("screen-1-consent (§7.2)", () => {
       gave_direct_consent: false,
     });
     expect(parsed).toEqual({
-      error: "third_party_consent_possible must be true or false",
+      error: "has_existing_relationship must be true or false",
     });
   });
 });

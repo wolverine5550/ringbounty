@@ -7,18 +7,19 @@
 
 /** Wizard screens persisted via `?step=` and {@link QUALIFY_STEP_RESUME_EVENT_KEY}. */
 export const QUALIFY_WIZARD_STEP_MIN = 1 as const;
-export const QUALIFY_WIZARD_STEP_MAX = 5 as const;
+export const QUALIFY_WIZARD_STEP_MAX = 6 as const;
 
-export type QualifyWizardStep = 1 | 2 | 3 | 4 | 5;
+export type QualifyWizardStep = 1 | 2 | 3 | 4 | 5 | 6;
 
 /** `claim_events.key` for last completed wizard screen (resume). */
 export const QUALIFY_STEP_RESUME_EVENT_KEY = "qualify_step_resume" as const;
 
 /** Short headings for step chrome (full forms ship in §7.2–7.6). */
 export const QUALIFY_STEP_TITLES: Record<QualifyWizardStep, string> = {
-  1: "Consent and established business relationship",
+  1: "Before we ask about the caller",
   2: "Stop request and internal do-not-call",
   3: "Call details and timing",
   4: "Company identification and evidence",
-  5: "Phone line type",
+  5: "Consent and relationship with that company",
+  6: "Phone line type",
 };

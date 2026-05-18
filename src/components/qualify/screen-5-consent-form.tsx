@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,17 +12,19 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  QUALIFY_CONSENT_STEP_PREFACE,
   QUALIFY_EBR_EXPLAINER_MESSAGE,
   QUALIFY_Q1_PROMPT,
-  QUALIFY_Q2_PROMPT,
   QUALIFY_Q3_PROMPT,
 } from "@/lib/constants/qualify-screen-1";
+import { formatCompanyConsentPrompt } from "@/lib/qualify/format-company-consent-prompt";
 import { buildQualifyPageHref } from "@/lib/qualify/qualify-step";
 import type { QualifyScreen1Answers } from "@/lib/qualify/screen-1-consent";
 
-export type Screen1ConsentFormProps = {
+export type Screen5ConsentFormProps = {
   claimSubjectId: string;
   claimId: string;
+  companyName: string;
   initialAnswers?: QualifyScreen1Answers | null;
 };
 
@@ -32,58 +34,43 @@ type YesNoFieldProps = {
   onChange: (value: boolean) => void;
 };
 
-/** Shared yes/no control for Q1–Q3. */
 function YesNoField({ legend, value, onChange }: YesNoFieldProps) {
   return (
     <fieldset className="flex flex-col gap-3">
       <legend className="text-sm font-medium">{legend}</legend>
-      <YesNoButtons value={value} onChange={onChange} />
+      <div className="flex flex-wrap gap-3">
+        <Button
+          type="button"
+          variant={value === true ? "default" : "outline"}
+          onClick={() => onChange(true)}
+        >
+          Yes
+        </Button>
+        <Button
+          type="button"
+          variant={value === false ? "default" : "outline"}
+          onClick={() => onChange(false)}
+        >
+          No
+        </Button>
+      </div>
     </fieldset>
   );
 }
 
-function YesNoButtons({
-  value,
-  onChange,
-}: {
-  value: boolean | null;
-  onChange: (value: boolean) => void;
-}) {
-  return (
-    <div className="flex flex-wrap gap-3">
-      <Button
-        type="button"
-        variant={value === true ? "default" : "outline"}
-        onClick={() => onChange(true)}
-      >
-        Yes
-      </Button>
-      <Button
-        type="button"
-        variant={value === false ? "default" : "outline"}
-        onClick={() => onChange(false)}
-      >
-        No
-      </Button>
-    </div>
-  );
-}
-
 /**
- * Phase 7.2 — Screen 1 consent / EBR questions (prd.md §9).
+ * Step 5 — consent / EBR after the user has named the company (§7.2, reordered).
  */
-export function Screen1ConsentForm({
+export function Screen5ConsentForm({
   claimSubjectId,
   claimId,
+  companyName,
   initialAnswers = null,
-}: Screen1ConsentFormProps) {
+}: Screen5ConsentFormProps) {
   const router = useRouter();
   const [gaveDirectConsent, setGaveDirectConsent] = useState<boolean | null>(
     initialAnswers?.gaveDirectConsent ?? null,
   );
-  const [thirdPartyConsentPossible, setThirdPartyConsentPossible] = useState<
-    boolean | null
-  >(initialAnswers?.thirdPartyConsentPossible ?? null);
   const [hasExistingRelationship, setHasExistingRelationship] = useState<
     boolean | null
   >(initialAnswers?.hasExistingRelationship ?? null);
@@ -91,17 +78,24 @@ export function Screen1ConsentForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [ebrExplainerOpen, setEbrExplainerOpen] = useState(false);
 
-  const canSubmit =
-    gaveDirectConsent !== null &&
-    thirdPartyConsentPossible !== null &&
-    hasExistingRelationship !== null;
+  const q1Prompt = useMemo(
+    () => formatCompanyConsentPrompt(QUALIFY_Q1_PROMPT, companyName),
+    [companyName],
+  );
+  const q3Prompt = useMemo(
+    () => formatCompanyConsentPrompt(QUALIFY_Q3_PROMPT, companyName),
+    [companyName],
+  );
 
-  const goToStep2 = () => {
+  const canSubmit =
+    gaveDirectConsent !== null && hasExistingRelationship !== null;
+
+  const goToStep6 = () => {
     router.push(
       buildQualifyPageHref({
         claimSubjectId,
         claimId,
-        step: 2,
+        step: 6,
       }),
     );
     router.refresh();
@@ -110,7 +104,7 @@ export function Screen1ConsentForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSubmit) {
-      setSubmitError("Please answer all three questions.");
+      setSubmitError("Please answer both questions.");
       return;
     }
 
@@ -125,7 +119,7 @@ export function Screen1ConsentForm({
         body: JSON.stringify({
           claim_subject_id: claimSubjectId,
           gave_direct_consent: gaveDirectConsent,
-          third_party_consent_possible: thirdPartyConsentPossible,
+          third_party_consent_possible: false,
           has_existing_relationship: hasExistingRelationship,
         }),
       });
@@ -145,7 +139,7 @@ export function Screen1ConsentForm({
         return;
       }
 
-      goToStep2();
+      goToStep6();
     } catch {
       setSubmitError("Network error. Please try again.");
     } finally {
@@ -156,18 +150,17 @@ export function Screen1ConsentForm({
   return (
     <>
       <form className="flex flex-col gap-6" onSubmit={(ev) => void handleSubmit(ev)}>
+        <p className="text-muted-foreground text-sm">
+          {QUALIFY_CONSENT_STEP_PREFACE}{" "}
+          <span className="text-foreground font-medium">{companyName.trim()}</span>
+        </p>
         <YesNoField
-          legend={QUALIFY_Q1_PROMPT}
+          legend={q1Prompt}
           value={gaveDirectConsent}
           onChange={setGaveDirectConsent}
         />
         <YesNoField
-          legend={QUALIFY_Q2_PROMPT}
-          value={thirdPartyConsentPossible}
-          onChange={setThirdPartyConsentPossible}
-        />
-        <YesNoField
-          legend={QUALIFY_Q3_PROMPT}
+          legend={q3Prompt}
           value={hasExistingRelationship}
           onChange={setHasExistingRelationship}
         />
@@ -185,9 +178,10 @@ export function Screen1ConsentForm({
 
       {ebrExplainerOpen ? (
         <EbrExplainerOverlay
+          companyName={companyName}
           onContinue={() => {
             setEbrExplainerOpen(false);
-            goToStep2();
+            goToStep6();
           }}
         />
       ) : null}
@@ -195,13 +189,19 @@ export function Screen1ConsentForm({
   );
 }
 
-function EbrExplainerOverlay({ onContinue }: { onContinue: () => void }) {
+function EbrExplainerOverlay({
+  companyName,
+  onContinue,
+}: {
+  companyName: string;
+  onContinue: () => void;
+}) {
   return (
     <QualifyOverlay>
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader>
           <CardTitle id="ebr-explainer-title" className="text-lg">
-            Relationship with this company
+            Relationship with {companyName.trim() || "this company"}
           </CardTitle>
           <CardDescription>{QUALIFY_EBR_EXPLAINER_MESSAGE}</CardDescription>
         </CardHeader>

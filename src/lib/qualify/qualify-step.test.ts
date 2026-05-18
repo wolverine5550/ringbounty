@@ -12,12 +12,13 @@ describe("qualify-step (§7.1.3)", () => {
     expect(parseQualifyStepFromQuery("1")).toBe(1);
     expect(parseQualifyStepFromQuery("4")).toBe(4);
     expect(parseQualifyStepFromQuery("5")).toBe(5);
+    expect(parseQualifyStepFromQuery("6")).toBe(6);
   });
 
   it("rejects invalid step query values", () => {
     expect(parseQualifyStepFromQuery(null)).toBeNull();
     expect(parseQualifyStepFromQuery("0")).toBeNull();
-    expect(parseQualifyStepFromQuery("6")).toBeNull();
+    expect(parseQualifyStepFromQuery("7")).toBeNull();
     expect(parseQualifyStepFromQuery("x")).toBeNull();
   });
 

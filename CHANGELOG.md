@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-05-18 (§7.2 — Qualify wizard step 1 reorder)
+
+- **Step 1** is now an **orientation screen** only ([`screen-1-intro-form.tsx`](src/components/qualify/screen-1-intro-form.tsx), [`POST /api/qualify/screen-1-intro`](src/app/api/qualify/screen-1-intro/route.ts)) — no consent questions before the caller is named.
+- **Removed Q2** (third-party / partner consent) from the consumer flow; persisted as `false` when consent is saved.
+- **Consent / EBR (Q1 + Q3)** moved to **step 5**, after company identification — prompts use the company name ([`screen-5-consent-form.tsx`](src/components/qualify/screen-5-consent-form.tsx), [`format-company-consent-prompt.ts`](src/lib/qualify/format-company-consent-prompt.ts)).
+- **Line type** is now **step 6** (wizard max step 6 in [`constants.ts`](src/lib/qualify/constants.ts)).
+
+## 2026-05-18 (§6.2.4 — Federal DNC evidence PDF uploads)
+
+- **Optional FTC confirmation upload** now accepts **PDF** in addition to JPEG/PNG/WebP/GIF — validation in [`federal-dnc-evidence.ts`](src/lib/dnc/federal-dnc-evidence.ts), copy in [`federal-dnc-attestation.ts`](src/lib/constants/federal-dnc-attestation.ts), file input `accept` on [`federal-dnc-attestation-form.tsx`](src/components/qualify/federal-dnc-attestation-form.tsx). Storage: migration [`20260518150000_federal_dnc_evidence_allow_pdf.sql`](supabase/migrations/20260518150000_federal_dnc_evidence_allow_pdf.sql) adds `application/pdf` to `claim-evidence` bucket `allowed_mime_types`. Vitest: [`federal-dnc-evidence.test.ts`](src/lib/dnc/federal-dnc-evidence.test.ts).
+
 ## 2026-05-18 (Pre-launch — Marketing header auth, PKCE UX, leads RLS fix)
 
 - **Marketing header auth:** [`MarketingHeader`](src/components/marketing/marketing-header.tsx) renders [`MarketingHeaderAuth`](src/components/marketing/marketing-header-auth.tsx) inside `<Suspense>` on all public marketing pages — **Sign in** when logged out, **Sign out** when a session exists (no email label in the header). Shared client control: [`SignOutButton`](src/components/sign-out-button.tsx); [`LogoutButton`](src/components/logout-button.tsx) wraps it for starter-template compatibility (`redirectTo=/login`).

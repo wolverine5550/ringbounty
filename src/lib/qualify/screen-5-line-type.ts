@@ -95,7 +95,7 @@ export async function persistQualifyScreen5Answers(
 
   await persistQualifyResumeStep(supabase, {
     claimId: params.claimId,
-    step: 5,
+    step: 6,
   });
 }
 

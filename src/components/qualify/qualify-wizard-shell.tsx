@@ -1,6 +1,7 @@
 import Link from "next/link";
 
-import { Screen1ConsentForm } from "@/components/qualify/screen-1-consent-form";
+import { Screen1IntroForm } from "@/components/qualify/screen-1-intro-form";
+import { Screen5ConsentForm } from "@/components/qualify/screen-5-consent-form";
 import { Screen2StopRequestForm } from "@/components/qualify/screen-2-stop-request-form";
 import { Screen3CallDetailsForm } from "@/components/qualify/screen-3-call-details-form";
 import { Screen4CompanyForm } from "@/components/qualify/screen-4-company-form";
@@ -21,8 +22,8 @@ export type QualifyWizardShellProps = {
   claimSubjectId: string;
   claimId: string;
   step: QualifyWizardStep;
-  /** Loaded from `claim_events` when step is 1 (§7.2). */
-  screen1Initial?: QualifyScreen1Answers | null;
+  /** Loaded from `claim_events` when step is 5 (§7.2 consent, after company). */
+  screen5ConsentInitial?: QualifyScreen1Answers | null;
   /** Loaded from `claim_events` when step is 2 (§7.3). */
   screen2Initial?: QualifyScreen2Answers | null;
   /** Loaded from `claim_events` when step is 3 (§7.4). */
@@ -44,7 +45,7 @@ export function QualifyWizardShell({
   claimSubjectId,
   claimId,
   step,
-  screen1Initial = null,
+  screen5ConsentInitial = null,
   screen2Initial = null,
   screen3Initial = null,
   showPostStopCount = false,
@@ -64,11 +65,7 @@ export function QualifyWizardShell({
       </p>
       <h2 className="text-lg font-semibold">{title}</h2>
       {step === 1 ? (
-        <Screen1ConsentForm
-          claimSubjectId={claimSubjectId}
-          claimId={claimId}
-          initialAnswers={screen1Initial}
-        />
+        <Screen1IntroForm claimSubjectId={claimSubjectId} claimId={claimId} />
       ) : step === 2 ? (
         <Screen2StopRequestForm
           claimSubjectId={claimSubjectId}
@@ -90,6 +87,13 @@ export function QualifyWizardShell({
           initialCompanyName={subjectCompanyName}
         />
       ) : step === 5 ? (
+        <Screen5ConsentForm
+          claimSubjectId={claimSubjectId}
+          claimId={claimId}
+          companyName={subjectCompanyName?.trim() || "the company you identified"}
+          initialAnswers={screen5ConsentInitial}
+        />
+      ) : step === 6 ? (
         <Screen5LineTypeForm
           claimSubjectId={claimSubjectId}
           claimId={claimId}
@@ -118,7 +122,13 @@ export function QualifyWizardShell({
             Previous step
           </Link>
         ) : null}
-        {nextStep && step !== 1 && step !== 2 && step !== 3 && step !== 4 && step !== 5 ? (
+        {nextStep &&
+        step !== 1 &&
+        step !== 2 &&
+        step !== 3 &&
+        step !== 4 &&
+        step !== 5 &&
+        step !== 6 ? (
           <Link
             className="text-primary text-sm underline underline-offset-2"
             href={buildQualifyPageHref({

@@ -1,18 +1,18 @@
 /**
- * Phase 7.2 — Screen 1 consent / EBR copy (prd.md §9 Screen 1).
+ * Phase 7.2 / 7.5 — Consent / EBR copy (asked on wizard step 5 after company is named).
  */
 
-/** Q1 — direct signup / purchase with the caller's company. */
+/** Q1 — permission to call, only after {{company}} is known. */
 export const QUALIFY_Q1_PROMPT =
-  "Did you ever sign up for something, fill out a form, or make a purchase with this company directly?";
+  "Did you give {{company}} permission to contact you — for example by signing up, filling out a form, or making a purchase?";
 
-/** Q2 — number may have been shared via a related third party. */
-export const QUALIFY_Q2_PROMPT =
-  "Could you have given your number to a related company, partner site, or third party that might have shared it with this company?";
-
-/** Q3 — ongoing customer / subscriber / borrower relationship. */
+/** Q3 — ongoing relationship with the named company. */
 export const QUALIFY_Q3_PROMPT =
-  "Did you ever have an ongoing account or relationship with this company (for example a customer, subscriber, or borrower)?";
+  "Did you ever have an ongoing account or relationship with {{company}} (for example as a customer, subscriber, or borrower)?";
+
+/** Shown on step 5 before consent questions. */
+export const QUALIFY_CONSENT_STEP_PREFACE =
+  "Answer based on the company you identified in the previous step. If you are not sure, choose No.";
 
 /**
  * Shown when Q1 or Q3 is Yes (prd.md §9 Screen 1 footnote).

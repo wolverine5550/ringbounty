@@ -36,9 +36,9 @@ export const FEDERAL_DNC_REGISTRATION_DATE_HELP =
 export const FEDERAL_DNC_GATE_BLOCKED_MESSAGE =
   "Please confirm your National Do Not Call Registry status before continuing.";
 
-/** §6.2.4 — Optional FTC confirmation email screenshot (evidence only). */
+/** §6.2.4 — Optional FTC confirmation email screenshot or PDF (evidence only). */
 export const FEDERAL_DNC_OPTIONAL_SCREENSHOT_COPY =
-  "Optional: Upload a screenshot of your FTC donotcall.gov confirmation email (JPEG, PNG, WebP, or GIF; max 5 MB). RingBounty does not verify uploads as legal proof. Not required to continue.";
+  "Optional: Upload a screenshot or PDF of your FTC donotcall.gov confirmation email (JPEG, PNG, WebP, GIF, or PDF; max 5 MB). RingBounty does not verify uploads as legal proof. Not required to continue.";
 
 export const FEDERAL_DNC_OPTIONAL_SCREENSHOT_LABEL =
-  "FTC registration confirmation screenshot (optional)";
+  "FTC registration confirmation (screenshot or PDF, optional)";

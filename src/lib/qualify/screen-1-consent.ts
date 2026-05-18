@@ -96,17 +96,13 @@ export async function loadQualifyScreen1Answers(
     latest.get(QUALIFY_SCREEN_1_KEYS.hasExistingRelationship),
   );
 
-  if (
-    gaveDirectConsent === null ||
-    thirdPartyConsentPossible === null ||
-    hasExistingRelationship === null
-  ) {
+  if (gaveDirectConsent === null || hasExistingRelationship === null) {
     return null;
   }
 
   return {
     gaveDirectConsent,
-    thirdPartyConsentPossible,
+    thirdPartyConsentPossible: thirdPartyConsentPossible ?? false,
     hasExistingRelationship,
   };
 }
@@ -177,7 +173,7 @@ export async function persistQualifyScreen1Answers(
     throw insertError;
   }
 
-  await persistQualifyResumeStep(supabase, { claimId, step: 1 });
+  await persistQualifyResumeStep(supabase, { claimId, step: 5 });
 
   return { showEbrExplainer };
 }
@@ -194,21 +190,20 @@ export function parseQualifyScreen1Body(
     return { error: "gave_direct_consent must be true or false" };
   }
   if (
-    thirdPartyConsentPossible !== true &&
-    thirdPartyConsentPossible !== false
-  ) {
-    return { error: "third_party_consent_possible must be true or false" };
-  }
-  if (
     hasExistingRelationship !== true &&
     hasExistingRelationship !== false
   ) {
     return { error: "has_existing_relationship must be true or false" };
   }
 
+  const thirdPartyResolved =
+    thirdPartyConsentPossible === true || thirdPartyConsentPossible === false
+      ? thirdPartyConsentPossible
+      : false;
+
   return {
     gaveDirectConsent,
-    thirdPartyConsentPossible,
+    thirdPartyConsentPossible: thirdPartyResolved,
     hasExistingRelationship,
   };
 }

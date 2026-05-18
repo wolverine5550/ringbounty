@@ -39,12 +39,22 @@ describe("federal-dnc-evidence (§6.2.4)", () => {
     ).toBe(false);
   });
 
+  it("accepts PDF under size limit", () => {
+    expect(
+      validateFederalDncEvidenceFile({
+        size: 1024,
+        type: "application/pdf",
+        name: "ftc-confirmation.pdf",
+      }),
+    ).toEqual({ ok: true, mimeType: "application/pdf", extension: ".pdf" });
+  });
+
   it("rejects disallowed mime types", () => {
     expect(
       validateFederalDncEvidenceFile({
         size: 100,
-        type: "application/pdf",
-        name: "doc.pdf",
+        type: "text/plain",
+        name: "notes.txt",
       }).ok,
     ).toBe(false);
   });

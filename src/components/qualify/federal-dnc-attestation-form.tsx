@@ -183,7 +183,7 @@ export function FederalDncAttestationForm({
         <Input
           id="federal-dnc-screenshot"
           type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif"
+          accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,.pdf"
           onChange={(e) => {
             const file = e.target.files?.[0] ?? null;
             setScreenshotFile(file);
