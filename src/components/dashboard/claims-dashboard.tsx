@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { DashboardNewCheckCta } from "@/components/dashboard/dashboard-new-check-cta";
 import { Button } from "@/components/ui/button";
 import type { UserClaimsDashboard } from "@/lib/claims/load-user-claims-dashboard";
 
@@ -48,6 +49,8 @@ export function ClaimsDashboard({ dashboard }: ClaimsDashboardProps) {
           <p className="text-2xl font-semibold tabular-nums">{totalNumbers}</p>
         </div>
       </section>
+
+      <DashboardNewCheckCta />
 
       <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
@@ -104,9 +107,6 @@ export function ClaimsDashboard({ dashboard }: ClaimsDashboardProps) {
                     <Link href={claim.qualifyHref}>Continue qualifying</Link>
                   </Button>
                 ) : null}
-                <Button asChild size="sm" variant="ghost">
-                  <Link href="/check">Check another number</Link>
-                </Button>
               </div>
             </li>
           ))}

@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { ClaimsDashboard } from "@/components/dashboard/claims-dashboard";
+import { DashboardNewCheckCta } from "@/components/dashboard/dashboard-new-check-cta";
 import { PostCheckPageFallback } from "@/components/post-check/post-check-page-fallback";
-import { Button } from "@/components/ui/button";
 import { loadUserClaimsDashboard } from "@/lib/claims/load-user-claims-dashboard";
 import {
   POST_LOGIN_CHECK_PATH,
@@ -54,20 +53,13 @@ async function DashboardPageContent() {
       <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold tracking-tight">Your dashboard</h1>
         <p className="text-muted-foreground text-sm">
-          Review numbers you have screened and pick up where you left off.
+          Review past screens, start a new number check, or pick up qualification
+          where you left off.
         </p>
       </header>
 
       {dashboard.claims.length === 0 ? (
-        <div className="flex flex-col gap-4 rounded-lg border p-6">
-          <p className="text-muted-foreground text-sm">
-            You have not completed a number check yet. Run your first free lookup
-            to see spam signals and next steps.
-          </p>
-          <Button asChild>
-            <Link href="/check">Check a number</Link>
-          </Button>
-        </div>
+        <DashboardNewCheckCta />
       ) : (
         <ClaimsDashboard dashboard={dashboard} />
       )}
