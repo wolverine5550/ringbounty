@@ -1,7 +1,18 @@
 import Link from "next/link";
 
 import { FirmLeadRowActions } from "@/components/firms/firm-lead-row-actions";
+import { FirmLeadStatusActions } from "@/components/firms/firm-lead-status-actions";
 import type { FirmLeadListRow } from "@/lib/firms/apply-firm-lead-filters";
+
+function formatStatusDate(iso: string | null): string | null {
+  if (!iso) {
+    return null;
+  }
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+}
 
 function formatUsd(cents: number | null): string {
   if (cents == null) return "—";
@@ -57,7 +68,14 @@ export function FirmLeadsTable({
             const isAssigned = row.assigned_firm_id === firmId;
             const isPool = row.assigned_firm_id == null;
             const showPii =
-              isAssigned && row.status === "accepted" && row.consumer_email;
+              isAssigned &&
+              ["accepted", "contacted", "retained", "closed"].includes(row.status) &&
+              row.consumer_email;
+            const statusDate =
+              formatStatusDate(row.closed_at) ??
+              formatStatusDate(row.retained_at) ??
+              formatStatusDate(row.contacted_at) ??
+              formatStatusDate(row.accepted_at);
 
             return (
               <tr key={row.id} className="border-b last:border-0">
@@ -69,7 +87,12 @@ export function FirmLeadsTable({
                   {row.claim_strength ?? "—"}
                 </td>
                 <td className="px-3 py-2">{formatUsd(value)}</td>
-                <td className="px-3 py-2 capitalize">{row.status}</td>
+                <td className="px-3 py-2">
+                  <span className="capitalize">{row.status}</span>
+                  {statusDate ? (
+                    <p className="text-xs text-muted-foreground">{statusDate}</p>
+                  ) : null}
+                </td>
                 <td className="px-3 py-2">
                   {showPii ? (
                     <div className="space-y-0.5">
@@ -102,13 +125,20 @@ export function FirmLeadsTable({
                   )}
                 </td>
                 <td className="px-3 py-2 text-right">
-                  <FirmLeadRowActions
-                    leadId={row.id}
-                    isPool={isPool}
-                    status={row.status}
-                    leadFeeCents={leadFeeCents}
-                    stripeChargesEnabled={stripeChargesEnabled}
-                  />
+                  <div className="flex flex-col items-end gap-2">
+                    <FirmLeadRowActions
+                      leadId={row.id}
+                      isPool={isPool}
+                      status={row.status}
+                      leadFeeCents={leadFeeCents}
+                      stripeChargesEnabled={stripeChargesEnabled}
+                    />
+                    <FirmLeadStatusActions
+                      leadId={row.id}
+                      status={row.status}
+                      isAssigned={isAssigned}
+                    />
+                  </div>
                 </td>
               </tr>
             );

@@ -162,7 +162,7 @@ Marketing UI: [`src/components/marketing/`](src/components/marketing/). Unauthen
 | **Persistence** | On federal attestation save, [`deriveStateDncScaffoldFields`](src/lib/dnc/scaffold-state-dnc-row.ts) writes `state_dnc_applicable` + `state_dnc_state` from `public.users.state`. |
 | **Qualify UI** | [`StateDncComingSoon`](src/components/qualify/state-dnc-coming-soon.tsx) when the user's state has a registry. |
 | **`/check`** | Submit JSON includes `state_dnc` (generic “coming soon” copy; state-specific after profile is set). |
-| **Future** | [`StateDncProvider`](src/lib/dnc/state-dnc-provider.ts) interface for §13.7 per-state APIs. |
+| **§13.7 scaffold** | Per-state flags `STATE_DNC_{CODE}_ENABLED` ([`state-dnc-flags.ts`](src/lib/dnc/state-dnc-flags.ts)); lookup orchestration ([`run-state-dnc-lookup.ts`](src/lib/dnc/run-state-dnc-lookup.ts)) + persist ([`persist-state-dnc-lookup.ts`](src/lib/dnc/persist-state-dnc-lookup.ts)). Spike: [`docs/spikes/20260517300000-state-dnc-integrations.md`](docs/spikes/20260517300000-state-dnc-integrations.md). **No state API shipped** — flags stay off until vendor + counsel. |
 
 **Phase 6.4 — company identification:**
 
@@ -189,7 +189,9 @@ Marketing UI: [`src/components/marketing/`](src/components/marketing/). Unauthen
 | **Firm §13.3** | Stripe **Connect Express** ([`constants.ts`](src/lib/stripe/connect/constants.ts)). Linked firm user → [`POST /api/firms/stripe-connect/onboarding`](src/app/api/firms/stripe-connect/onboarding/route.ts) returns Account Link URL; `law_firms.stripe_connect_*` updated by [`POST /api/webhooks/stripe`](src/app/api/webhooks/stripe/route.ts) (`account.updated`). Requires Stripe Dashboard Connect enabled + `STRIPE_*` env vars (see `.env.example`). |
 | **Firm §13.4** | In-app portal at [`/firms/leads`](src/app/firms/(portal)/leads/page.tsx) (same deploy; optional host `firms.*` via [`apply-firm-portal-proxy.ts`](src/lib/firms/apply-firm-portal-proxy.ts)). Magic-link login at `/firms/login`; [`linkFirmUserOnLogin`](src/lib/firms/link-firm-user-on-login.ts) binds `firm_users.auth_user_id` after invite ([`POST /api/firms/invite`](src/app/api/firms/invite/route.ts) when `FIRM_OPS_INVITE_SECRET` is set). **Pool model:** RLS policy `leads_select_firm_pool` + assigned rows; filters (state, min value, strength); Realtime INSERT on `leads`. |
 | **Firm §13.5** | **Accept + pay:** [`POST /api/firms/leads/[leadId]/accept`](src/app/api/firms/leads/[leadId]/accept/route.ts) → Stripe Checkout (direct charge on firm Connect account; platform `application_fee_amount` = lead fee). Webhook [`payment_intent.succeeded`](src/app/api/webhooks/stripe/route.ts) sets `leads.status=accepted` and unlocks consumer PII (`users_select_for_firm_assigned_lead`, `claim_subjects_select_for_firm_assigned_lead`). **Decline:** [`POST /api/firms/leads/[leadId]/decline`](src/app/api/firms/leads/[leadId]/decline/route.ts) → `firm_lead_declines` (per-firm hide). Requires `STRIPE_*` + completed Connect onboarding (`stripe_connect_charges_enabled`). |
-| **Next** | §13.6 firm status updates → user visibility (v0.2). |
+| **Firm §13.6** | **Status updates:** [`PATCH /api/firms/leads/[leadId]/status`](src/app/api/firms/leads/[leadId]/status/route.ts) (`contacted` / `retained` / `closed` + timestamps). Consumers see status on [`/results`](src/app/(post-check)/results/page.tsx) via `leads_select_consumer_own`. **Reminder cron:** [`POST /api/cron/firm-lead-status-reminder`](src/app/api/cron/firm-lead-status-reminder/route.ts) with `Authorization: Bearer $CRON_SECRET` (5+ days in `accepted` with no update). |
+| **§13.7** | State DNC spike + per-state env flags + `dnc_check_results` normalization scaffold ([`docs/spikes/20260517300000-state-dnc-integrations.md`](docs/spikes/20260517300000-state-dnc-integrations.md)). Enable one state at a time after real `StateDncProvider` + legal sign-off. |
+| **Next** | §13.8 disputes placeholder. |
 
 **Phase 6.5 — registered agent lookup:**
 

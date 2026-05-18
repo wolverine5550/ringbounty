@@ -385,8 +385,10 @@ export type Database = {
           estimated_value_low_cents: number | null
           estimated_value_realistic_cents: number | null
           evidence_pdf_url: string | null
+          firm_status_reminder_sent_at: string | null
           id: string
           lead_fee_cents: number | null
+          retained_at: string | null
           status: string
           stripe_payment_intent_id: string | null
           updated_at: string
@@ -402,12 +404,14 @@ export type Database = {
           consumer_state?: string | null
           contacted_at?: string | null
           created_at?: string
+          firm_status_reminder_sent_at?: string | null
           estimated_value_high_cents?: number | null
           estimated_value_low_cents?: number | null
           estimated_value_realistic_cents?: number | null
           evidence_pdf_url?: string | null
           id?: string
           lead_fee_cents?: number | null
+          retained_at?: string | null
           status?: string
           stripe_payment_intent_id?: string | null
           updated_at?: string
@@ -427,8 +431,10 @@ export type Database = {
           estimated_value_low_cents?: number | null
           estimated_value_realistic_cents?: number | null
           evidence_pdf_url?: string | null
+          firm_status_reminder_sent_at?: string | null
           id?: string
           lead_fee_cents?: number | null
+          retained_at?: string | null
           status?: string
           stripe_payment_intent_id?: string | null
           updated_at?: string

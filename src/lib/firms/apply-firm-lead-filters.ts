@@ -13,6 +13,10 @@ export type FirmLeadListRow = {
   consumer_email: string | null;
   consumer_full_name: string | null;
   evidence_pdf_url: string | null;
+  accepted_at: string | null;
+  contacted_at: string | null;
+  retained_at: string | null;
+  closed_at: string | null;
 };
 
 /**

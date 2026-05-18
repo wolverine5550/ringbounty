@@ -1227,25 +1227,25 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 
 ### 13.6 Firm status updates → user visibility
 
-- [ ] **13.6.1** Firm UI: mark `contacted`, `retained`, `closed` with dates.
-- [ ] **13.6.2** RLS allows consumer to read status fields on own lead.
-- [ ] **13.6.3** PRD: reminder after 5 days if no status — email cron or Edge scheduled function.
+- [x] **13.6.1** Firm UI: mark `contacted`, `retained`, `closed` with dates. <!-- done: `firm-lead-status-actions.tsx`, `PATCH /api/firms/leads/[leadId]/status`, `update-firm-lead-status.ts`, `retained_at` migration -->
+- [x] **13.6.2** RLS allows consumer to read status fields on own lead. <!-- done: existing `leads_select_consumer_own`; `AttorneyLeadStatusPanel` on `/results` -->
+- [x] **13.6.3** PRD: reminder after 5 days if no status — email cron or Edge scheduled function. <!-- done: `POST /api/cron/firm-lead-status-reminder`, `send-firm-lead-status-reminders.ts`, `CRON_SECRET` -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README §13.6 -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG 2026-05-17 §13.6 -->
 
 ### 13.7 State DNC integrations
 
-- [ ] **13.7.1** Per-state spike checklist (IN, TX, WY, CO, LA, MS, MO, OK, OR, PA, TN).
-- [ ] **13.7.2** Normalize into `dnc_check_results` fields per state.
-- [ ] **13.7.3** Feature flags per state to ship incrementally.
+- [x] **13.7.1** Per-state spike checklist (IN, TX, WY, CO, LA, MS, MO, OK, OR, PA, TN). <!-- done: `docs/spikes/20260517300000-state-dnc-integrations.md` -->
+- [x] **13.7.2** Normalize into `dnc_check_results` fields per state. <!-- done: `normalize-state-dnc-lookup.ts`, `persist-state-dnc-lookup.ts`, `run-state-dnc-lookup.ts` -->
+- [x] **13.7.3** Feature flags per state to ship incrementally. <!-- done: `state-dnc-flags.ts`, `resolve-state-dnc-provider.ts`, `.env.example` -->
 
 
 **Docs — this subsection**
-- [ ] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow.
-- [ ] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip).
+- [x] Update `README.md` if anything here changed setup, commands, user flows, or developer workflow. <!-- done: README §13.7 -->
+- [x] Update `CHANGELOG.md` with a short entry when the change is user-facing or notable for infra/tooling (otherwise note "infra / chore only" in the PR or skip). <!-- done: CHANGELOG 2026-05-17 §13.7 -->
 
 ### 13.8 Disputes placeholder
 
@@ -1319,7 +1319,7 @@ Track resolutions here by checking items off and adding `<!-- done: decision rec
 - [x] **Federal DNC / FTC** — **Attestation-only** for registry status (no SAN/vendor scrub for claim scoring unless counsel approves). FTC registry access certified only for TSR / preventing telemarketing calls ([Q&A #13](https://www.ftc.gov/business-guidance/resources/qa-telemarketers-sellers-about-dnc-provisions-tsr-0)); RealPhoneValidation-style APIs still require SAN and same purpose limits. Spike: [`docs/spikes/20260516190000-federal-dnc-access.md`](docs/spikes/20260516190000-federal-dnc-access.md).
 - [ ] **Nomorobo + Twilio at launch** — Both enabled by default when keys present? Pricing / rate limits; storage of raw responses under Nomorobo / Twilio ToS (§5.2 / §5.3).
 - [ ] **OpenCorporates** — Pricing tier, monthly cap, behavior when cap hit (queue vs fail vs manual-only).
-- [ ] **State DNC APIs** — Per-state reality (API vs scrape vs none); order of rollout.
+- [x] **State DNC APIs** — Per-state reality (API vs scrape vs none); order of rollout. <!-- done: spike `docs/spikes/20260517300000-state-dnc-integrations.md`; recommend CO, IN, TX, PA first after legal -->
 - [ ] **FTC consumer complaint lookup** — Allowed use for company identification; implementation approach.
 
 

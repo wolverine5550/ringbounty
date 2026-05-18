@@ -16,6 +16,10 @@ const sample: FirmLeadListRow[] = [
     consumer_email: null,
     consumer_full_name: null,
     evidence_pdf_url: null,
+    accepted_at: null,
+    contacted_at: null,
+    retained_at: null,
+    closed_at: null,
   },
   {
     id: "2",
@@ -30,6 +34,10 @@ const sample: FirmLeadListRow[] = [
     consumer_email: null,
     consumer_full_name: null,
     evidence_pdf_url: null,
+    accepted_at: null,
+    contacted_at: null,
+    retained_at: null,
+    closed_at: null,
   },
 ];
 

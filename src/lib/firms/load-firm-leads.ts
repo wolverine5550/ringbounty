@@ -20,6 +20,10 @@ type LeadSelectRow = {
   created_at: string;
   consumer_state: string | null;
   evidence_pdf_url: string | null;
+  accepted_at: string | null;
+  contacted_at: string | null;
+  retained_at: string | null;
+  closed_at: string | null;
   users: LeadUserJoin | LeadUserJoin[] | null;
 };
 
@@ -33,7 +37,7 @@ export async function loadFirmLeads(
   const { data, error } = await supabase
     .from("leads")
     .select(
-      "id, status, claim_strength, estimated_value_realistic_cents, estimated_value_low_cents, violation_type, assigned_firm_id, created_at, consumer_state, evidence_pdf_url, users(email, full_name)",
+      "id, status, claim_strength, estimated_value_realistic_cents, estimated_value_low_cents, violation_type, assigned_firm_id, created_at, consumer_state, evidence_pdf_url, accepted_at, contacted_at, retained_at, closed_at, users(email, full_name)",
     )
     .order("created_at", { ascending: false })
     .limit(200);
@@ -59,6 +63,10 @@ export async function loadFirmLeads(
       consumer_email: userJoin?.email ?? null,
       consumer_full_name: userJoin?.full_name ?? null,
       evidence_pdf_url: typed.evidence_pdf_url,
+      accepted_at: typed.accepted_at ?? null,
+      contacted_at: typed.contacted_at ?? null,
+      retained_at: typed.retained_at ?? null,
+      closed_at: typed.closed_at ?? null,
     };
   });
 }

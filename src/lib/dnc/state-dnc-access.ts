@@ -1,5 +1,5 @@
 /**
- * Phase 6.3.2 — State DNC status for API responses (no automated lookup in v0.1).
+ * Phase 6.3.2 / 13.7 — State DNC status for API responses.
  */
 
 import {
@@ -10,13 +10,19 @@ import {
   getApplicableStateDncCode,
   deriveStateDncScaffoldFields,
 } from "@/lib/dnc/scaffold-state-dnc-row";
+import { isStateDncAutomatedCheckEnabled } from "@/lib/dnc/state-dnc-flags";
+import type { StateDncFlagsEnv } from "@/lib/dnc/state-dnc-flags";
 
-export type StateDncCheckStatus = "not_applicable" | "coming_soon" | "unknown";
+export type StateDncCheckStatus =
+  | "not_applicable"
+  | "coming_soon"
+  | "flag_enabled_pending_provider"
+  | "unknown";
 
 export type StateDncCheckSummary = {
   status: StateDncCheckStatus;
   state_code: string | null;
-  automated_check_available: false;
+  automated_check_available: boolean;
   user_message: string;
 };
 
@@ -25,15 +31,17 @@ export type StateDncCheckSummary = {
  */
 export function getStateDncCheckSummaryForUserState(
   userStateRaw: string | null | undefined,
+  env: StateDncFlagsEnv = process.env,
 ): StateDncCheckSummary {
   const fields = deriveStateDncScaffoldFields(userStateRaw);
   const applicableCode = getApplicableStateDncCode(fields);
 
   if (applicableCode) {
+    const flagEnabled = isStateDncAutomatedCheckEnabled(applicableCode, env);
     return {
-      status: "coming_soon",
+      status: flagEnabled ? "flag_enabled_pending_provider" : "coming_soon",
       state_code: applicableCode,
-      automated_check_available: false,
+      automated_check_available: flagEnabled,
       user_message: stateDncComingSoonMessage(applicableCode),
     };
   }

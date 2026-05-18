@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-05-17 (Phase 13.7 — State DNC integrations scaffold)
+
+- **§13.7.1:** Per-state spike checklist for eleven registry states ([`docs/spikes/20260517300000-state-dnc-integrations.md`](docs/spikes/20260517300000-state-dnc-integrations.md)) — telemarketer-scrub model; no public API confirmed.
+- **§13.7.2:** Normalize provider results into `dnc_check_results` ([`normalize-state-dnc-lookup.ts`](src/lib/dnc/normalize-state-dnc-lookup.ts), [`persist-state-dnc-lookup.ts`](src/lib/dnc/persist-state-dnc-lookup.ts)); triggered after federal attestation when applicable ([`run-state-dnc-lookup.ts`](src/lib/dnc/run-state-dnc-lookup.ts)).
+- **§13.7.3:** Per-state feature flags `STATE_DNC_{CODE}_ENABLED` ([`state-dnc-flags.ts`](src/lib/dnc/state-dnc-flags.ts), `.env.example`). Default off; +10 scoring unchanged until lookup persists `state_dnc_registered: true`.
+
+## 2026-05-17 (Phase 13.6 — Firm status updates → user visibility)
+
+- **§13.6.1:** Firm inbox actions to mark leads `contacted`, `retained`, or `closed` with timestamps ([`update-firm-lead-status.ts`](src/lib/firms/update-firm-lead-status.ts), [`PATCH /api/firms/leads/[leadId]/status`](src/app/api/firms/leads/[leadId]/status/route.ts), [`firm-lead-status-actions.tsx`](src/components/firms/firm-lead-status-actions.tsx)). Migration adds `retained_at` + RLS `leads_update_firm_assigned_status` ([`20260517230000_firm_lead_status_updates.sql`](supabase/migrations/20260517230000_firm_lead_status_updates.sql)).
+- **§13.6.2:** Consumers see referral status on `/results` ([`AttorneyLeadStatusPanel`](src/components/results/attorney-lead-status-panel.tsx), [`load-consumer-lead-status.ts`](src/lib/leads/load-consumer-lead-status.ts)); existing `leads_select_consumer_own` policy covers status fields.
+- **§13.6.3:** Stale `accepted` reminder cron ([`send-firm-lead-status-reminders.ts`](src/lib/firms/send-firm-lead-status-reminders.ts), [`POST /api/cron/firm-lead-status-reminder`](src/app/api/cron/firm-lead-status-reminder/route.ts)); set `CRON_SECRET` and schedule daily.
+
 ## 2026-05-17 (Phase 13.5 — Lead accept and payment)
 
 - **§13.5.1:** Accept button → Stripe Checkout on firm Connect account ([`create-lead-accept-checkout-session.ts`](src/lib/stripe/connect/create-lead-accept-checkout-session.ts)); direct charge with `application_fee_amount` (platform lead fee). APIs: [`POST /api/firms/leads/[leadId]/accept`](src/app/api/firms/leads/[leadId]/accept/route.ts), [`release-payment`](src/app/api/firms/leads/[leadId]/release-payment/route.ts) on cancel.

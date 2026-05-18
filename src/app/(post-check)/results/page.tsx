@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { PostCheckPageFallback } from "@/components/post-check/post-check-page-fallback";
+import { AttorneyLeadStatusPanel } from "@/components/results/attorney-lead-status-panel";
 import { AttorneyReferralCta } from "@/components/results/attorney-referral-cta";
 import { AttorneySharingChecklist } from "@/components/results/attorney-sharing-checklist";
 import { EmailCaptureModal } from "@/components/email-capture-modal";
@@ -12,6 +13,7 @@ import { ResultsValuationPanel } from "@/components/results/results-valuation-pa
 import { SolWarningBanner } from "@/components/results/sol-warning-banner";
 import { enforcePostCheckAccess } from "@/lib/claims/enforce-post-check-access";
 import { loadResultsPageContext } from "@/lib/claims/load-results-page-context";
+import { loadConsumerLeadStatus } from "@/lib/leads/load-consumer-lead-status";
 import { RESULTS_PATH } from "@/lib/claims/gated-routes";
 import { buildCanonicalMetadata } from "@/lib/seo/canonical-metadata";
 import { createClient } from "@/lib/supabase/server";
@@ -53,13 +55,16 @@ async function ResultsPageContent({ searchParams }: ResultsPageProps) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const results =
+  const [results, consumerLead] =
     claimId && user?.id
-      ? await loadResultsPageContext(supabase, {
-          claimId,
-          userId: user.id,
-        })
-      : null;
+      ? await Promise.all([
+          loadResultsPageContext(supabase, {
+            claimId,
+            userId: user.id,
+          }),
+          loadConsumerLeadStatus(supabase, { claimId, userId: user.id }),
+        ])
+      : [null, null];
 
   return (
     <div className="mx-auto flex min-h-svh max-w-lg flex-col gap-6 p-8">
@@ -89,6 +94,8 @@ async function ResultsPageContent({ searchParams }: ResultsPageProps) {
           {results.effectiveClaimStrength !== "ineligible" ? (
             <AttorneySharingChecklist />
           ) : null}
+
+          {consumerLead ? <AttorneyLeadStatusPanel lead={consumerLead} /> : null}
 
           <section className="flex flex-col gap-3">
             <h2 className="text-sm font-medium">Numbers on this claim</h2>

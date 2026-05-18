@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { validateFederalDncAttestation } from "@/lib/dnc/federal-dnc-attestation-gate";
 import { persistFederalDncAttestation } from "@/lib/dnc/persist-federal-dnc-attestation";
 import { getStateDncCheckSummaryForUserState } from "@/lib/dnc/state-dnc-access";
+import { runStateDncLookupIfEnabled } from "@/lib/dnc/run-state-dnc-lookup";
 import { uploadFederalDncConfirmationScreenshot } from "@/lib/dnc/upload-federal-dnc-evidence";
 import { createClient } from "@/lib/supabase/server";
 
@@ -178,6 +179,13 @@ export async function POST(request: NextRequest) {
       attestation: validated.value,
       earliestCallDate,
       confirmationScreenshotPath,
+      userState: profile?.state ?? null,
+    });
+
+    await runStateDncLookupIfEnabled(supabase, {
+      claimId: subject.claim_id,
+      claimSubjectId: subject.id,
+      phoneNumberNormalized: subject.phone_number_normalized,
       userState: profile?.state ?? null,
     });
 
