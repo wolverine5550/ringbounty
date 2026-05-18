@@ -1,11 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  extractUsPhoneDigits,
+  formatUsPhoneMask,
+} from "@/lib/check/us-phone";
 import {
   DONOTCALL_GOV_URL,
   FEDERAL_DNC_ATTESTATION_REGISTERED_PROMPT,
@@ -14,15 +18,22 @@ import {
   FEDERAL_DNC_GATE_BLOCKED_MESSAGE,
   FEDERAL_DNC_OPTIONAL_SCREENSHOT_COPY,
   FEDERAL_DNC_OPTIONAL_SCREENSHOT_LABEL,
+  FEDERAL_DNC_RECEIVING_LINE_NOTE,
+  FEDERAL_DNC_RECEIVING_PHONE_HELP,
+  FEDERAL_DNC_RECEIVING_PHONE_LABEL,
   FEDERAL_DNC_REGISTRATION_DATE_HELP,
+  FEDERAL_DNC_SCREENED_CALLER_LABEL,
   FEDERAL_DNC_SELF_CHECK_INSTRUCTIONS,
 } from "@/lib/constants/federal-dnc-attestation";
 import { canProceedPastFederalDncGate } from "@/lib/dnc/federal-dnc-attestation-gate";
+import { parseReceivingPhoneInput } from "@/lib/users/receiving-phone";
 
 export type FederalDncAttestationFormProps = {
   claimSubjectId: string;
-  /** Masked display for context (e.g. (555) 123-4567). */
-  phoneDisplay?: string | null;
+  /** Caller/spammer number from `/check` — not the consumer receiving line. */
+  screenedCallerDisplay?: string | null;
+  /** Saved on `public.users` from a prior claim. */
+  initialReceivingPhoneDisplay?: string | null;
   initialRegistered?: boolean | null;
   initialRegistrationDate?: string | null;
   /** Existing Storage path when user already uploaded (§6.2.4). */
@@ -34,17 +45,24 @@ export type FederalDncAttestationFormProps = {
  */
 export function FederalDncAttestationForm({
   claimSubjectId,
-  phoneDisplay,
+  screenedCallerDisplay = null,
+  initialReceivingPhoneDisplay = null,
   initialRegistered = null,
   initialRegistrationDate = null,
   initialScreenshotPath = null,
 }: FederalDncAttestationFormProps) {
   const router = useRouter();
+  const receivingPhoneInputId = useId();
   const [registered, setRegistered] = useState<boolean | null>(
     initialRegistered,
   );
   const [registrationDate, setRegistrationDate] = useState(
     initialRegistrationDate ?? "",
+  );
+  const [receivingDigits, setReceivingDigits] = useState(() =>
+    initialReceivingPhoneDisplay
+      ? extractUsPhoneDigits(initialReceivingPhoneDisplay)
+      : "",
   );
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -56,15 +74,26 @@ export function FederalDncAttestationForm({
     initialScreenshotPath,
   );
 
-  const canSubmit = canProceedPastFederalDncGate({
-    federalDncRegistered: registered,
-    federalDncRegistrationDate: registrationDate,
-  });
+  const receivingPhoneValid =
+    parseReceivingPhoneInput(receivingDigits).ok ||
+    (Boolean(initialReceivingPhoneDisplay) && receivingDigits.length === 0);
+
+  const canSubmit =
+    canProceedPastFederalDncGate({
+      federalDncRegistered: registered,
+      federalDncRegistrationDate: registrationDate,
+    }) && receivingPhoneValid;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSubmit || registered === null) {
       setSubmitError(FEDERAL_DNC_GATE_BLOCKED_MESSAGE);
+      return;
+    }
+
+    const receivingParsed = parseReceivingPhoneInput(receivingDigits);
+    if (!receivingParsed.ok && !initialReceivingPhoneDisplay) {
+      setSubmitError(receivingParsed.error);
       return;
     }
 
@@ -78,6 +107,9 @@ export function FederalDncAttestationForm({
       if (registered && registrationDate) {
         formData.append("federal_dnc_registration_date", registrationDate);
       }
+      if (receivingParsed.ok) {
+        formData.append("receiving_phone", receivingParsed.value.display);
+      }
       if (screenshotFile) {
         formData.append("federal_dnc_confirmation_screenshot", screenshotFile);
       }
@@ -90,6 +122,7 @@ export function FederalDncAttestationForm({
       const body = (await res.json()) as {
         error?: string;
         federal_dnc_confirmation_screenshot_path?: string | null;
+        receiving_phone?: string | null;
       };
       if (!res.ok) {
         setSubmitError(body.error ?? "Could not save your answers.");
@@ -97,6 +130,9 @@ export function FederalDncAttestationForm({
       }
 
       setSaved(true);
+      if (body.receiving_phone) {
+        setReceivingDigits(extractUsPhoneDigits(body.receiving_phone));
+      }
       if (body.federal_dnc_confirmation_screenshot_path) {
         setSavedScreenshotPath(body.federal_dnc_confirmation_screenshot_path);
         setScreenshotFile(null);
@@ -115,11 +151,15 @@ export function FederalDncAttestationForm({
         <p className="text-muted-foreground text-sm">
           {FEDERAL_DNC_ATTESTATION_REQUIRED_MESSAGE}
         </p>
-        {phoneDisplay ? (
+        {screenedCallerDisplay ? (
           <p className="text-sm">
-            Number checked: <span className="font-medium">{phoneDisplay}</span>
+            {FEDERAL_DNC_SCREENED_CALLER_LABEL}{" "}
+            <span className="font-medium">{screenedCallerDisplay}</span>
           </p>
         ) : null}
+        <p className="text-muted-foreground text-sm leading-relaxed">
+          {FEDERAL_DNC_RECEIVING_LINE_NOTE}
+        </p>
         <p className="text-muted-foreground text-sm">
           {FEDERAL_DNC_SELF_CHECK_INSTRUCTIONS}{" "}
           <a
@@ -130,6 +170,27 @@ export function FederalDncAttestationForm({
           >
             donotcall.gov
           </a>
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor={receivingPhoneInputId}>
+          {FEDERAL_DNC_RECEIVING_PHONE_LABEL}
+        </Label>
+        <Input
+          id={receivingPhoneInputId}
+          type="tel"
+          inputMode="numeric"
+          autoComplete="tel"
+          placeholder="(555) 123-4567"
+          value={formatUsPhoneMask(receivingDigits)}
+          onChange={(e) => {
+            setReceivingDigits(extractUsPhoneDigits(e.target.value).slice(0, 10));
+          }}
+          required={!initialReceivingPhoneDisplay}
+        />
+        <p className="text-muted-foreground text-xs">
+          {FEDERAL_DNC_RECEIVING_PHONE_HELP}
         </p>
       </div>
 
@@ -194,8 +255,8 @@ export function FederalDncAttestationForm({
         </p>
         {savedScreenshotPath && !screenshotFile ? (
           <p className="text-success text-xs">
-            A screenshot is already saved for this number. Uploading a new
-            file will replace it.
+            A confirmation file is already saved on your account. Uploading a
+            new file will replace it for this claim.
           </p>
         ) : null}
       </div>

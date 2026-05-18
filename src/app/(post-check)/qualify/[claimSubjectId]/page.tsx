@@ -2,12 +2,13 @@ import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { PostCheckPageFallback } from "@/components/post-check/post-check-page-fallback";
-import { FederalDncAttestationForm } from "@/components/qualify/federal-dnc-attestation-form";
+import { FederalDncAttestationGate } from "@/components/qualify/federal-dnc-attestation-gate";
 import { QualifyWizardShell } from "@/components/qualify/qualify-wizard-shell";
 import { StateDncComingSoon } from "@/components/qualify/state-dnc-coming-soon";
 import { enforcePostCheckAccess } from "@/lib/claims/enforce-post-check-access";
 import { buildLoginHrefForClaim } from "@/lib/claims/gated-routes";
 import { getFederalDncScreenshotPathFromMetadata } from "@/lib/dnc/federal-dnc-evidence";
+import { loadPriorFederalDncAttestationForUser } from "@/lib/dnc/load-prior-federal-dnc-attestation";
 import {
   deriveStateDncScaffoldFields,
   getApplicableStateDncCode,
@@ -29,6 +30,7 @@ import { loadQualifyScreen3Answers } from "@/lib/qualify/screen-3-call-details";
 import { loadQualifyScreen4Answers } from "@/lib/qualify/screen-4-company-identification";
 import { loadQualifyScreen5Answers } from "@/lib/qualify/screen-5-line-type";
 import { createClient } from "@/lib/supabase/server";
+import { loadUserReceivingPhone } from "@/lib/users/receiving-phone";
 
 type QualifyPageProps = {
   params: Promise<{ claimSubjectId: string }>;
@@ -142,17 +144,26 @@ async function QualifyPageContent({
   }
 
   if (!federalDncComplete) {
+    const [priorAttestation, savedReceivingPhone] = await Promise.all([
+      loadPriorFederalDncAttestationForUser(supabase, {
+        userId: user.id,
+        excludeClaimSubjectId: pageContext.subject.id,
+      }),
+      loadUserReceivingPhone(supabase, user.id),
+    ]);
+
     return (
-      <QualifyPageLayout
-        title="National Do Not Call Registry"
-        subtitle="Before the qualification wizard — confirm your registry status (Phase 6.2)."
-      >
+      <QualifyPageLayout title="National Do Not Call Registry">
         {applicableStateCode ? (
           <StateDncComingSoon stateCode={applicableStateCode} />
         ) : null}
-        <FederalDncAttestationForm
+        <FederalDncAttestationGate
           claimSubjectId={pageContext.subject.id}
-          phoneDisplay={pageContext.subject.phone_number}
+          claimId={claimId}
+          hasPriorAttestationForPhone={priorAttestation !== null}
+          savedReceivingPhoneDisplay={savedReceivingPhone?.display ?? null}
+          screenedCallerDisplay={pageContext.subject.phone_number}
+          initialReceivingPhoneDisplay={savedReceivingPhone?.display ?? null}
           initialRegistered={dncRow?.federal_dnc_registered ?? null}
           initialRegistrationDate={
             dncRow?.federal_dnc_registration_date ?? null
@@ -236,14 +247,16 @@ function QualifyPageLayout({
   children,
 }: {
   title: string;
-  subtitle: string;
+  subtitle?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="mx-auto flex min-h-svh max-w-lg flex-col gap-6 p-8">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-        <p className="text-muted-foreground text-sm">{subtitle}</p>
+        {subtitle ? (
+          <p className="text-muted-foreground text-sm">{subtitle}</p>
+        ) : null}
       </div>
       {children}
     </div>

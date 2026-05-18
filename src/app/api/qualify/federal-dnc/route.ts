@@ -6,6 +6,11 @@ import { getStateDncCheckSummaryForUserState } from "@/lib/dnc/state-dnc-access"
 import { runStateDncLookupIfEnabled } from "@/lib/dnc/run-state-dnc-lookup";
 import { uploadFederalDncConfirmationScreenshot } from "@/lib/dnc/upload-federal-dnc-evidence";
 import { createClient } from "@/lib/supabase/server";
+import {
+  loadUserReceivingPhone,
+  parseReceivingPhoneInput,
+  persistUserReceivingPhone,
+} from "@/lib/users/receiving-phone";
 
 const SCREENSHOT_FIELD = "federal_dnc_confirmation_screenshot";
 
@@ -14,6 +19,7 @@ type ParsedAttestationBody = {
   federalDncRegistered: boolean | null;
   registrationDateRaw: string;
   earliestCallDate: string | null;
+  receivingPhoneRaw: string;
   screenshotFile: File | null;
 };
 
@@ -48,12 +54,17 @@ async function parseRequestBody(
       screenshotEntry instanceof File && screenshotEntry.size > 0
         ? screenshotEntry
         : null;
+    const receivingPhoneRaw =
+      typeof formData.get("receiving_phone") === "string"
+        ? String(formData.get("receiving_phone")).trim()
+        : "";
 
     return {
       claimSubjectId,
       federalDncRegistered,
       registrationDateRaw,
       earliestCallDate,
+      receivingPhoneRaw,
       screenshotFile,
     };
   }
@@ -86,6 +97,10 @@ async function parseRequestBody(
       typeof record.earliest_call_date === "string"
         ? record.earliest_call_date.trim() || null
         : null,
+    receivingPhoneRaw:
+      typeof record.receiving_phone === "string"
+        ? record.receiving_phone.trim()
+        : "",
     screenshotFile: null,
   };
 }
@@ -114,6 +129,7 @@ export async function POST(request: NextRequest) {
     federalDncRegistered,
     registrationDateRaw,
     earliestCallDate,
+    receivingPhoneRaw,
     screenshotFile,
   } = parsed;
 
@@ -146,6 +162,29 @@ export async function POST(request: NextRequest) {
 
   if (!subject?.id || !subject.claim_id || !subject.phone_number_normalized) {
     return NextResponse.json({ error: "Claim subject not found" }, { status: 404 });
+  }
+
+  const savedReceivingPhone = await loadUserReceivingPhone(supabase, user.id);
+
+  let receivingPhone = savedReceivingPhone;
+  if (receivingPhoneRaw) {
+    const parsedReceiving = parseReceivingPhoneInput(receivingPhoneRaw);
+    if (!parsedReceiving.ok) {
+      return NextResponse.json({ error: parsedReceiving.error }, { status: 400 });
+    }
+    receivingPhone = parsedReceiving.value;
+    await persistUserReceivingPhone(supabase, {
+      userId: user.id,
+      phone: receivingPhone,
+    });
+  } else if (!receivingPhone) {
+    return NextResponse.json(
+      {
+        error:
+          "Enter the phone line where you received these unwanted calls.",
+      },
+      { status: 400 },
+    );
   }
 
   const { data: profile } = await supabase
@@ -197,6 +236,7 @@ export async function POST(request: NextRequest) {
       federal_dnc_matrix_tier: result.matrixTier,
       federal_dnc_matrix_points: result.matrixPoints,
       federal_dnc_confirmation_screenshot_path: confirmationScreenshotPath,
+      receiving_phone: receivingPhone.display,
       state_dnc: stateDnc,
     });
   } catch (e) {

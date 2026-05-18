@@ -36,6 +36,34 @@ export const FEDERAL_DNC_REGISTRATION_DATE_HELP =
 export const FEDERAL_DNC_GATE_BLOCKED_MESSAGE =
   "Please confirm your National Do Not Call Registry status before continuing.";
 
+/** When the same account already attested DNC for this phone on another claim. */
+export const FEDERAL_DNC_REUSE_HEADLINE =
+  "Use your saved registry answer?";
+
+export const FEDERAL_DNC_REUSE_CONTINUE_LABEL = "Continue with saved answer";
+
+export const FEDERAL_DNC_REUSE_ANSWER_AGAIN_LABEL =
+  "Answer again for this claim";
+
+/** Label for the spammer number screened on `/check` (not the DNC receiving line). */
+export const FEDERAL_DNC_SCREENED_CALLER_LABEL =
+  "Caller number you screened on RingBounty:";
+
+/** Input label for the consumer receiving line (saved on account). */
+export const FEDERAL_DNC_RECEIVING_PHONE_LABEL =
+  "Your phone that received these calls (cell or home):";
+
+export const FEDERAL_DNC_RECEIVING_PHONE_HELP =
+  "We save this on your account so you do not re-enter it for each new spammer you screen.";
+
+/** Clarifies federal DNC is about the line that received calls, not the screened caller. */
+export const FEDERAL_DNC_RECEIVING_LINE_NOTE =
+  "National Do Not Call Registry status applies to your receiving line below, not the caller number screened above.";
+
+export function buildFederalDncReuseBodyWithPhone(receivingPhoneDisplay: string): string {
+  return `You already confirmed National Do Not Call Registry status for ${receivingPhoneDisplay} on another claim. We can apply the same answer to this claim.`;
+}
+
 /** §6.2.4 — Optional FTC confirmation email screenshot or PDF (evidence only). */
 export const FEDERAL_DNC_OPTIONAL_SCREENSHOT_COPY =
   "Optional: Upload a screenshot or PDF of your FTC donotcall.gov confirmation email (JPEG, PNG, WebP, GIF, or PDF; max 5 MB). RingBounty does not verify uploads as legal proof. Not required to continue.";

@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-05-18 (Federal DNC — receiving line profile + account reuse)
+
+### Receiving phone vs screened caller
+
+- **Product fix:** Federal DNC attestation is about the **consumer’s receiving line** (cell/home), not the **spammer number** screened on `/check`. The qualify gate now labels the screened caller separately and collects **your phone that received these calls** ([`federal-dnc-attestation-form.tsx`](src/components/qualify/federal-dnc-attestation-form.tsx), copy in [`federal-dnc-attestation.ts`](src/lib/constants/federal-dnc-attestation.ts)).
+- **Profile persistence:** `public.users.receiving_phone` + `receiving_phone_normalized` (migration [`20260518173000_users_receiving_phone.sql`](supabase/migrations/20260518173000_users_receiving_phone.sql)); helpers in [`receiving-phone.ts`](src/lib/users/receiving-phone.ts). Saved on [`POST /api/qualify/federal-dnc`](src/app/api/qualify/federal-dnc/route.ts) and optional capture on reuse ([`POST /api/qualify/federal-dnc/reuse-prior`](src/app/api/qualify/federal-dnc/reuse-prior/route.ts)).
+- **Account-level reuse:** Prior federal DNC answers (yes/no, registration date, optional FTC PDF) reuse across **any new claim** on the same account ([`load-prior-federal-dnc-attestation.ts`](src/lib/dnc/load-prior-federal-dnc-attestation.ts), [`FederalDncAttestationGate`](src/components/qualify/federal-dnc-attestation-gate.tsx), [`reuse-federal-dnc-attestation-from-prior.ts`](src/lib/dnc/reuse-federal-dnc-attestation-from-prior.ts)) — not keyed to `claim_subjects.phone_number_normalized`.
+- **UX:** Removed internal “Phase 6.2” subtitle on the federal DNC qualify page; reuse panel shows saved receiving line when known. Docs: [`check_cadence.md`](docs/check_cadence.md).
+
+## 2026-05-18 (Pre-launch — Results qualify gate + signed-in dashboard checks)
+
+### Results and attorney CTA
+
+- **Attorney connect gated on qualify** — [`canShowAttorneyReferralCta`](src/lib/claims/results-qualify-gate.ts) requires `claims.status === 'qualified'` before `/results` shows attorney referral; [`QualifyContinuationCta`](src/components/results/qualify-continuation-cta.tsx) when not qualified. Evidence checklist stays on [`/attorney-connect`](src/app/(post-check)/attorney-connect/page.tsx) only.
+- **Results layout** — Strength and per-number cards side-by-side ([`ResultsStrengthAndSubjects`](src/components/results/results-strength-and-subjects.tsx)); DNC summary hidden until qualification complete (`showDncSummary` on results page).
+
+### Signed-in check submit
+
+- **Dashboard multi-check** — Authenticated [`POST /api/check/submit`](src/app/api/check/submit/route.ts) skips anonymous “free check” 403; creates a **new claim per submit** via [`create-claim-for-authenticated-check.ts`](src/lib/claims/create-claim-for-authenticated-check.ts) (up to `CHECK_MAX_PHONE_ROWS` numbers).
+
 ## 2026-05-18 (Pre-launch — Signed-in dashboard + post-login home)
 
 - **Post-login redirect** — Magic link callback ([`auth/callback`](src/app/auth/callback/route.ts)) defaults to [`/dashboard`](src/app/dashboard/page.tsx) ([`resolvePostLoginRedirectPath`](src/lib/claims/post-login-redirect.ts)). Legacy [`/protected`](src/app/protected/page.tsx) redirects there too.
