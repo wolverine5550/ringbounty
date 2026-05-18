@@ -4,7 +4,11 @@ import {
   ANONYMOUS_SESSION_COOKIE_NAME,
   isValidAnonymousSessionId,
 } from "@/lib/anonymous-session";
-import { CHECK_FREE_LOOKUP_MAX_PHONES } from "@/lib/check/constants";
+import {
+  CHECK_FREE_LOOKUP_MAX_PHONES,
+  CHECK_MAX_PHONE_ROWS,
+} from "@/lib/check/constants";
+import { createClaimWithSubjectsForAuthenticatedUser } from "@/lib/claims/create-claim-for-authenticated-check";
 import { loadAnonymousDraftGateStatus } from "@/lib/claims/load-claim-query-snapshot";
 import { getFederalDncCheckSummaryForClient } from "@/lib/dnc/federal-dnc-access";
 import { getStateDncCheckSummaryForAnonymousCheck } from "@/lib/dnc/state-dnc-access";
@@ -22,6 +26,7 @@ import {
   createAdminClient,
   SupabaseAdminKeyMissingError,
 } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -30,7 +35,10 @@ type PhonePayloadError = Extract<
   { ok: false }
 >["error"];
 
-function jsonErrorForPhoneParse(error: PhonePayloadError): NextResponse {
+function jsonErrorForPhoneParse(
+  error: PhonePayloadError,
+  maxPhones: number,
+): NextResponse {
   const status = 400;
   switch (error) {
     case "invalid_body":
@@ -44,7 +52,10 @@ function jsonErrorForPhoneParse(error: PhonePayloadError): NextResponse {
     case "too_many":
       return NextResponse.json(
         {
-          error: `You can submit at most ${String(CHECK_FREE_LOOKUP_MAX_PHONES)} phone number per free check.`,
+          error:
+            maxPhones === CHECK_FREE_LOOKUP_MAX_PHONES
+              ? `You can submit at most ${String(maxPhones)} phone number per free check.`
+              : `You can submit at most ${String(maxPhones)} phone numbers per check.`,
         },
         { status },
       );
@@ -164,6 +175,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const authenticatedUserId = user?.id ?? null;
+  const maxPhones = authenticatedUserId
+    ? CHECK_MAX_PHONE_ROWS
+    : CHECK_FREE_LOOKUP_MAX_PHONES;
+
   let phonePayload: DedupedPhoneEntry[] | null = null;
 
   const text = await request.text();
@@ -203,11 +223,11 @@ export async function POST(request: NextRequest) {
 
       const parsed = parseAndDedupePhoneNumberPayload(
         rawList,
-        CHECK_FREE_LOOKUP_MAX_PHONES,
+        maxPhones,
         displayInputs,
       );
       if (!parsed.ok) {
-        return jsonErrorForPhoneParse(parsed.error);
+        return jsonErrorForPhoneParse(parsed.error, maxPhones);
       }
       phonePayload = parsed.entries;
     }
@@ -217,7 +237,7 @@ export async function POST(request: NextRequest) {
     const admin = createAdminClient();
     await assertCheckSubmissionAllowed(admin, request, raw);
 
-    if (phonePayload && phonePayload.length > 0) {
+    if (!authenticatedUserId && phonePayload && phonePayload.length > 0) {
       const existingGate = await loadAnonymousDraftGateStatus(admin, raw);
       if (existingGate && existingGate.snapshot.subjects.length > 0) {
         return NextResponse.json(
@@ -230,15 +250,27 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    let userStateCode: string | null = null;
+    if (authenticatedUserId) {
+      const { data: profile } = await admin
+        .from("users")
+        .select("state")
+        .eq("id", authenticatedUserId)
+        .maybeSingle();
+      userStateCode = profile?.state ?? null;
+    }
+
     let claimId: string | undefined;
     let claimSubjectIds: string[] | undefined;
     let numberChecks: Awaited<ReturnType<typeof runSpamChecksForPhoneList>> | undefined;
     if (phonePayload && phonePayload.length > 0) {
-      const persisted = await replaceClaimSubjectsForPhones(
-        admin,
-        raw,
-        phonePayload,
-      );
+      const persisted = authenticatedUserId
+        ? await createClaimWithSubjectsForAuthenticatedUser(
+            admin,
+            authenticatedUserId,
+            phonePayload,
+          )
+        : await replaceClaimSubjectsForPhones(admin, raw, phonePayload);
       claimId = persisted.claimId;
       claimSubjectIds = persisted.subjectIds;
       numberChecks = await runSpamChecksForPhoneList(admin, {
@@ -247,6 +279,8 @@ export async function POST(request: NextRequest) {
           phoneNumberNormalized: e.phoneNumberNormalized,
           subjectId: persisted.subjectIds[i] ?? null,
         })),
+        userStateCode,
+        anonymousSessionId: authenticatedUserId ? null : raw,
       });
     }
 

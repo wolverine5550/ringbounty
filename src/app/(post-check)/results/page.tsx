@@ -5,11 +5,10 @@ import { PostCheckPageFallback } from "@/components/post-check/post-check-page-f
 import { AttorneyLeadStatusPanel } from "@/components/results/attorney-lead-status-panel";
 import { FirmContactDisputeForm } from "@/components/results/firm-contact-dispute-form";
 import { AttorneyReferralCta } from "@/components/results/attorney-referral-cta";
-import { AttorneySharingChecklist } from "@/components/results/attorney-sharing-checklist";
+import { QualifyContinuationCta } from "@/components/results/qualify-continuation-cta";
 import { EmailCaptureModal } from "@/components/email-capture-modal";
 import { ResultsIneligiblePanel } from "@/components/results/results-ineligible-panel";
-import { ResultsStrengthHeader } from "@/components/results/results-strength-header";
-import { ResultsSubjectCard } from "@/components/results/results-subject-card";
+import { ResultsStrengthAndSubjects } from "@/components/results/results-strength-and-subjects";
 import { ResultsValuationPanel } from "@/components/results/results-valuation-panel";
 import { SolWarningBanner } from "@/components/results/sol-warning-banner";
 import { enforcePostCheckAccess } from "@/lib/claims/enforce-post-check-access";
@@ -79,13 +78,17 @@ async function ResultsPageContent({ searchParams }: ResultsPageProps) {
       : [null, null, false];
 
   return (
-    <div className="mx-auto flex min-h-svh max-w-lg flex-col gap-6 p-8">
+    <div className="mx-auto flex min-h-svh w-full max-w-3xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Your results</h1>
-        <p className="text-muted-foreground text-sm">
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+          Your results
+        </h1>
+        <p className="text-muted-foreground max-w-prose text-sm leading-relaxed">
           {results?.effectiveClaimStrength === "ineligible"
             ? "Informational claim strength based on your qualification answers. This is not legal advice."
-            : "Informational claim strength and statutory estimate ranges based on your qualification answers. This is not legal advice."}
+            : results?.isQualificationComplete
+              ? "Informational claim strength and statutory estimate ranges based on your qualification answers. This is not legal advice."
+              : "Preliminary strength from your spam-database screen. Complete the questions below for full results. This is not legal advice."}
         </p>
       </header>
 
@@ -98,14 +101,14 @@ async function ResultsPageContent({ searchParams }: ResultsPageProps) {
         <>
           {results.sol ? <SolWarningBanner sol={results.sol} /> : null}
 
-          <ResultsStrengthHeader display={results.strengthDisplay} />
+          <ResultsStrengthAndSubjects
+            strengthDisplay={results.strengthDisplay}
+            subjects={results.subjects}
+            showDncSummary={results.isQualificationComplete}
+          />
 
           {results.valuation ? (
             <ResultsValuationPanel valuation={results.valuation} />
-          ) : null}
-
-          {results.effectiveClaimStrength !== "ineligible" ? (
-            <AttorneySharingChecklist />
           ) : null}
 
           {consumerLead ? <AttorneyLeadStatusPanel lead={consumerLead} /> : null}
@@ -123,13 +126,6 @@ async function ResultsPageContent({ searchParams }: ResultsPageProps) {
             />
           ) : null}
 
-          <section className="flex flex-col gap-3">
-            <h2 className="text-sm font-medium">Numbers on this claim</h2>
-            {results.subjects.map((subject) => (
-              <ResultsSubjectCard key={subject.subjectId} subject={subject} />
-            ))}
-          </section>
-
           {results.effectiveClaimStrength === "ineligible" ? (
             <ResultsIneligiblePanel
               claimId={results.claimId}
@@ -145,7 +141,14 @@ async function ResultsPageContent({ searchParams }: ResultsPageProps) {
                   reason={results.emailCaptureReason}
                 />
               ) : null}
-              <AttorneyReferralCta context={results} />
+              {results.isQualificationComplete ? (
+                <AttorneyReferralCta context={results} />
+              ) : results.qualifyHref ? (
+                <QualifyContinuationCta
+                  qualifyHref={results.qualifyHref}
+                  claimStatus={results.claimStatus}
+                />
+              ) : null}
             </>
           )}
         </>

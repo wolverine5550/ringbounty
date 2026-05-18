@@ -10,15 +10,23 @@ const TONE_CLASSES: Record<ResultsStrengthDisplay["tone"], string> = {
 
 export type ResultsStrengthHeaderProps = {
   display: ResultsStrengthDisplay;
+  className?: string;
 };
 
 /**
  * Phase 8.4.3 — Claim-level strength band with likelihood copy.
  */
-export function ResultsStrengthHeader({ display }: ResultsStrengthHeaderProps) {
+export function ResultsStrengthHeader({
+  display,
+  className,
+}: ResultsStrengthHeaderProps) {
   return (
     <section
-      className={cn("rounded-lg border p-4", TONE_CLASSES[display.tone])}
+      className={cn(
+        "rounded-lg border p-4 lg:p-5",
+        TONE_CLASSES[display.tone],
+        className,
+      )}
       aria-labelledby="results-strength-headline"
     >
       <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide">

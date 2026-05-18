@@ -28,10 +28,10 @@ export function buildSpamSummary(row: ClaimSubjectSpamRow): string {
   return "No strong spam-database match for this number.";
 }
 
-/** One-line DNC summary for a subject card. */
+/** One-line DNC summary for a subject card (after qualification / `dnc_check_results`). */
 export function buildDncSummary(dnc: DncRowForStrength | null): string {
   if (!dnc) {
-    return "Do-not-call checks have not been recorded yet.";
+    return "Do-not-call status will appear here after you complete the qualification questions.";
   }
 
   const parts: string[] = [];

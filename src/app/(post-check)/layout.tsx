@@ -11,7 +11,7 @@ export default function PostCheckLayout({
     <>
       <ConsumerFunnelHeader />
       {children}
-      <div className="mx-auto max-w-lg px-8 pb-8">
+      <div className="mx-auto max-w-3xl px-4 pb-8 sm:px-6">
         <DisclaimerBanner variant="block" />
       </div>
     </>

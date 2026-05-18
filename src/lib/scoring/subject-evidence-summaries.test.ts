@@ -24,7 +24,7 @@ describe("buildSpamSummary (§8.4.1)", () => {
 
 describe("buildDncSummary (§8.4.1)", () => {
   it("returns placeholder when no DNC row", () => {
-    expect(buildDncSummary(null)).toContain("not been recorded");
+    expect(buildDncSummary(null)).toContain("qualification questions");
   });
 
   it("summarizes federal eligible registration", () => {

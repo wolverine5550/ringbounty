@@ -13,51 +13,81 @@ const STRENGTH_BADGE_CLASSES: Record<ResultsStrengthTone, string> = {
 
 export type ResultsSubjectCardProps = {
   subject: ResultsSubjectView;
+  /** Tighter layout when shown beside claim-level strength on `/results`. */
+  variant?: "default" | "compact";
+  /** False before qualify — DNC comes from attestation in the wizard, not spam check. */
+  showDncSummary?: boolean;
 };
 
 /**
  * Phase 8.4.1 — Per-subject evidence summary + strength / exempt badges.
  */
-export function ResultsSubjectCard({ subject }: ResultsSubjectCardProps) {
+export function ResultsSubjectCard({
+  subject,
+  variant = "default",
+  showDncSummary = true,
+}: ResultsSubjectCardProps) {
+  const isCompact = variant === "compact";
   const strengthTone = getResultsStrengthDisplay(subject.strength).tone;
 
   return (
-    <article className="flex flex-col gap-3 rounded-lg border p-4">
+    <article
+      className={cn(
+        "flex flex-col rounded-lg border bg-card/40",
+        isCompact ? "gap-2 p-3" : "gap-3 p-4",
+      )}
+    >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="flex min-w-0 flex-col gap-1">
           <h3 className="text-sm font-medium">
-            {subject.companyName ?? subject.phoneNumber ?? "Phone number on file"}
+            {subject.phoneNumber ??
+              subject.companyName ??
+              "Phone number on file"}
           </h3>
-          {subject.companyName && subject.phoneNumber ? (
-            <p className="text-muted-foreground text-xs">{subject.phoneNumber}</p>
+          {subject.companyName &&
+          subject.phoneNumber &&
+          subject.companyName !== subject.phoneNumber ? (
+            <p className="text-muted-foreground text-xs">{subject.companyName}</p>
           ) : null}
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Badge
-            variant="outline"
-            className={cn(STRENGTH_BADGE_CLASSES[strengthTone])}
-          >
-            {subject.strengthLabel}
+        {!isCompact ? (
+          <div className="flex flex-wrap gap-2">
+            <Badge
+              variant="outline"
+              className={cn(STRENGTH_BADGE_CLASSES[strengthTone])}
+            >
+              {subject.strengthLabel}
+            </Badge>
+            {subject.isExempt ? (
+              <Badge variant="secondary">Exempt</Badge>
+            ) : null}
+          </div>
+        ) : subject.isExempt ? (
+          <Badge variant="secondary" className="shrink-0">
+            Exempt
           </Badge>
-          {subject.isExempt ? (
-            <Badge variant="secondary">Exempt</Badge>
-          ) : null}
-        </div>
+        ) : null}
       </div>
 
       {subject.isExempt && subject.exemptReason ? (
         <p className="text-muted-foreground text-xs">{subject.exemptReason}</p>
       ) : null}
 
-      <dl className="flex flex-col gap-2 text-sm">
+      <dl className={cn("flex flex-col text-sm", isCompact ? "gap-1.5" : "gap-2")}>
         <div>
           <dt className="text-muted-foreground text-xs font-medium">Spam check</dt>
-          <dd className="mt-0.5">{subject.spamSummary}</dd>
+          <dd className="mt-0.5 text-xs leading-relaxed sm:text-sm">
+            {subject.spamSummary}
+          </dd>
         </div>
-        <div>
-          <dt className="text-muted-foreground text-xs font-medium">Do Not Call</dt>
-          <dd className="mt-0.5">{subject.dncSummary}</dd>
-        </div>
+        {showDncSummary ? (
+          <div>
+            <dt className="text-muted-foreground text-xs font-medium">Do Not Call</dt>
+            <dd className="mt-0.5 text-xs leading-relaxed sm:text-sm">
+              {subject.dncSummary}
+            </dd>
+          </div>
+        ) : null}
       </dl>
     </article>
   );

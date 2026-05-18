@@ -4,6 +4,7 @@ import { Suspense } from "react";
 
 import { PostCheckPageFallback } from "@/components/post-check/post-check-page-fallback";
 import { AttorneyConnectForm } from "@/components/results/attorney-connect-form";
+import { AttorneySharingChecklist } from "@/components/results/attorney-sharing-checklist";
 import { enforcePostCheckAccess } from "@/lib/claims/enforce-post-check-access";
 import {
   ATTORNEY_CONNECT_PATH,
@@ -62,21 +63,31 @@ async function AttorneyConnectPageContent({ searchParams }: AttorneyConnectPageP
     loadResultsPageContext(supabase, { claimId, userId: user.id }),
   ]);
 
-  if (!referral?.anyCanRefer || !results) {
+  if (!results) {
+    redirect(`${RESULTS_PATH}?claim=${claimId}`);
+  }
+
+  if (!results.isQualificationComplete) {
+    redirect(results.qualifyHref ?? `${RESULTS_PATH}?claim=${claimId}`);
+  }
+
+  if (!referral?.anyCanRefer) {
     redirect(`${RESULTS_PATH}?claim=${claimId}`);
   }
 
   return (
-    <div className="mx-auto flex min-h-svh max-w-lg flex-col gap-6 p-8">
+    <div className="mx-auto flex min-h-svh w-full max-w-3xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
           Connect with an attorney — free
         </h1>
-        <p className="text-muted-foreground text-sm">
-          Review what happens next before we share your claim summary with participating
-          attorneys.
+        <p className="text-muted-foreground max-w-prose text-sm leading-relaxed">
+          Review what we may share and confirm your evidence before we introduce you
+          to participating attorneys.
         </p>
       </header>
+
+      <AttorneySharingChecklist />
 
       <AttorneyConnectForm
         claimId={claimId}

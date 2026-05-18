@@ -6,6 +6,11 @@ import {
   canReferToAttorney,
   type CanReferToAttorneyResult,
 } from "@/lib/claims/can-refer-to-attorney";
+import {
+  buildResultsQualifyHref,
+  isClaimQualifiedForAttorneyPath,
+  pickResultsQualifySubjectId,
+} from "@/lib/claims/results-qualify-gate";
 import { getEmailCaptureTrigger } from "@/lib/claims/email-capture-trigger";
 import type { ClaimStrengthGate } from "@/lib/claims/successful-query";
 import { getResultsStrengthDisplay } from "@/lib/constants/results-strength";
@@ -41,6 +46,11 @@ export type ResultsSubjectView = {
 
 export type ResultsPageContext = {
   claimId: string;
+  /** `qualified` after wizard step 6; attorney CTA only when true. */
+  claimStatus: string;
+  isQualificationComplete: boolean;
+  /** Set when user still needs the qualify wizard. */
+  qualifyHref: string | null;
   effectiveClaimStrength: ClaimStrengthGate;
   strengthDisplay: ReturnType<typeof getResultsStrengthDisplay>;
   valuation: ReturnType<typeof computeClaimScoring>["valuation"];
@@ -95,7 +105,7 @@ export async function loadResultsPageContext(
 ): Promise<ResultsPageContext | null> {
   const { data: claim, error: claimError } = await supabase
     .from("claims")
-    .select("id, user_id, claim_strength")
+    .select("id, user_id, claim_strength, status")
     .eq("id", params.claimId)
     .maybeSingle();
 
@@ -214,8 +224,24 @@ export async function loadResultsPageContext(
   const strengthForDisplay = (effectiveClaimStrength ??
     "ineligible") as StrengthMatrixStrength;
 
+  const claimStatus = claim.status;
+  const isQualificationComplete = isClaimQualifiedForAttorneyPath(claimStatus);
+  const qualifySubjectId = pickResultsQualifySubjectId(
+    subjects.map((s) => ({ subjectId: s.subjectId, isExempt: s.isExempt })),
+  );
+  const qualifyHref =
+    !isQualificationComplete && qualifySubjectId
+      ? buildResultsQualifyHref({
+          claimId: claim.id,
+          subjectId: qualifySubjectId,
+        })
+      : null;
+
   return {
     claimId: claim.id,
+    claimStatus,
+    isQualificationComplete,
+    qualifyHref,
     effectiveClaimStrength,
     strengthDisplay: getResultsStrengthDisplay(strengthForDisplay),
     valuation:
