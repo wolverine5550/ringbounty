@@ -2,17 +2,10 @@
  * Inserts the user-provided company name into consent prompts (step 5).
  */
 
+import { isSubstantiveCompanyName } from "@/lib/constants/company-identification";
+
 /** Used when the caller is unidentified or the user entered a placeholder. */
 export const CONSENT_GENERIC_COMPANY_LABEL = "the company";
-
-const PLACEHOLDER_COMPANY_NAMES = new Set([
-  "unknown",
-  "n/a",
-  "na",
-  "not sure",
-  "unsure",
-  "none",
-]);
 
 /**
  * True when the user identified a real company (step 5 consent applies).
@@ -20,11 +13,7 @@ const PLACEHOLDER_COMPANY_NAMES = new Set([
 export function isNamedCompanyForConsent(
   companyName: string | null | undefined,
 ): boolean {
-  const trimmed = companyName?.trim() ?? "";
-  if (trimmed.length < 2) {
-    return false;
-  }
-  return !PLACEHOLDER_COMPANY_NAMES.has(trimmed.toLowerCase());
+  return isSubstantiveCompanyName(companyName);
 }
 
 /**

@@ -26,6 +26,28 @@ function baseMerged(
 }
 
 describe("enrichMergedCompanyFromLookup (§6.4.2)", () => {
+  it("calls Whitepages when Nomorobo returned UNKNOWN (not substantive)", async () => {
+    const lookup = vi
+      .spyOn(whitepages, "lookupCompanyFromWhitepages")
+      .mockResolvedValue({
+        companyName: "Hint Co",
+        skippedReason: null,
+        raw: [],
+      });
+    const merged = baseMerged({
+      companyIdentified: false,
+      companyName: null,
+    });
+    await enrichMergedCompanyFromLookup(merged, {
+      phoneNumberNormalized: "+19542064747",
+      env: {
+        WHITEPAGES_COMPANY_LOOKUP_ENABLED: "true",
+        WHITEPAGES_API_KEY: "key",
+      },
+    });
+    expect(lookup).toHaveBeenCalled();
+  });
+
   it("skips when company already identified", async () => {
     const lookup = vi.spyOn(whitepages, "lookupCompanyFromWhitepages");
     const merged = baseMerged({

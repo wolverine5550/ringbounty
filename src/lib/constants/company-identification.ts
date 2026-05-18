@@ -2,9 +2,33 @@
  * Phase 6.4 — Company identification for attorney referral path (PRD §7 Step 2, Q13 in Phase 7).
  *
  * v0.1 trust policy (see `docs/company-identification-strategy.md`):
- * - `company_identified = true` only from Nomorobo `reported_name` or user Q13 (`user_input`).
+ * - `company_identified = true` only from a **substantive** Nomorobo `reported_name` or user Q13 (`user_input`).
+ * - Placeholders such as `UNKNOWN` are not identified — Whitepages may still run on `/check`.
  * - Twilio CNAM and Whitepages are hints only (spoofed / employer ≠ defendant).
  */
+
+/** Nomorobo / user strings that must not count as an identified defendant (§6.4). */
+const PLACEHOLDER_COMPANY_NAMES = new Set([
+  "unknown",
+  "n/a",
+  "na",
+  "not sure",
+  "unsure",
+  "none",
+]);
+
+/**
+ * True when a company name is more than a placeholder (spam merge, qualify consent, RA lookup).
+ */
+export function isSubstantiveCompanyName(
+  companyName: string | null | undefined,
+): boolean {
+  const trimmed = companyName?.trim() ?? "";
+  if (trimmed.length < 2) {
+    return false;
+  }
+  return !PLACEHOLDER_COMPANY_NAMES.has(trimmed.toLowerCase());
+}
 
 /** Shown when Twilio CNAM returned a label but we did not auto-identify (§6.4). */
 export const COMPANY_CNAM_HINT_PREFIX =

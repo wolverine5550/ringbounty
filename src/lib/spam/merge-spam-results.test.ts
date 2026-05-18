@@ -74,6 +74,21 @@ describe("mergeSpamCheckResults", () => {
     expect(merged.companyIdentified).toBe(true);
   });
 
+  it("treats Nomorobo UNKNOWN as unidentified so Whitepages can run (§6.4)", () => {
+    const merged = mergeSpamCheckResults([
+      result({
+        providerId: "nomorobo",
+        companyName: "UNKNOWN",
+        category: "robocall",
+      }),
+      result({ providerId: "twilio", companyName: null }),
+    ]);
+    expect(merged.companyName).toBeNull();
+    expect(merged.companyIdentified).toBe(false);
+    expect(merged.companyNameSource).toBeNull();
+    expect(merged.callCategory).toBe("robocall");
+  });
+
   it("stores Twilio CNAM as hint only when Nomorobo has no name (§6.4 policy)", () => {
     const merged = mergeSpamCheckResults([
       result({ providerId: "nomorobo", companyName: null }),

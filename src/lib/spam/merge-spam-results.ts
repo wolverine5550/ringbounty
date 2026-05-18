@@ -10,6 +10,7 @@
  * - `spamDbSource` — which provider(s) contributed a spam hit (`nomorobo` | `twilio` | `both` | `none`)
  */
 
+import { isSubstantiveCompanyName } from "@/lib/constants/company-identification";
 import { resolveExemptFromCallCategory } from "@/lib/constants/exempt-categories";
 
 import type { SpamCheckResult } from "./types";
@@ -101,8 +102,7 @@ function pickNomoroboFirst(
 export function resolveCompanyNameSource(
   nomorobo: SpamCheckResult | undefined,
 ): CompanyNameSource {
-  const nomo = nomorobo?.companyName?.trim();
-  return nomo ? "nomorobo" : null;
+  return isSubstantiveCompanyName(nomorobo?.companyName) ? "nomorobo" : null;
 }
 
 /**
@@ -146,7 +146,7 @@ export function mergeSpamCheckResults(
   );
   const callCategory = pickNomoroboFirst(nomorobo, twilio, "category");
   const nomoroboCompany = nomorobo?.companyName?.trim() || null;
-  const companyIdentified = nomoroboCompany !== null && nomoroboCompany !== "";
+  const companyIdentified = isSubstantiveCompanyName(nomoroboCompany);
   const companyName = companyIdentified ? nomoroboCompany : null;
   const companyNameSource = resolveCompanyNameSource(nomorobo);
   const twilioCnam = twilio?.companyName?.trim() || null;

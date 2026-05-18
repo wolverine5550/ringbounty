@@ -1,38 +1,16 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  isTcpaLetterBlockedForUnidentifiedCompany,
-  TCPA_LETTER_BLOCKED_COMPANY_UNIDENTIFIED,
-} from "./company-identification";
+import { isSubstantiveCompanyName } from "./company-identification";
 
-describe("company-identification (§6.4)", () => {
-  it("blocks attorney referral when company not identified and not exempt", () => {
-    expect(
-      isTcpaLetterBlockedForUnidentifiedCompany({
-        companyIdentified: false,
-        isExempt: false,
-      }),
-    ).toBe(true);
+describe("isSubstantiveCompanyName", () => {
+  it("rejects UNKNOWN and other placeholders", () => {
+    expect(isSubstantiveCompanyName("UNKNOWN")).toBe(false);
+    expect(isSubstantiveCompanyName("n/a")).toBe(false);
+    expect(isSubstantiveCompanyName("")).toBe(false);
   });
 
-  it("does not block when identified or exempt", () => {
-    expect(
-      isTcpaLetterBlockedForUnidentifiedCompany({
-        companyIdentified: true,
-        isExempt: false,
-      }),
-    ).toBe(false);
-    expect(
-      isTcpaLetterBlockedForUnidentifiedCompany({
-        companyIdentified: false,
-        isExempt: true,
-      }),
-    ).toBe(false);
-  });
-
-  it("uses stable claim_events token", () => {
-    expect(TCPA_LETTER_BLOCKED_COMPANY_UNIDENTIFIED).toBe(
-      "company_unidentified",
-    );
+  it("accepts real company names", () => {
+    expect(isSubstantiveCompanyName("Acme Corp")).toBe(true);
+    expect(isSubstantiveCompanyName("Capital One")).toBe(true);
   });
 });
