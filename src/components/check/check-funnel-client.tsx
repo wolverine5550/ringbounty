@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   CHECK_FREE_LOOKUP_MAX_PHONES,
+  CHECK_MAX_PHONE_ROWS,
   CHECK_NUMBER_ENTRY_HEADING,
   RB_CHECK_SUBMITTED_EVENT,
 } from "@/lib/check/constants";
@@ -104,11 +105,28 @@ function computeDuplicateRowIds(rows: PhoneRow[]): Set<string> {
   return dup;
 }
 
+type CheckFunnelClientProps = {
+  /**
+   * `dashboard` — signed-in embed: multi-number rows, no anonymous account-wall copy.
+   * `default` — anonymous `/check` funnel (one free lookup before sign-in).
+   */
+  variant?: "default" | "dashboard";
+  /** Fires after a successful submit (e.g. dashboard `router.refresh()`). */
+  onCheckSubmitted?: () => void;
+};
+
 /**
  * `/check` — masked US NANP rows, validation + submit (§4.3–4.6).
  * Evidence preservation runs on `/attorney-connect` before referral (PRD §10).
  */
-export function CheckFunnelClient() {
+export function CheckFunnelClient({
+  variant = "default",
+  onCheckSubmitted,
+}: CheckFunnelClientProps = {}) {
+  const isDashboard = variant === "dashboard";
+  const maxPhoneRows = isDashboard
+    ? CHECK_MAX_PHONE_ROWS
+    : CHECK_FREE_LOOKUP_MAX_PHONES;
   /** Stable across SSR + hydration (do not use `crypto.randomUUID()` for row keys). */
   const phoneRowIdPrefix = useId();
   const nextPhoneRowIndexRef = useRef(1);
@@ -166,7 +184,7 @@ export function CheckFunnelClient() {
 
   const addPhoneRow = useCallback(() => {
     setPhoneRows((prev) => {
-      if (prev.length >= CHECK_FREE_LOOKUP_MAX_PHONES) {
+      if (prev.length >= maxPhoneRows) {
         return prev;
       }
       const index = nextPhoneRowIndexRef.current;
@@ -176,7 +194,7 @@ export function CheckFunnelClient() {
         { id: `${phoneRowIdPrefix}-${String(index)}`, digits: "" },
       ];
     });
-  }, [phoneRowIdPrefix]);
+  }, [maxPhoneRows, phoneRowIdPrefix]);
 
   const removePhoneRow = useCallback(
     (rowId: string) => {
@@ -307,6 +325,7 @@ export function CheckFunnelClient() {
       }
 
       window.dispatchEvent(new Event(RB_CHECK_SUBMITTED_EVENT));
+      onCheckSubmitted?.();
     } catch {
       setSubmitFailureCount((n) => n + 1);
       setSubmitError("Could not run check. Please try again.");
@@ -317,6 +336,7 @@ export function CheckFunnelClient() {
     [
       duplicateRowIds.size,
       phoneRows,
+      onCheckSubmitted,
       refreshGateStatus,
       requiresAccountWall,
       submitFailureCount,
@@ -365,29 +385,44 @@ export function CheckFunnelClient() {
     node.focus({ preventScroll: true });
   }, []);
 
+  const showRemoveRow = maxPhoneRows > 1 && phoneRows.length > 1;
+
   return (
     <>
       <section
         ref={stepOneRef}
         id="check-number-entry"
         tabIndex={-1}
-        aria-labelledby="check-number-entry-heading"
-        className="flex flex-col gap-4 rounded-lg border border-border bg-muted/10 p-4 outline-none"
+        aria-labelledby={
+          isDashboard ? "dashboard-check-heading" : "check-number-entry-heading"
+        }
+        className={
+          isDashboard
+            ? "flex flex-col gap-4 outline-none"
+            : "flex flex-col gap-4 rounded-lg border border-border bg-muted/10 p-4 outline-none"
+        }
       >
-          <div className="flex flex-col gap-2">
-            <h2
-              id="check-number-entry-heading"
-              className="text-lg font-semibold tracking-tight"
-            >
-              {CHECK_NUMBER_ENTRY_HEADING}
-            </h2>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              U.S. numbers only. Formatting is added as you type; the server stores
-              a normalized +1-form number and optionally your masked display string.
-            </p>
-          </div>
+          {!isDashboard ? (
+            <div className="flex flex-col gap-2">
+              <h2
+                id="check-number-entry-heading"
+                className="text-lg font-semibold tracking-tight"
+              >
+                {CHECK_NUMBER_ENTRY_HEADING}
+              </h2>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                U.S. numbers only. Formatting is added as you type; the server stores
+                a normalized +1-form number and optionally your masked display
+                string.
+              </p>
+            </div>
+          ) : null}
 
-          <ul className="flex flex-col gap-3">
+          <ul
+            className={
+              isDashboard ? "flex flex-col gap-2" : "flex flex-col gap-3"
+            }
+          >
             {phoneRows.map((row, index) => {
               const dup = duplicateRowIds.has(row.id);
               const validityHint = dup ? null : rowValidityHint(row.digits);
@@ -396,7 +431,14 @@ export function CheckFunnelClient() {
                 : validityHint;
               const inputId = `check-phone-${row.id}`;
               return (
-                <li key={row.id} className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:gap-2">
+                <li
+                  key={row.id}
+                  className={
+                    isDashboard
+                      ? "flex flex-col gap-1.5 sm:flex-row sm:items-end sm:gap-2"
+                      : "flex flex-col gap-1.5 sm:flex-row sm:items-start sm:gap-2"
+                  }
+                >
                   <div className="min-w-0 flex-1">
                     <Label htmlFor={inputId} className="sr-only">
                       Phone number {index + 1}
@@ -422,7 +464,7 @@ export function CheckFunnelClient() {
                       </p>
                     ) : null}
                   </div>
-                  {CHECK_FREE_LOOKUP_MAX_PHONES > 1 ? (
+                  {showRemoveRow ? (
                     <Button
                       type="button"
                       variant="outline"
@@ -439,19 +481,19 @@ export function CheckFunnelClient() {
             })}
           </ul>
 
-          {CHECK_FREE_LOOKUP_MAX_PHONES > 1 ? (
+          {maxPhoneRows > 1 ? (
             <div className="flex flex-wrap items-center gap-2">
               <Button
                 type="button"
                 variant="secondary"
                 size="sm"
-                disabled={phoneRows.length >= CHECK_FREE_LOOKUP_MAX_PHONES}
+                disabled={phoneRows.length >= maxPhoneRows}
                 onClick={addPhoneRow}
               >
                 Add number
               </Button>
               <p className="text-muted-foreground text-xs">
-                Up to {String(CHECK_FREE_LOOKUP_MAX_PHONES)} numbers per check.
+                Up to {String(maxPhoneRows)} numbers per check.
               </p>
             </div>
           ) : null}
@@ -663,7 +705,7 @@ export function CheckFunnelClient() {
             </p>
           ) : null}
 
-          {requiresAccountWall ? (
+          {!isDashboard && requiresAccountWall ? (
             <p className="text-muted-foreground text-sm" role="status">
               You&apos;ve used your free check. Use <strong>Sign in</strong> in the
               header to continue, or check another number after creating an account.
@@ -671,9 +713,16 @@ export function CheckFunnelClient() {
           ) : null}
 
           {!requiresAccountWall && numberChecks === null ? (
-            <div className="flex flex-wrap items-center gap-2">
+            <div
+              className={
+                isDashboard
+                  ? "flex flex-col gap-2 sm:flex-row sm:items-center"
+                  : "flex flex-wrap items-center gap-2"
+              }
+            >
               <Button
                 type="button"
+                className={isDashboard ? "w-full sm:w-auto" : undefined}
                 disabled={
                   checkSubmitting ||
                   retryWaiting ||

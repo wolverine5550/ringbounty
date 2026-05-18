@@ -1,10 +1,10 @@
 # Changelog
 
-## 2026-05-18 (Pre-launch — Post-login home: `/check` or `/dashboard`)
+## 2026-05-18 (Pre-launch — Signed-in dashboard + post-login home)
 
-- **Smart sign-in redirect** — Magic link callback ([`auth/callback`](src/app/auth/callback/route.ts)) sends users to [`/check`](src/app/check/page.tsx) when they have no screened numbers yet, or [`/dashboard`](src/app/dashboard/page.tsx) when they do ([`resolvePostLoginRedirectPath`](src/lib/claims/post-login-redirect.ts)). Legacy [`/protected`](src/app/protected/page.tsx) forwards to the same resolver (starter template page removed).
-- **Consumer dashboard** — Lists prior checks with phone labels, status, strength, and links to **View results** / **Continue qualifying** ([`ClaimsDashboard`](src/components/dashboard/claims-dashboard.tsx), [`loadUserClaimsDashboard`](src/lib/claims/load-user-claims-dashboard.ts)).
-- **Header nav** — Logged-in funnel chrome shows **Dashboard** + **Check numbers** (each hidden on its own route) instead of a bare **Your results** link without a claim id.
+- **Post-login redirect** — Magic link callback ([`auth/callback`](src/app/auth/callback/route.ts)) defaults to [`/dashboard`](src/app/dashboard/page.tsx) ([`resolvePostLoginRedirectPath`](src/lib/claims/post-login-redirect.ts)). Legacy [`/protected`](src/app/protected/page.tsx) redirects there too.
+- **Dashboard UX** — Wide two-column layout: **New check** embeds [`CheckFunnelClient`](src/components/check/check-funnel-client.tsx) (`variant="dashboard"`, up to 10 numbers, refreshes search list on submit) beside **Your searches** ([`ClaimsDashboard`](src/components/dashboard/claims-dashboard.tsx), [`DashboardClaimCard`](src/components/dashboard/dashboard-claim-card.tsx)). [`/check`](src/app/check/page.tsx) remains the anonymous-first funnel.
+- **Logged-in header** — Funnel chrome shows **Dashboard** only (hidden on `/dashboard` where screening is inline). Removed redundant **Check numbers** nav link ([`consumer-funnel-nav.ts`](src/lib/layout/consumer-funnel-nav.ts)).
 
 ## 2026-05-18 (Pre-launch — One free anonymous lookup on `/check`)
 
@@ -37,7 +37,7 @@
 
 ### Logged-in app header
 
-- [`ConsumerFunnelHeader`](src/components/layout/consumer-funnel-header.tsx) + [`LoggedInAppHeader`](src/components/layout/logged-in-app-header.tsx) on [`check/layout.tsx`](src/app/check/layout.tsx) and [`(post-check)/layout.tsx`](src/app/(post-check)/layout.tsx): brand, **Check numbers** (hidden on `/check`), **Your results**, **Sign out**. Anonymous `/check` has no app header (marketing pages use [`MarketingHeader`](src/components/marketing/marketing-header.tsx)).
+- [`ConsumerFunnelHeader`](src/components/layout/consumer-funnel-header.tsx) + [`LoggedInAppHeader`](src/components/layout/logged-in-app-header.tsx) on [`check/layout.tsx`](src/app/check/layout.tsx), [`dashboard/layout.tsx`](src/app/dashboard/layout.tsx), and [`(post-check)/layout.tsx`](src/app/(post-check)/layout.tsx): brand, **Dashboard** (when not already on `/dashboard`), **Sign out**. Anonymous `/check` has no app header (marketing pages use [`MarketingHeader`](src/components/marketing/marketing-header.tsx)).
 
 ## 2026-05-18 (§7.2 — Qualify wizard step 1 reorder)
 

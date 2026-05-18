@@ -72,8 +72,9 @@ Create `.env.local` from `.env.example` and set values from your [Supabase proje
 | Route | Purpose |
 |-------|---------|
 | [`/login`](src/app/login/page.tsx) (+ [`loading.tsx`](src/app/login/loading.tsx)) | Magic link (email OTP): sends a sign-in link via `signInWithOtp` → user lands on `/auth/callback` for PKCE `code` exchange. Uses `searchParams.then(…)` inside `<Suspense>` for Cache Components. After send, UI warns to open the link in the **same browser** ([`magic-link-login-form.tsx`](src/components/magic-link-login-form.tsx)). |
-| [`/auth/callback`](src/app/auth/callback/route.ts) | Server route: `exchangeCodeForSession` then redirect — **`/check`** if the user has no screened numbers yet, else **`/dashboard`** ([`resolvePostLoginRedirectPath`](src/lib/claims/post-login-redirect.ts)); explicit `?next=` still honored for funnel deep links. |
-| [`/dashboard`](src/app/dashboard/page.tsx) | Signed-in home listing prior checks (phones, status, strength) with links to `/results?claim=…` and qualify. |
+| [`/auth/callback`](src/app/auth/callback/route.ts) | Server route: `exchangeCodeForSession` then redirect to **`/dashboard`** by default ([`resolvePostLoginRedirectPath`](src/lib/claims/post-login-redirect.ts)); explicit `?next=` still honored for funnel deep links. |
+| [`/dashboard`](src/app/dashboard/page.tsx) | Signed-in home: **inline number screening** (same API as `/check`) plus past searches with links to `/results?claim=…` and qualify. Two-column layout on desktop. |
+| [`/check`](src/app/check/page.tsx) | Anonymous-first screening funnel (one free lookup); signed-in users can use [`/dashboard`](src/app/dashboard/page.tsx) instead. |
 | [`/auth/error`](src/app/auth/error/page.tsx) | Auth failure page; detects PKCE verifier mismatch (“open link in same browser”) with recovery steps. |
 | `/auth/login`, `/auth/sign-up`, … | Starter **email + password** flows from the template. |
 
@@ -125,7 +126,7 @@ Shared copy lives in [`src/lib/marketing/`](src/lib/marketing/) (`constants.ts`,
 
 Marketing UI: [`src/components/marketing/`](src/components/marketing/). [`MarketingHeader`](src/components/marketing/marketing-header.tsx) includes [`MarketingHeaderAuth`](src/components/marketing/marketing-header-auth.tsx) — **Sign in** / **Sign out** in the nav (server session via `getClaims`; no email label). Shared sign-out: [`SignOutButton`](src/components/sign-out-button.tsx). Unauthenticated access to marketing routes is allowed via [`isPublicMarketingPath`](src/lib/marketing/public-routes.ts) in [`src/lib/supabase/proxy.ts`](src/lib/supabase/proxy.ts).
 
-**Logged-in consumer funnel:** [`ConsumerFunnelHeader`](src/components/layout/consumer-funnel-header.tsx) (Suspense + [`LoggedInAppHeader`](src/components/layout/logged-in-app-header.tsx)) on [`/check`](src/app/check/layout.tsx) and post-check routes ([`(post-check)/layout.tsx`](src/app/(post-check)/layout.tsx)) — brand, **Check numbers**, **Your results**, **Sign out** when a session exists; hidden for anonymous `/check`.
+**Logged-in consumer funnel:** [`ConsumerFunnelHeader`](src/components/layout/consumer-funnel-header.tsx) (Suspense + [`LoggedInAppHeader`](src/components/layout/logged-in-app-header.tsx)) on [`/check`](src/app/check/layout.tsx), [`/dashboard`](src/app/dashboard/layout.tsx), and post-check routes ([`(post-check)/layout.tsx`](src/app/(post-check)/layout.tsx)) — brand, **Dashboard** (hidden on `/dashboard`; screening is inline there), **Sign out** when a session exists; hidden for anonymous `/check`.
 
 **v0.1 consumer path (2026-05-18):** `/check` → **one free number check** (anonymous) → **sign in** → qualify → `/results` → optional `/attorney-connect`. PRD §10 **evidence preservation** (screenshots, call logs, notes) runs on **attorney connect**, not on `/check`, so users confirm the number and complete qualification before the “build your evidence profile” checklist gates attorney referral.
 
@@ -372,8 +373,8 @@ In an emergency, hooks can be skipped with `HUSKY=0 git commit ...`, but this sh
 This app ships on **Next.js 16.2.x** with **Cache Components** enabled. Request-time APIs (`cookies()`, `headers()`, and **awaiting** page `searchParams` / `params` promises in the wrong place) can trigger the dev overlay [“Route … was accessed outside `<Suspense>`”](https://nextjs.org/docs/messages/blocking-route). RingBounty follows the **Next.js 16.2** streaming guidance:
 
 - **[`/login`](src/app/login/page.tsx)** — Sync page component; `<Suspense>` wraps `searchParams.then(({ next }) => …)` so the magic-link form receives `next` without blocking the segment. **[`src/app/login/loading.tsx`](src/app/login/loading.tsx)** provides the route `loading` fallback.
-- **[`/protected`](src/app/protected/page.tsx)** — Legacy starter route; **redirects** to `/check` or `/dashboard` (same resolver as post-login). The old template UI is gone.
-- **[`/dashboard`](src/app/dashboard/page.tsx)** — Consumer dashboard (see Auth routes table). Uses the same logged-in header as `/check` and post-check routes.
+- **[`/protected`](src/app/protected/page.tsx)** — Legacy starter route; **redirects** to `/dashboard`. The old template UI is gone.
+- **[`/dashboard`](src/app/dashboard/page.tsx)** — Signed-in home with embedded [`CheckFunnelClient`](src/components/check/check-funnel-client.tsx) (`variant="dashboard"`) and search history ([`ClaimsDashboard`](src/components/dashboard/claims-dashboard.tsx)).
 - **Post-check funnel** ([`/results`](src/app/(post-check)/results/page.tsx), [`/qualify/...`](src/app/(post-check)/qualify/[claimSubjectId]/page.tsx), [`/summary`](src/app/(post-check)/summary/page.tsx); legacy `/letter/*` → `/results`) — Sync page shell + inner async component inside `<Suspense>` so [`enforcePostCheckAccess`](src/lib/claims/enforce-post-check-access.ts) (`cookies()`) does not block the static shell. Segment fallback: [`src/app/(post-check)/loading.tsx`](src/app/(post-check)/loading.tsx).
 - **[`/[slug]`](src/app/[slug]/page.tsx)** (company SEO, §11.3) — `connection()` + `<Suspense>` until `COMPANY_SEO_PAGES` has entries (Cache Components forbids empty `generateStaticParams`).
 

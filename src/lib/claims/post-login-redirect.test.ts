@@ -1,51 +1,15 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import {
   isLegacyPostLoginPath,
-  POST_LOGIN_CHECK_PATH,
   POST_LOGIN_DASHBOARD_PATH,
   resolvePostLoginRedirectPath,
 } from "./post-login-redirect";
 
 describe("resolvePostLoginRedirectPath", () => {
-  it("sends users without screened subjects to /check", async () => {
-    const supabase = {
-      from: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({
-              data: [{ id: "c1", claim_subjects: [] }],
-              error: null,
-            }),
-          }),
-        }),
-      }),
-    };
-
+  it("sends signed-in users to the dashboard", async () => {
     await expect(
-      resolvePostLoginRedirectPath(supabase as never, "user-1"),
-    ).resolves.toBe(POST_LOGIN_CHECK_PATH);
-  });
-
-  it("sends users with at least one subject to /dashboard", async () => {
-    const supabase = {
-      from: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({
-              data: [
-                { id: "c1", claim_subjects: [] },
-                { id: "c2", claim_subjects: [{ id: "s1" }] },
-              ],
-              error: null,
-            }),
-          }),
-        }),
-      }),
-    };
-
-    await expect(
-      resolvePostLoginRedirectPath(supabase as never, "user-1"),
+      resolvePostLoginRedirectPath({} as never, "user-1"),
     ).resolves.toBe(POST_LOGIN_DASHBOARD_PATH);
   });
 });
