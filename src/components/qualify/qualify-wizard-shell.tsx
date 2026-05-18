@@ -11,7 +11,10 @@ import {
   QUALIFY_WIZARD_STEP_MAX,
   type QualifyWizardStep,
 } from "@/lib/qualify/constants";
-import { buildQualifyPageHref } from "@/lib/qualify/qualify-step";
+import {
+  buildQualifyPageHref,
+  resolveQualifyPreviousStep,
+} from "@/lib/qualify/qualify-step";
 import type { QualifyScreen1Answers } from "@/lib/qualify/screen-1-consent";
 import type { QualifyScreen2Answers } from "@/lib/qualify/screen-2-stop-request";
 import type { QualifyScreen3Answers } from "@/lib/qualify/screen-3-call-details";
@@ -54,7 +57,7 @@ export function QualifyWizardShell({
   screen5Initial = null,
 }: QualifyWizardShellProps) {
   const title = QUALIFY_STEP_TITLES[step];
-  const prevStep = step > 1 ? ((step - 1) as QualifyWizardStep) : null;
+  const prevStep = resolveQualifyPreviousStep(step, subjectCompanyName);
   const nextStep =
     step < QUALIFY_WIZARD_STEP_MAX ? ((step + 1) as QualifyWizardStep) : null;
 
@@ -90,7 +93,7 @@ export function QualifyWizardShell({
         <Screen5ConsentForm
           claimSubjectId={claimSubjectId}
           claimId={claimId}
-          companyName={subjectCompanyName?.trim() || "the company you identified"}
+          companyName={subjectCompanyName ?? ""}
           initialAnswers={screen5ConsentInitial}
         />
       ) : step === 6 ? (

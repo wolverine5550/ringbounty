@@ -18,12 +18,17 @@ import {
   loadQualifyPageContext,
 } from "@/lib/qualify/load-qualify-context";
 import {
+  formatQualifyEvaluatedCallerDisplay,
+  QUALIFY_EVALUATED_CALLER_LABEL,
+} from "@/lib/qualify/constants";
+import {
   buildQualifyPageHref,
   isFederalDncAttestationComplete,
   loadQualifyResumeStep,
   parseQualifyStepFromQuery,
   resolveQualifyWizardStep,
 } from "@/lib/qualify/qualify-step";
+import { isNamedCompanyForConsent } from "@/lib/qualify/format-company-consent-prompt";
 import { loadQualifyScreen1Answers } from "@/lib/qualify/screen-1-consent";
 import { loadQualifyScreen2Answers } from "@/lib/qualify/screen-2-stop-request";
 import { loadQualifyScreen3Answers } from "@/lib/qualify/screen-3-call-details";
@@ -97,6 +102,10 @@ async function QualifyPageContent({
   }
 
   const claimId = pageContext.claim.id;
+  const evaluatedCallerDisplay = formatQualifyEvaluatedCallerDisplay(
+    pageContext.subject.phone_number,
+    pageContext.subject.phone_number_normalized,
+  );
 
   const { data: dncRow } = await supabase
     .from("dnc_check_results")
@@ -153,7 +162,10 @@ async function QualifyPageContent({
     ]);
 
     return (
-      <QualifyPageLayout title="National Do Not Call Registry">
+      <QualifyPageLayout
+        title="National Do Not Call Registry"
+        evaluatedCallerDisplay={evaluatedCallerDisplay}
+      >
         {applicableStateCode ? (
           <StateDncComingSoon stateCode={applicableStateCode} />
         ) : null}
@@ -207,7 +219,7 @@ async function QualifyPageContent({
   const companyNameForConsent =
     pageContext.subject.company_name?.trim() ?? "";
 
-  if (wizardStep === 5 && companyNameForConsent.length < 2) {
+  if (wizardStep === 5 && !isNamedCompanyForConsent(companyNameForConsent)) {
     redirect(
       buildQualifyPageHref({
         claimSubjectId: pageContext.subject.id,
@@ -220,7 +232,8 @@ async function QualifyPageContent({
   return (
     <QualifyPageLayout
       title="Qualify your claim"
-      subtitle={`Screen ${wizardStep} of 6 — answer questions about this number.`}
+      evaluatedCallerDisplay={evaluatedCallerDisplay}
+      subtitle={`Screen ${wizardStep} of 6 — answer questions about this caller.`}
     >
       {applicableStateCode ? (
         <StateDncComingSoon stateCode={applicableStateCode} />
@@ -243,10 +256,12 @@ async function QualifyPageContent({
 
 function QualifyPageLayout({
   title,
+  evaluatedCallerDisplay,
   subtitle,
   children,
 }: {
   title: string;
+  evaluatedCallerDisplay?: string | null;
   subtitle?: string;
   children: React.ReactNode;
 }) {
@@ -254,6 +269,14 @@ function QualifyPageLayout({
     <div className="mx-auto flex min-h-svh max-w-lg flex-col gap-6 p-8">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+        {evaluatedCallerDisplay ? (
+          <p className="text-sm">
+            <span className="text-muted-foreground">
+              {QUALIFY_EVALUATED_CALLER_LABEL}{" "}
+            </span>
+            <span className="font-medium">{evaluatedCallerDisplay}</span>
+          </p>
+        ) : null}
         {subtitle ? (
           <p className="text-muted-foreground text-sm">{subtitle}</p>
         ) : null}

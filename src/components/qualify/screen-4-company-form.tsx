@@ -12,12 +12,18 @@ import {
   QUALIFY_Q13_PITCH_PROMPT,
   QUALIFY_Q13_OPTIONAL_HINT,
   QUALIFY_Q13_PROMPT,
-  QUALIFY_Q14_PROMPT,
+  QUALIFY_Q13_PROMPT_NO_VOICEMAIL,
+  buildQualifyQ14Prompt,
+  QUALIFY_Q14_UPLOAD_HELP,
+  QUALIFY_Q14_UPLOAD_LABEL,
   QUALIFY_VOICEMAIL_PROMPT,
   QUALIFY_VOICEMAIL_TRANSCRIPT_LABEL,
   QUALIFY_VOICEMAIL_TRANSCRIPTION_UNAVAILABLE,
 } from "@/lib/constants/qualify-screen-4";
-import { buildQualifyPageHref } from "@/lib/qualify/qualify-step";
+import {
+  buildQualifyPageHref,
+  resolveWizardStepAfterCompanyScreen,
+} from "@/lib/qualify/qualify-step";
 import type { QualifyScreen4Answers } from "@/lib/qualify/screen-4-company-identification";
 
 export type Screen4CompanyFormProps = {
@@ -68,7 +74,12 @@ export function Screen4CompanyForm({
   initialCompanyName = null,
 }: Screen4CompanyFormProps) {
   const router = useRouter();
-  const [hasVoicemail, setHasVoicemail] = useState<boolean | null>(null);
+  const [hasVoicemail, setHasVoicemail] = useState<boolean | null>(() => {
+    if (initialAnswers) {
+      return initialAnswers.hasVoicemailForUpload;
+    }
+    return null;
+  });
   const [voicemailFile, setVoicemailFile] = useState<File | null>(null);
   const [transcript, setTranscript] = useState(
     initialAnswers?.voicemailTranscript ?? "",
@@ -88,6 +99,14 @@ export function Screen4CompanyForm({
   const [hasAdditionalEvidence, setHasAdditionalEvidence] = useState<boolean | null>(
     initialAnswers?.hasAdditionalEvidence ?? null,
   );
+  const [savedEvidencePaths, setSavedEvidencePaths] = useState<string[]>(
+    initialAnswers?.additionalEvidencePaths ?? [],
+  );
+  const [pendingEvidenceFiles, setPendingEvidenceFiles] = useState<File[]>([]);
+  const [evidenceUploadError, setEvidenceUploadError] = useState<string | null>(
+    null,
+  );
+  const [isUploadingEvidence, setIsUploadingEvidence] = useState(false);
   const [showUnverifiedWarning, setShowUnverifiedWarning] = useState(
     initialAnswers?.verificationStatus === "user_input_unverified",
   );
@@ -96,14 +115,15 @@ export function Screen4CompanyForm({
   const [isUploadingVoicemail, setIsUploadingVoicemail] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const canSubmit = hasAdditionalEvidence !== null;
+  const canSubmit =
+    hasVoicemail !== null && hasAdditionalEvidence !== null;
 
-  const goToNextStep = (namedCompany: boolean) => {
+  const goToNextStep = (companyNameAfterSave: string) => {
     router.push(
       buildQualifyPageHref({
         claimSubjectId,
         claimId,
-        step: namedCompany ? 5 : 6,
+        step: resolveWizardStepAfterCompanyScreen(companyNameAfterSave),
       }),
     );
     router.refresh();
@@ -180,6 +200,46 @@ export function Screen4CompanyForm({
     }
   };
 
+  const uploadPendingEvidence = async (): Promise<string[] | null> => {
+    if (pendingEvidenceFiles.length === 0) {
+      return savedEvidencePaths;
+    }
+
+    setIsUploadingEvidence(true);
+    setEvidenceUploadError(null);
+
+    const formData = new FormData();
+    formData.append("claim_subject_id", claimSubjectId);
+    for (const file of pendingEvidenceFiles) {
+      formData.append("additional_evidence_files", file);
+    }
+
+    try {
+      const res = await fetch("/api/qualify/additional-evidence", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      const body = (await res.json()) as {
+        error?: string;
+        storage_paths?: string[];
+      };
+      if (!res.ok) {
+        setEvidenceUploadError(body.error ?? "Could not upload files.");
+        return null;
+      }
+      const paths = body.storage_paths ?? savedEvidencePaths;
+      setSavedEvidencePaths(paths);
+      setPendingEvidenceFiles([]);
+      return paths;
+    } catch {
+      setEvidenceUploadError("Network error. Please try again.");
+      return null;
+    } finally {
+      setIsUploadingEvidence(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSubmit) {
@@ -190,18 +250,33 @@ export function Screen4CompanyForm({
     setIsSubmitting(true);
     setSubmitError(null);
 
+    let evidencePaths = savedEvidencePaths;
+    if (hasAdditionalEvidence === true && pendingEvidenceFiles.length > 0) {
+      const uploaded = await uploadPendingEvidence();
+      if (uploaded === null) {
+        setIsSubmitting(false);
+        return;
+      }
+      evidencePaths = uploaded;
+    }
+
     const trimmedCompany = companyName.trim();
     const payload: Record<string, unknown> = {
       claim_subject_id: claimSubjectId,
       company_name: trimmedCompany,
+      has_voicemail: hasVoicemail === true,
       has_additional_evidence: hasAdditionalEvidence,
+      additional_evidence_paths:
+        hasAdditionalEvidence === true ? evidencePaths : [],
     };
 
-    if (callbackPhone.trim()) {
-      payload.company_callback_phone = callbackPhone.trim();
-    }
-    if (productPitch.trim()) {
-      payload.company_product_pitch = productPitch.trim();
+    if (hasVoicemail === true) {
+      if (callbackPhone.trim()) {
+        payload.company_callback_phone = callbackPhone.trim();
+      }
+      if (productPitch.trim()) {
+        payload.company_product_pitch = productPitch.trim();
+      }
     }
     if (voicemailIdentified) {
       payload.skip_user_company_persist = true;
@@ -230,7 +305,7 @@ export function Screen4CompanyForm({
         setShowUnverifiedWarning(true);
       }
 
-      goToNextStep(trimmedCompany.length >= 2);
+      goToNextStep(trimmedCompany);
     } catch {
       setSubmitError("Network error. Please try again.");
     } finally {
@@ -247,6 +322,11 @@ export function Screen4CompanyForm({
           setHasVoicemail(value);
           if (!value) {
             setVoicemailFile(null);
+            setVoicemailError(null);
+            setTranscript("");
+            setVoicemailIdentified(false);
+            setCallbackPhone("");
+            setProductPitch("");
           }
         }}
       />
@@ -285,7 +365,11 @@ export function Screen4CompanyForm({
       ) : null}
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="company-name">{QUALIFY_Q13_PROMPT}</Label>
+        <Label htmlFor="company-name">
+          {hasVoicemail === false
+            ? QUALIFY_Q13_PROMPT_NO_VOICEMAIL
+            : QUALIFY_Q13_PROMPT}
+        </Label>
         <Input
           id="company-name"
           value={companyName}
@@ -295,32 +379,84 @@ export function Screen4CompanyForm({
         <p className="text-muted-foreground text-xs">{QUALIFY_Q13_OPTIONAL_HINT}</p>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="callback-phone">{QUALIFY_Q13_CALLBACK_PROMPT}</Label>
-        <Input
-          id="callback-phone"
-          value={callbackPhone}
-          onChange={(e) => setCallbackPhone(e.target.value)}
-          placeholder="Optional"
-        />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="product-pitch">{QUALIFY_Q13_PITCH_PROMPT}</Label>
-        <textarea
-          id="product-pitch"
-          className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-          value={productPitch}
-          onChange={(e) => setProductPitch(e.target.value)}
-          placeholder="Optional"
-        />
-      </div>
+      {hasVoicemail === true ? (
+        <>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="callback-phone">{QUALIFY_Q13_CALLBACK_PROMPT}</Label>
+            <Input
+              id="callback-phone"
+              value={callbackPhone}
+              onChange={(e) => setCallbackPhone(e.target.value)}
+              placeholder="Optional"
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="product-pitch">{QUALIFY_Q13_PITCH_PROMPT}</Label>
+            <textarea
+              id="product-pitch"
+              className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+              value={productPitch}
+              onChange={(e) => setProductPitch(e.target.value)}
+              placeholder="Optional"
+            />
+          </div>
+        </>
+      ) : null}
 
       <YesNoField
-        legend={QUALIFY_Q14_PROMPT}
+        legend={buildQualifyQ14Prompt(hasVoicemail)}
         value={hasAdditionalEvidence}
-        onChange={setHasAdditionalEvidence}
+        onChange={(value) => {
+          setHasAdditionalEvidence(value);
+          if (!value) {
+            setPendingEvidenceFiles([]);
+            setEvidenceUploadError(null);
+          }
+        }}
       />
+
+      {hasAdditionalEvidence === true ? (
+        <div className="flex flex-col gap-3">
+          <Label htmlFor="additional-evidence-files">
+            {QUALIFY_Q14_UPLOAD_LABEL}
+          </Label>
+          <Input
+            id="additional-evidence-files"
+            type="file"
+            multiple
+            accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,.pdf,text/plain,.txt"
+            onChange={(e) => {
+              const picked = Array.from(e.target.files ?? []);
+              setPendingEvidenceFiles(picked);
+              setEvidenceUploadError(null);
+            }}
+          />
+          <p className="text-muted-foreground text-xs">{QUALIFY_Q14_UPLOAD_HELP}</p>
+          {savedEvidencePaths.length > 0 ? (
+            <p className="text-success text-xs" role="status">
+              {savedEvidencePaths.length} file
+              {savedEvidencePaths.length === 1 ? "" : "s"} saved on your account.
+            </p>
+          ) : null}
+          {pendingEvidenceFiles.length > 0 ? (
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={isUploadingEvidence || isSubmitting}
+              onClick={() => void uploadPendingEvidence()}
+            >
+              {isUploadingEvidence
+                ? "Uploading…"
+                : `Upload ${pendingEvidenceFiles.length} file${pendingEvidenceFiles.length === 1 ? "" : "s"} now`}
+            </Button>
+          ) : null}
+          {evidenceUploadError ? (
+            <p className="text-destructive text-sm" role="alert">
+              {evidenceUploadError}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       {showUnverifiedWarning ? (
         <p className="text-muted-foreground text-sm" role="status">
@@ -334,7 +470,10 @@ export function Screen4CompanyForm({
         </p>
       ) : null}
 
-      <Button type="submit" disabled={!canSubmit || isSubmitting}>
+      <Button
+        type="submit"
+        disabled={!canSubmit || isSubmitting || isUploadingEvidence}
+      >
         {isSubmitting ? "Saving…" : "Save and continue"}
       </Button>
     </form>

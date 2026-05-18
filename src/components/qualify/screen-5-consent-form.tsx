@@ -17,7 +17,10 @@ import {
   QUALIFY_Q1_PROMPT,
   QUALIFY_Q3_PROMPT,
 } from "@/lib/constants/qualify-screen-1";
-import { formatCompanyConsentPrompt } from "@/lib/qualify/format-company-consent-prompt";
+import {
+  formatCompanyConsentPrompt,
+  resolveCompanyConsentLabel,
+} from "@/lib/qualify/format-company-consent-prompt";
 import { buildQualifyPageHref } from "@/lib/qualify/qualify-step";
 import type { QualifyScreen1Answers } from "@/lib/qualify/screen-1-consent";
 
@@ -78,6 +81,10 @@ export function Screen5ConsentForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [ebrExplainerOpen, setEbrExplainerOpen] = useState(false);
 
+  const companyLabel = useMemo(
+    () => resolveCompanyConsentLabel(companyName),
+    [companyName],
+  );
   const q1Prompt = useMemo(
     () => formatCompanyConsentPrompt(QUALIFY_Q1_PROMPT, companyName),
     [companyName],
@@ -150,10 +157,7 @@ export function Screen5ConsentForm({
   return (
     <>
       <form className="flex flex-col gap-6" onSubmit={(ev) => void handleSubmit(ev)}>
-        <p className="text-muted-foreground text-sm">
-          {QUALIFY_CONSENT_STEP_PREFACE}{" "}
-          <span className="text-foreground font-medium">{companyName.trim()}</span>
-        </p>
+        <p className="text-muted-foreground text-sm">{QUALIFY_CONSENT_STEP_PREFACE}</p>
         <YesNoField
           legend={q1Prompt}
           value={gaveDirectConsent}
@@ -178,7 +182,7 @@ export function Screen5ConsentForm({
 
       {ebrExplainerOpen ? (
         <EbrExplainerOverlay
-          companyName={companyName}
+          companyLabel={companyLabel}
           onContinue={() => {
             setEbrExplainerOpen(false);
             goToStep6();
@@ -190,10 +194,10 @@ export function Screen5ConsentForm({
 }
 
 function EbrExplainerOverlay({
-  companyName,
+  companyLabel,
   onContinue,
 }: {
-  companyName: string;
+  companyLabel: string;
   onContinue: () => void;
 }) {
   return (
@@ -201,7 +205,7 @@ function EbrExplainerOverlay({
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader>
           <CardTitle id="ebr-explainer-title" className="text-lg">
-            Relationship with {companyName.trim() || "this company"}
+            Relationship with {companyLabel}
           </CardTitle>
           <CardDescription>{QUALIFY_EBR_EXPLAINER_MESSAGE}</CardDescription>
         </CardHeader>

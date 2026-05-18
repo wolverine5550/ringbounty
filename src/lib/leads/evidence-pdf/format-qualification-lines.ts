@@ -40,7 +40,7 @@ const KEY_LABELS: Record<string, string> = {
   [QUALIFY_SCREEN_3_KEYS.callsAfter9pm]: "Calls after 9 p.m.",
   [QUALIFY_SCREEN_3_KEYS.callsAfter9pmCount]: "Calls after 9 p.m. (count)",
   [QUALIFY_SCREEN_4_KEYS.hasAdditionalEvidence]:
-    "User has additional evidence (screenshots, logs, etc.)",
+    "User has screenshots or notes (additional evidence)",
   [QUALIFY_SCREEN_4_KEYS.companyCallbackPhone]: "Callback number from caller",
   [QUALIFY_SCREEN_4_KEYS.companyProductPitch]: "Product or pitch described",
   federal_dnc_registered: "Federal DNC registered (attestation)",

@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-05-18 (Qualify UX — caller context, Screen 4 evidence uploads)
+
+### Wizard context
+
+- **Caller on every qualify screen** — [`QualifyPageLayout`](src/app/(post-check)/qualify/[claimSubjectId]/page.tsx) shows **Caller number you are qualifying** under the page title ([`formatQualifyEvaluatedCallerDisplay`](src/lib/qualify/constants.ts)).
+
+### Screen 4 (company + evidence)
+
+- **Voicemail-gated fields** — Callback number and product/pitch fields only when user answers **Yes** to having a voicemail to upload; **No** clears those values ([`screen-4-company-form.tsx`](src/components/qualify/screen-4-company-form.tsx), [`screen-4-company-identification.ts`](src/lib/qualify/screen-4-company-identification.ts)).
+- **Step 5 skipped when company unknown** — Blank, `UNKNOWN`, or placeholder company names route Screen 4 → **6** (skip consent); direct navigation to `?step=5` redirects to step 6 ([`isNamedCompanyForConsent`](src/lib/qualify/format-company-consent-prompt.ts), [`resolveWizardStepAfterCompanyScreen`](src/lib/qualify/qualify-step.ts)). Step title: **Permission and prior relationship**.
+- **Step 5 consent copy** — Preface no longer appends the raw company string; named companies get dynamic `{{company}}` in Q1/Q3 ([`resolveCompanyConsentLabel`](src/lib/qualify/format-company-consent-prompt.ts)).
+- **Q14 copy** — Last question asks for **screenshots/notes only** (not voicemail again); wording depends on voicemail yes/no ([`buildQualifyQ14Prompt`](src/lib/constants/qualify-screen-4.ts)).
+- **Q14 file uploads** — Answering **Yes** to additional evidence shows multi-file upload (JPEG/PNG/WebP/GIF/PDF/`.txt`, 5 MB each, 10 per claim) → private **`claim-evidence`** Storage via [`POST /api/qualify/additional-evidence`](src/app/api/qualify/additional-evidence/route.ts) ([`additional-call-evidence.ts`](src/lib/qualify/additional-call-evidence.ts), [`upload-additional-call-evidence.ts`](src/lib/qualify/upload-additional-call-evidence.ts)). Paths persist on `claim_events` key `additional_evidence_paths`. Migration [`20260518174500_claim_evidence_text_plain.sql`](supabase/migrations/20260518174500_claim_evidence_text_plain.sql).
+
 ## 2026-05-18 (Federal DNC — receiving line profile + account reuse)
 
 ### Receiving phone vs screened caller

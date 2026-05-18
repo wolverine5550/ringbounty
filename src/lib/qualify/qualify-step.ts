@@ -12,6 +12,7 @@ import {
   QUALIFY_WIZARD_STEP_MIN,
   type QualifyWizardStep,
 } from "./constants";
+import { isNamedCompanyForConsent } from "./format-company-consent-prompt";
 
 const QUALIFICATION_ANSWER_EVENT: ClaimEventType = "qualification_answer";
 
@@ -57,6 +58,29 @@ export function resolveQualifyWizardStep(params: {
   resumeStep: QualifyWizardStep | null;
 }): QualifyWizardStep {
   return params.urlStep ?? params.resumeStep ?? 1;
+}
+
+/** Wizard step after Screen 4 — skip consent when the company is not identified. */
+export function resolveWizardStepAfterCompanyScreen(
+  companyName: string | null | undefined,
+): 5 | 6 {
+  return isNamedCompanyForConsent(companyName) ? 5 : 6;
+}
+
+/**
+ * Previous-step link — step 6 skips back to 4 when consent was skipped.
+ */
+export function resolveQualifyPreviousStep(
+  currentStep: QualifyWizardStep,
+  subjectCompanyName: string | null | undefined,
+): QualifyWizardStep | null {
+  if (currentStep === 6 && !isNamedCompanyForConsent(subjectCompanyName)) {
+    return 4;
+  }
+  if (currentStep <= QUALIFY_WIZARD_STEP_MIN) {
+    return null;
+  }
+  return (currentStep - 1) as QualifyWizardStep;
 }
 
 export function buildQualifyPageHref(params: {

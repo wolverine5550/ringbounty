@@ -12,6 +12,11 @@ import { persistUserCompanyIdentification } from "@/lib/company/persist-user-com
 import type { Database } from "@/types/database";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import {
+  ADDITIONAL_EVIDENCE_PATHS_EVENT_KEY,
+  parseAdditionalEvidencePathsEventValue,
+} from "@/lib/qualify/additional-call-evidence";
+
 import { parseQualificationBooleanValue } from "./screen-1-consent";
 import { persistQualifyResumeStep } from "./qualify-step";
 
@@ -23,6 +28,8 @@ export const QUALIFY_SCREEN_4_KEYS = {
   companyCallbackPhone: "company_callback_phone",
   companyProductPitch: "company_product_pitch",
   hasAdditionalEvidence: "has_additional_evidence",
+  hasVoicemailForUpload: "has_voicemail_for_upload",
+  additionalEvidencePaths: ADDITIONAL_EVIDENCE_PATHS_EVENT_KEY,
   voicemailTranscript: "voicemail_transcript",
   companyIdentificationSource: "company_identification_source",
 } as const;
@@ -31,6 +38,8 @@ const SCREEN_4_LOAD_KEYS = [
   QUALIFY_SCREEN_4_KEYS.companyCallbackPhone,
   QUALIFY_SCREEN_4_KEYS.companyProductPitch,
   QUALIFY_SCREEN_4_KEYS.hasAdditionalEvidence,
+  QUALIFY_SCREEN_4_KEYS.hasVoicemailForUpload,
+  QUALIFY_SCREEN_4_KEYS.additionalEvidencePaths,
   QUALIFY_SCREEN_4_KEYS.voicemailTranscript,
   QUALIFY_SCREEN_4_KEYS.companyIdentificationSource,
   COMPANY_NAME_VERIFICATION_STATUS_KEY,
@@ -45,6 +54,8 @@ export type QualifyScreen4Answers = {
   companyCallbackPhone: string | null;
   companyProductPitch: string | null;
   hasAdditionalEvidence: boolean;
+  hasVoicemailForUpload: boolean;
+  additionalEvidencePaths: string[];
   voicemailTranscript: string | null;
   companyIdentificationSource: string | null;
   verificationStatus: CompanyNameVerificationStatus | null;
@@ -151,11 +162,26 @@ export async function loadQualifyScreen4Answers(
     ? verificationRaw
     : null;
 
+  const hasVoicemailForUpload = parseQualificationBooleanValue(
+    latest.get(QUALIFY_SCREEN_4_KEYS.hasVoicemailForUpload),
+  );
+
+  const callbackRaw = latest.get(QUALIFY_SCREEN_4_KEYS.companyCallbackPhone);
+  const pitchRaw = latest.get(QUALIFY_SCREEN_4_KEYS.companyProductPitch);
+
   return {
     companyName,
-    companyCallbackPhone: latest.get(QUALIFY_SCREEN_4_KEYS.companyCallbackPhone) ?? null,
-    companyProductPitch: latest.get(QUALIFY_SCREEN_4_KEYS.companyProductPitch) ?? null,
+    companyCallbackPhone:
+      hasVoicemailForUpload === true && callbackRaw?.trim()
+        ? callbackRaw
+        : null,
+    companyProductPitch:
+      hasVoicemailForUpload === true && pitchRaw?.trim() ? pitchRaw : null,
     hasAdditionalEvidence,
+    hasVoicemailForUpload: hasVoicemailForUpload ?? false,
+    additionalEvidencePaths: parseAdditionalEvidencePathsEventValue(
+      latest.get(QUALIFY_SCREEN_4_KEYS.additionalEvidencePaths),
+    ),
     voicemailTranscript: latest.get(QUALIFY_SCREEN_4_KEYS.voicemailTranscript) ?? null,
     companyIdentificationSource:
       latest.get(QUALIFY_SCREEN_4_KEYS.companyIdentificationSource) ?? null,
@@ -233,9 +259,14 @@ export async function persistQualifyScreen4Answers(
       QUALIFY_SCREEN_4_KEYS.hasAdditionalEvidence,
       String(answers.hasAdditionalEvidence),
     ),
+    qualificationEventRow(
+      claimId,
+      QUALIFY_SCREEN_4_KEYS.hasVoicemailForUpload,
+      String(answers.hasVoicemailForUpload),
+    ),
   ];
 
-  if (answers.companyCallbackPhone) {
+  if (answers.hasVoicemailForUpload && answers.companyCallbackPhone) {
     contextRows.push(
       qualificationEventRow(
         claimId,
@@ -245,12 +276,43 @@ export async function persistQualifyScreen4Answers(
     );
   }
 
-  if (answers.companyProductPitch) {
+  if (answers.hasVoicemailForUpload && answers.companyProductPitch) {
     contextRows.push(
       qualificationEventRow(
         claimId,
         QUALIFY_SCREEN_4_KEYS.companyProductPitch,
         answers.companyProductPitch,
+      ),
+    );
+  } else if (!answers.hasVoicemailForUpload) {
+    contextRows.push(
+      qualificationEventRow(
+        claimId,
+        QUALIFY_SCREEN_4_KEYS.companyCallbackPhone,
+        "",
+      ),
+      qualificationEventRow(
+        claimId,
+        QUALIFY_SCREEN_4_KEYS.companyProductPitch,
+        "",
+      ),
+    );
+  }
+
+  if (answers.hasAdditionalEvidence && answers.additionalEvidencePaths.length > 0) {
+    contextRows.push(
+      qualificationEventRow(
+        claimId,
+        QUALIFY_SCREEN_4_KEYS.additionalEvidencePaths,
+        JSON.stringify(answers.additionalEvidencePaths),
+      ),
+    );
+  } else if (!answers.hasAdditionalEvidence) {
+    contextRows.push(
+      qualificationEventRow(
+        claimId,
+        QUALIFY_SCREEN_4_KEYS.additionalEvidencePaths,
+        JSON.stringify([]),
       ),
     );
   }
@@ -280,22 +342,39 @@ export function parseQualifyScreen4Body(
     return { error: "has_additional_evidence must be true or false" };
   }
 
-  const callbackParsed = parseOptionalContextField(
-    body.company_callback_phone,
-    "company_callback_phone",
-    32,
-  );
+  const hasVoicemailForUpload = body.has_voicemail;
+  if (hasVoicemailForUpload !== true && hasVoicemailForUpload !== false) {
+    return { error: "has_voicemail must be true or false" };
+  }
+
+  const callbackParsed = hasVoicemailForUpload
+    ? parseOptionalContextField(
+        body.company_callback_phone,
+        "company_callback_phone",
+        32,
+      )
+    : null;
   if (isFieldParseError(callbackParsed)) {
     return callbackParsed;
   }
 
-  const pitchParsed = parseOptionalContextField(
-    body.company_product_pitch,
-    "company_product_pitch",
-    2000,
-  );
+  const pitchParsed = hasVoicemailForUpload
+    ? parseOptionalContextField(
+        body.company_product_pitch,
+        "company_product_pitch",
+        2000,
+      )
+    : null;
   if (isFieldParseError(pitchParsed)) {
     return pitchParsed;
+  }
+
+  const pathsRaw = body.additional_evidence_paths;
+  let additionalEvidencePaths: string[] = [];
+  if (Array.isArray(pathsRaw)) {
+    additionalEvidencePaths = pathsRaw.filter(
+      (p): p is string => typeof p === "string" && p.trim().length > 0,
+    );
   }
 
   return {
@@ -303,6 +382,8 @@ export function parseQualifyScreen4Body(
     companyCallbackPhone: callbackParsed,
     companyProductPitch: pitchParsed,
     hasAdditionalEvidence,
+    hasVoicemailForUpload,
+    additionalEvidencePaths: hasAdditionalEvidence ? additionalEvidencePaths : [],
     voicemailTranscript: null,
     companyIdentificationSource: null,
     verificationStatus: null,
