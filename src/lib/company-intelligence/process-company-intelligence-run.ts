@@ -102,18 +102,20 @@ async function claimPendingBatch(
 async function markRunCompleted(
   admin: SupabaseClient<Database>,
   run: IntelligenceRunRow,
-  durationMs: number,
-  synthesis: Awaited<
-    ReturnType<typeof runCompanyIntelligenceAgent>
-  >["synthesis"],
+  agentResult: Awaited<ReturnType<typeof runCompanyIntelligenceAgent>>,
 ): Promise<void> {
   const now = new Date().toISOString();
+  const durationMs = agentResult.durationMs;
+  const synthesis = agentResult.synthesis;
+
   const runPatch: Database["public"]["Tables"]["company_intelligence_runs"]["Update"] =
     {
       status: "completed",
       duration_ms: durationMs,
       updated_at: now,
       last_error: null,
+      sources_queried: agentResult.roundAudits as Database["public"]["Tables"]["company_intelligence_runs"]["Update"]["sources_queried"],
+      raw_results: agentResult.rawResults as Database["public"]["Tables"]["company_intelligence_runs"]["Update"]["raw_results"],
     };
 
   const subjectPatch: Database["public"]["Tables"]["claim_subjects"]["Update"] =
@@ -252,11 +254,10 @@ export async function processCompanyIntelligenceRun(
       runId: run.id,
       env,
     });
-    const durationMs =
-      agentResult.durationMs > 0
-        ? agentResult.durationMs
-        : Date.now() - started;
-    await markRunCompleted(admin, run, durationMs, agentResult.synthesis);
+    if (agentResult.durationMs <= 0) {
+      agentResult.durationMs = Date.now() - started;
+    }
+    await markRunCompleted(admin, run, agentResult);
     return { runId: run.id, status: "completed" };
   } catch (error) {
     return markRunFailed(admin, run, errorMessage(error));

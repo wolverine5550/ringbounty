@@ -2,12 +2,32 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createMockSupabaseClient } from "@/test-utils/mockSupabaseClient";
 
+import * as contextModule from "./load-claim-subject-intel-context";
 import { runCompanyIntelligenceAgent } from "./run-company-intelligence-agent";
 import * as seedModule from "./sources/seed-violations";
+import * as laneAModule from "./sources/lane-a-spam-providers";
 
-describe("runCompanyIntelligenceAgent (CI-2.2)", () => {
-  it("returns null synthesis when seed miss", async () => {
+const baseContext = {
+  metadata: null,
+  subjectCreatedAt: new Date().toISOString(),
+  authenticatedUserId: null,
+};
+
+describe("runCompanyIntelligenceAgent (CI-3.1)", () => {
+  it("returns null synthesis when seed miss and no Lane A hits", async () => {
+    vi.spyOn(contextModule, "loadClaimSubjectIntelContext").mockResolvedValue(
+      baseContext,
+    );
     vi.spyOn(seedModule, "querySeedViolations").mockResolvedValue(null);
+    vi.spyOn(
+      laneAModule,
+      "evaluateLaneASpamProvidersRound2",
+    ).mockReturnValue({
+      hits: [],
+      rawByProvider: {},
+      reusedLaneA: false,
+      skippedReason: "missing_metadata",
+    });
 
     const admin = createMockSupabaseClient();
     const result = await runCompanyIntelligenceAgent({
@@ -19,10 +39,14 @@ describe("runCompanyIntelligenceAgent (CI-2.2)", () => {
 
     expect(result.synthesis).toBeNull();
     expect(result.skipPaidRounds).toBe(false);
-    expect(result.round1Hits).toEqual([]);
+    expect(result.allSources).toEqual([]);
+    expect(result.roundAudits[0]?.round).toBe(1);
   });
 
   it("Path B high-count seed returns category suggest without skipping paid rounds", async () => {
+    vi.spyOn(contextModule, "loadClaimSubjectIntelContext").mockResolvedValue(
+      baseContext,
+    );
     vi.spyOn(seedModule, "querySeedViolations").mockResolvedValue({
       phoneNumberNormalized: "+18005551234",
       reportedCompanyName: null,
@@ -31,6 +55,15 @@ describe("runCompanyIntelligenceAgent (CI-2.2)", () => {
       source: "ftc_complaint",
       litigationStatus: null,
       metadata: { ftc_subject: "Other", complaint_count: 75 },
+    });
+    vi.spyOn(
+      laneAModule,
+      "evaluateLaneASpamProvidersRound2",
+    ).mockReturnValue({
+      hits: [],
+      rawByProvider: {},
+      reusedLaneA: false,
+      skippedReason: "missing_metadata",
     });
 
     const admin = createMockSupabaseClient();
@@ -44,10 +77,14 @@ describe("runCompanyIntelligenceAgent (CI-2.2)", () => {
     expect(result.synthesis?.companyName).toBeNull();
     expect(result.synthesis?.callCategory).toBe("Other");
     expect(result.skipPaidRounds).toBe(false);
-    expect(result.round1Hits).toHaveLength(1);
+    expect(result.stoppedEarly).toBe(true);
+    expect(result.allSources).toHaveLength(1);
   });
 
   it("Path A seed short-circuit skips paid rounds", async () => {
+    vi.spyOn(contextModule, "loadClaimSubjectIntelContext").mockResolvedValue(
+      baseContext,
+    );
     vi.spyOn(seedModule, "querySeedViolations").mockResolvedValue({
       phoneNumberNormalized: "+18005551234",
       reportedCompanyName: "CarShield",
@@ -69,5 +106,35 @@ describe("runCompanyIntelligenceAgent (CI-2.2)", () => {
     expect(result.synthesis?.companyName).toBe("CarShield");
     expect(result.synthesis?.confidence).toBe(85);
     expect(result.skipPaidRounds).toBe(true);
+    expect(result.stoppedEarly).toBe(true);
+  });
+
+  it("Round 2 nomorobo reuse stops when confidence ≥ threshold", async () => {
+    vi.spyOn(contextModule, "loadClaimSubjectIntelContext").mockResolvedValue({
+      ...baseContext,
+      metadata: { spam_providers: { nomorobo: { risk_score: 90 } } },
+    });
+    vi.spyOn(seedModule, "querySeedViolations").mockResolvedValue(null);
+    vi.spyOn(
+      laneAModule,
+      "evaluateLaneASpamProvidersRound2",
+    ).mockReturnValue({
+      hits: [{ tier: "nomorobo", companyName: "Capital One" }],
+      rawByProvider: { nomorobo: { reported_name: "Capital One" } },
+      reusedLaneA: true,
+      skippedReason: null,
+    });
+
+    const admin = createMockSupabaseClient();
+    const result = await runCompanyIntelligenceAgent({
+      admin,
+      phoneNumberNormalized: "+18005551234",
+      claimSubjectId: "sub-1",
+      runId: "run-1",
+    });
+
+    expect(result.stoppedEarly).toBe(true);
+    expect(result.synthesis?.companyName).toBe("Capital One");
+    expect(result.roundAudits.some((a) => a.round === 2)).toBe(true);
   });
 });

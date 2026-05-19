@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-05-19 (Company ID — CI-3.1 orchestrator core)
+
+### Infra (flags off by default; CI-4 paid rounds not wired yet)
+
+- **CI-3.1.1** — Multi-round orchestrator in [`run-company-intelligence-agent.ts`](src/lib/company-intelligence/run-company-intelligence-agent.ts): accumulates `allSources` / `rounds` per round.
+- **CI-3.1.2** — Round 1: local `seed_violations` (CI-2.2).
+- **CI-3.1.3** — Round 2: reuse `metadata.spam_providers` + Whitepages hints from check submit ([`lane-a-spam-providers.ts`](src/lib/company-intelligence/sources/lane-a-spam-providers.ts)); no Nomorobo HTTP; stale when `claim_subjects.created_at` &gt; 24h (configurable).
+- **CI-3.1.4** — Short-circuit when confidence ≥ `COMPANY_INTEL_SHORT_CIRCUIT_THRESHOLD` (default 70).
+- **CI-3.1.5** — Worker persists `sources_queried`, `raw_results`, and suggest fields on `claim_subjects` ([`process-company-intelligence-run.ts`](src/lib/company-intelligence/process-company-intelligence-run.ts)).
+- Vitest: `orchestrator-policy.test.ts`, `orchestrator-short-circuit.test.ts`, `lane-a-spam-providers.test.ts`, updated `run-company-intelligence-agent.test.ts`.
+
 ## 2026-05-19 (Company ID — CI-2.2 seed Round 1 lookup)
 
 ### Infra (requires `seed_violations` data from CI-2.1 ETL)

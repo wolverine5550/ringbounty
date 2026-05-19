@@ -43,8 +43,13 @@ describe("processCompanyIntelligenceRun (CI-1.2)", () => {
     vi.spyOn(agentModule, "runCompanyIntelligenceAgent").mockResolvedValue({
       durationMs: 42,
       synthesis: null,
-      round1Hits: [],
+      allSources: [],
+      rounds: [],
+      roundAudits: [],
+      rawResults: {},
       skipPaidRounds: false,
+      stoppedEarly: false,
+      shortCircuitThreshold: 70,
     });
 
     const runUpdateEq = vi.fn().mockResolvedValue({ error: null });
@@ -158,8 +163,13 @@ describe("processCompanyIntelligenceRuns (CI-1.2.2)", () => {
     vi.spyOn(agentModule, "runCompanyIntelligenceAgent").mockResolvedValue({
       durationMs: 1,
       synthesis: null,
-      round1Hits: [],
+      allSources: [],
+      rounds: [],
+      roundAudits: [],
+      rawResults: {},
       skipPaidRounds: false,
+      stoppedEarly: false,
+      shortCircuitThreshold: 70,
     });
 
     const runUpdateEq = vi.fn().mockResolvedValue({ error: null });
