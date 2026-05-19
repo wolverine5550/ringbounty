@@ -31,6 +31,8 @@ export type RunSpamChecksForPhoneListParams = {
   /** §6.5 — `public.users.state` when known (enables in-state OpenCorporates search). */
   userStateCode?: string | null;
   anonymousSessionId?: string | null;
+  /** CI-1.4 — client IP for company-intelligence enqueue caps. */
+  clientIp: string;
 };
 
 function providerOutcomeToApi(
@@ -111,6 +113,8 @@ export async function runSpamChecksForPhoneList(
           phoneNumberNormalized: p.phoneNumberNormalized,
           companyIdentified: merged.companyIdentified,
           isExempt: merged.isExempt,
+          anonymousSessionId: params.anonymousSessionId,
+          clientIp: params.clientIp,
           env: params.env,
         });
       }

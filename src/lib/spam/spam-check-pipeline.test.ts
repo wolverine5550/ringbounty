@@ -25,6 +25,7 @@ describe("runSpamChecksForPhoneList", () => {
     const outcomes = await runSpamChecksForPhoneList(admin, {
       claimId: "claim-1",
       phones: [{ phoneNumberNormalized: "+12125550199", subjectId: "sub-1" }],
+      clientIp: "127.0.0.1",
       providers: [
         providerReturning({
           isSpam: true,

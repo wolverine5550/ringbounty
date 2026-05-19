@@ -7,6 +7,10 @@ export const RATE_LIMIT_ACTION_WAITLIST = "waitlist_signup" as const;
 export const RATE_LIMIT_ACTION_OPENCORPORATES_LOOKUP =
   "opencorporates_lookup" as const;
 
+/** CI-1.4 — Lane B `company_intelligence_runs` enqueue (free cache path; tune when SerpAPI ships). */
+export const RATE_LIMIT_ACTION_COMPANY_INTELLIGENCE_ENQUEUE =
+  "company_intelligence_enqueue" as const;
+
 /** Scopes for `public.rate_limit_buckets.scope`. */
 export const RATE_LIMIT_SCOPE_IP = "ip" as const;
 export const RATE_LIMIT_SCOPE_ANONYMOUS_SESSION = "anonymous_session" as const;
@@ -22,6 +26,14 @@ export const WAITLIST_WINDOW_SECONDS = 3600;
 /** Tunable — one lookup may perform several HTTP calls internally. */
 export const OPENCORPORATES_LOOKUP_LIMIT_PER_SESSION = 6;
 export const OPENCORPORATES_LOOKUP_WINDOW_SECONDS = 3600;
+
+/**
+ * CI-1.4 — Max Lane B enqueues per hour (mirrors check submission caps until SerpAPI tuning).
+ * One enqueue per UNKNOWN subject after Lane A persist.
+ */
+export const COMPANY_INTEL_ENQUEUE_LIMIT_PER_SESSION = 10;
+export const COMPANY_INTEL_ENQUEUE_LIMIT_PER_IP = 30;
+export const COMPANY_INTEL_ENQUEUE_WINDOW_SECONDS = 3600;
 
 /** User-facing copy when limited (§2.7.3). */
 export const RATE_LIMIT_USER_MESSAGE =

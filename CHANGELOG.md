@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-05-19 (Company ID — CI-2.1 FTC bulk ETL script)
+
+### Infra (no prod ingest until CI-P.2.4 counsel sign-off)
+
+- **CI-2.1.1** — [`scripts/etl/ftc-dnc-complaints-ingest.ts`](scripts/etl/ftc-dnc-complaints-ingest.ts): download or read FTC daily `DNC_Complaint_Numbers_YYYY-MM-DD.csv`; `npm run etl:ftc-dnc`.
+- **CI-2.1.2** — Parse + aggregate Path B ([`src/lib/company-intelligence/etl/`](src/lib/company-intelligence/etl/)): E.164 normalize, modal `Subject`, robocall majority, skip empty/invalid phones; no consumer PII.
+- **CI-2.1.3** — Upsert `seed_violations` (`source=ftc_complaint`, confidence buckets 10–99 medium / 100+ high). Vitest: `etl/*.test.ts`.
+- **CI-2.1.4** — Legal/data-use header in script (FTC terms, retention, unverified complaints).
+- **CI-2.1.5** — README manual run + rolling-window refresh notes.
+
+## 2026-05-19 (Company ID — CI-1.4 enqueue rate limits)
+
+### Infra (flags off by default)
+
+- **CI-1.4.1** — [`constants.ts`](src/lib/rate-limit/constants.ts): `company_intelligence_enqueue` action — **10/hour per anonymous session**, **30/hour per IP** (tunable when SerpAPI ships).
+- **CI-1.4.2** — [`assert-company-intelligence-enqueue-allowed.ts`](src/lib/rate-limit/assert-company-intelligence-enqueue-allowed.ts): skip Lane B insert when capped; `[rate-limit]` incident log + `company_intel_enqueue_rate_limited` JSON (does not block `/check`). Vitest: [`assert-company-intelligence-enqueue-allowed.test.ts`](src/lib/rate-limit/assert-company-intelligence-enqueue-allowed.test.ts).
+- **CI-1.4.3** — Documented Turnstile (**O1**) dependency before marketing traffic + full agent scale (complements hourly caps; [`README.md`](README.md)).
+
 ## 2026-05-19 (Company ID — CI-1.3 cron drain)
 
 ### Infra (agent stub until CI-3; flags off by default)

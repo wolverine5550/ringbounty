@@ -6,6 +6,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/types/database";
 
+import { assertCompanyIntelligenceEnqueueAllowed } from "@/lib/rate-limit/assert-company-intelligence-enqueue-allowed";
+
 import {
   getCompanyIntelligenceFeatureFlags,
   type CompanyIntelligenceEnv,
@@ -18,11 +20,15 @@ export type EnqueueCompanyIntelligenceRunParams = {
   phoneNumberNormalized: string;
   companyIdentified: boolean;
   isExempt: boolean;
+  /** Anonymous `rb_anonymous_sid`; null for authenticated submit (IP limit only). */
+  anonymousSessionId?: string | null;
+  /** Client IP from `getClientIp` (CI-1.4). */
+  clientIp: string;
   env?: CompanyIntelligenceEnv;
 };
 
 export type EnqueueCompanyIntelligenceRunResult =
-  | { enqueued: false }
+  | { enqueued: false; rateLimited?: boolean }
   | { enqueued: true; runId: string };
 
 /**
@@ -42,6 +48,22 @@ export async function enqueueCompanyIntelligenceRun(
     })
   ) {
     return { enqueued: false };
+  }
+
+  const rateLimit = await assertCompanyIntelligenceEnqueueAllowed(admin, {
+    anonymousSessionId: params.anonymousSessionId,
+    clientIp: params.clientIp,
+  });
+  if (!rateLimit.allowed) {
+    console.error(
+      JSON.stringify({
+        event: "company_intel_enqueue_rate_limited",
+        claim_subject_id: params.claimSubjectId,
+        phone_last4: params.phoneNumberNormalized.slice(-4),
+        retry_after_seconds: rateLimit.retryAfterSeconds,
+      }),
+    );
+    return { enqueued: false, rateLimited: true };
   }
 
   const { data: run, error: insertError } = await admin

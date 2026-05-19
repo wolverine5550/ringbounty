@@ -10,7 +10,7 @@ export type ShouldEnqueueCompanyIntelligenceRunParams = {
   isExempt: boolean;
 };
 
-/** Pure gate before insert; does not check rate limits (**CI-1.4**). */
+/** Pure gate before insert; rate limits run in enqueue (**CI-1.4**). */
 export function shouldEnqueueCompanyIntelligenceRun(
   params: ShouldEnqueueCompanyIntelligenceRunParams,
 ): boolean {

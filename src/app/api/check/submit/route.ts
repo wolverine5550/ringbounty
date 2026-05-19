@@ -22,6 +22,7 @@ import {
   assertCheckSubmissionAllowed,
   RateLimitExceededError,
 } from "@/lib/rate-limit/assert-check-submission-allowed";
+import { getClientIp } from "@/lib/rate-limit/get-client-ip";
 import {
   createAdminClient,
   SupabaseAdminKeyMissingError,
@@ -281,6 +282,7 @@ export async function POST(request: NextRequest) {
         })),
         userStateCode,
         anonymousSessionId: authenticatedUserId ? null : raw,
+        clientIp: getClientIp(request),
       });
     }
 

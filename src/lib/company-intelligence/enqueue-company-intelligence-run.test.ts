@@ -6,9 +6,14 @@ import {
   enqueueCompanyIntelligenceRun,
   maybeEnqueueCompanyIntelligenceRun,
 } from "./enqueue-company-intelligence-run";
+import * as rateLimitModule from "@/lib/rate-limit/assert-company-intelligence-enqueue-allowed";
 import * as triggerModule from "./trigger-company-intelligence-run";
 
 const agentOn = { COMPANY_INTELLIGENCE_AGENT_ENABLED: "true" };
+const rateLimitCtx = {
+  anonymousSessionId: "sid-test",
+  clientIp: "203.0.113.1",
+};
 
 describe("enqueueCompanyIntelligenceRun (CI-1.1)", () => {
   it("skips insert when flag off", async () => {
@@ -18,6 +23,7 @@ describe("enqueueCompanyIntelligenceRun (CI-1.1)", () => {
       phoneNumberNormalized: "+18005551234",
       companyIdentified: false,
       isExempt: false,
+      ...rateLimitCtx,
     });
     expect(result).toEqual({ enqueued: false });
     expect(admin.from).not.toHaveBeenCalled();
@@ -32,6 +38,7 @@ describe("enqueueCompanyIntelligenceRun (CI-1.1)", () => {
         companyIdentified: true,
         isExempt: false,
         env: agentOn,
+        ...rateLimitCtx,
       }),
     ).resolves.toEqual({ enqueued: false });
     await expect(
@@ -41,12 +48,42 @@ describe("enqueueCompanyIntelligenceRun (CI-1.1)", () => {
         companyIdentified: false,
         isExempt: true,
         env: agentOn,
+        ...rateLimitCtx,
       }),
     ).resolves.toEqual({ enqueued: false });
     expect(admin.from).not.toHaveBeenCalled();
   });
 
+  it("skips insert when rate limit exceeded (CI-1.4)", async () => {
+    vi.spyOn(
+      rateLimitModule,
+      "assertCompanyIntelligenceEnqueueAllowed",
+    ).mockResolvedValue({ allowed: false, retryAfterSeconds: 900 });
+    const logSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const admin = createMockSupabaseClient();
+    const result = await enqueueCompanyIntelligenceRun(admin, {
+      claimSubjectId: "subject-1",
+      phoneNumberNormalized: "+18005551234",
+      companyIdentified: false,
+      isExempt: false,
+      env: agentOn,
+      ...rateLimitCtx,
+    });
+
+    expect(result).toEqual({ enqueued: false, rateLimited: true });
+    expect(admin.from).not.toHaveBeenCalled();
+    expect(logSpy).toHaveBeenCalled();
+    logSpy.mockRestore();
+    vi.restoreAllMocks();
+  });
+
   it("inserts pending run and updates subject when UNKNOWN", async () => {
+    vi.spyOn(
+      rateLimitModule,
+      "assertCompanyIntelligenceEnqueueAllowed",
+    ).mockResolvedValue({ allowed: true });
+
     const runInsert = vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
         single: vi.fn().mockResolvedValue({
@@ -75,6 +112,7 @@ describe("enqueueCompanyIntelligenceRun (CI-1.1)", () => {
       companyIdentified: false,
       isExempt: false,
       env: agentOn,
+      ...rateLimitCtx,
     });
 
     expect(result).toEqual({ enqueued: true, runId: "run-uuid" });
@@ -92,6 +130,10 @@ describe("enqueueCompanyIntelligenceRun (CI-1.1)", () => {
 
 describe("maybeEnqueueCompanyIntelligenceRun (CI-1.1)", () => {
   it("triggers fail-open fetch when enqueue succeeds (CI-1.3.3)", async () => {
+    vi.spyOn(
+      rateLimitModule,
+      "assertCompanyIntelligenceEnqueueAllowed",
+    ).mockResolvedValue({ allowed: true });
     const triggerSpy = vi
       .spyOn(triggerModule, "triggerCompanyIntelligenceRunFetch")
       .mockImplementation(() => {});
@@ -124,6 +166,7 @@ describe("maybeEnqueueCompanyIntelligenceRun (CI-1.1)", () => {
       companyIdentified: false,
       isExempt: false,
       env: agentOn,
+      ...rateLimitCtx,
     });
 
     expect(triggerSpy).toHaveBeenCalledWith({
@@ -157,6 +200,7 @@ describe("maybeEnqueueCompanyIntelligenceRun (CI-1.1)", () => {
       companyIdentified: false,
       isExempt: false,
       env: agentOn,
+      ...rateLimitCtx,
     });
 
     expect(result).toEqual({ enqueued: false });

@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "etl:ftc-dnc": "npx tsx scripts/etl/ftc-dnc-complaints-ingest.ts",
     "prepare": "husky"
   },
   "lint-staged": {
