@@ -715,7 +715,7 @@ Husky runs **before every commit** (lint, typecheck, and tests once Vitest exist
 - [x] **6.4.4** `/check` UX: unidentified copy + CNAM/Whitepages hint line when present; attorney referral path needs Q13 (§7.5). <!-- done: check-funnel-client.tsx — update copy away from “demand letter” in marketing/constants pass -->
 - [ ] **6.4.5** **Bake-off (product):** 30–50 real spam numbers — Nomorobo vs trial **YouMail** (if miss rate high); document in `docs/` before re-adding YouMail to PRD.
 - [ ] **6.4.6** **Twilio VOIP / line type:** Persist `line_type_intelligence` on `claim_events` for claim-strength scoring (Lookup v2 already called; not CNAM for company ID).
-- [ ] **6.4.7** **FTC bulk index (v1):** Offline ingest consumer complaint data → phone→name lookup table (not live `dnc-complaints` API).
+- [ ] **6.4.7** **FTC bulk index (v1):** Offline ingest consumer complaint data → phone→name lookup table (not live `dnc-complaints` API). **Granular substeps:** [`docs/company_id_task_manager.md`](docs/company_id_task_manager.md) Phase **CI-2** (+ Company Intelligence Agent **CI-0–CI-11**).
 
 
 **Docs — this subsection**

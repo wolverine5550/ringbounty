@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-05-19 (Company ID — CI-P.1 doc and spike alignment)
+
+### Planning docs (no runtime changes)
+
+- **CI-P.1.1** — Cross-links: product spec is [`docs/claude_chat_company_finder.md`](docs/claude_chat_company_finder.md) (chat export + doc header); no remaining `company_finder.md` references in tracked docs. [`docs/check_cadence.md`](docs/check_cadence.md) §3.5 links task manager, product spec, FTC spikes, and planned Lane B agent.
+- **CI-P.1.2** — FTC live API vs bulk CSV: [`docs/spikes/20260516210000-ftc-complaints-company-lookup.md`](docs/spikes/20260516210000-ftc-complaints-company-lookup.md) § CI-P.1 alignment (live `subject` = category only; do not conflate with bulk ETL).
+- **CI-P.2 placeholder** — [`docs/spikes/20260519120000-ftc-bulk-csv-schema-validation.md`](docs/spikes/20260519120000-ftc-bulk-csv-schema-validation.md) for Path A/B/C decision (completed in **CI-P.2**).
+- **Task manager** — [`docs/company_id_task_manager.md`](docs/company_id_task_manager.md) **CI-P.1** checked; **CI-P.1.3** remains for **CI-P.2** fill-in.
+
 ## 2026-05-18 (Qualify UX — caller context, Screen 4 evidence uploads)
 
 ### Wizard context
