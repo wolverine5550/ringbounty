@@ -191,11 +191,13 @@ export type Database = {
       }
       company_intelligence_runs: {
         Row: {
+          apis_called: string[] | null
           attempt_count: number
           callback_numbers: string[] | null
           claim_subject_id: string
           created_at: string
           duration_ms: number | null
+          estimated_cost_cents: number | null
           id: string
           is_spoofed_pool: boolean | null
           last_error: string | null
@@ -213,11 +215,13 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          apis_called?: string[] | null
           attempt_count?: number
           callback_numbers?: string[] | null
           claim_subject_id: string
           created_at?: string
           duration_ms?: number | null
+          estimated_cost_cents?: number | null
           id?: string
           is_spoofed_pool?: boolean | null
           last_error?: string | null
@@ -235,11 +239,13 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          apis_called?: string[] | null
           attempt_count?: number
           callback_numbers?: string[] | null
           claim_subject_id?: string
           created_at?: string
           duration_ms?: number | null
+          estimated_cost_cents?: number | null
           id?: string
           is_spoofed_pool?: boolean | null
           last_error?: string | null
@@ -816,11 +822,13 @@ export type Database = {
       claim_company_intelligence_runs: {
         Args: { p_batch_size?: number }
         Returns: {
+          apis_called: string[] | null
           attempt_count: number
           callback_numbers: string[] | null
           claim_subject_id: string
           created_at: string
           duration_ms: number | null
+          estimated_cost_cents: number | null
           id: string
           is_spoofed_pool: boolean | null
           last_error: string | null

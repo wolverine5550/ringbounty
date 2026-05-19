@@ -135,6 +135,12 @@ async function markRunCompleted(
     runPatch.openrouter_response = agentResult.openrouterResponse;
   }
 
+  runPatch.estimated_cost_cents = agentResult.costEstimate.estimatedCostCents;
+  runPatch.apis_called =
+    agentResult.costEstimate.apisCalled.length > 0
+      ? agentResult.costEstimate.apisCalled
+      : null;
+
   const { error: runError } = await admin
     .from("company_intelligence_runs")
     .update(runPatch)

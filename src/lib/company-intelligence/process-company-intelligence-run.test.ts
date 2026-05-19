@@ -5,6 +5,7 @@ import { createMockSupabaseClient } from "@/test-utils/mockSupabaseClient";
 import type { Database } from "@/types/database";
 
 import * as agentModule from "./run-company-intelligence-agent";
+import type { RunCompanyIntelligenceAgentResult } from "./run-company-intelligence-agent";
 import * as persistModule from "./persist-company-intelligence-outcome";
 import {
   processCompanyIntelligenceRun,
@@ -36,6 +37,8 @@ const baseRun: IntelligenceRunRow = {
   duration_ms: null,
   openrouter_prompt: null,
   openrouter_response: null,
+  estimated_cost_cents: null,
+  apis_called: null,
   created_at: "2026-05-19T00:00:00.000Z",
 };
 
@@ -53,6 +56,10 @@ describe("processCompanyIntelligenceRun (CI-1.2)", () => {
       skipPaidRounds: false,
       stoppedEarly: false,
       shortCircuitThreshold: 70,
+      costEstimate: {
+        estimatedCostCents: 6,
+        apisCalled: ["serpapi", "openrouter"],
+      } satisfies RunCompanyIntelligenceAgentResult["costEstimate"],
     };
     vi.spyOn(agentModule, "runCompanyIntelligenceAgent").mockResolvedValue(
       agentResult,
@@ -62,13 +69,12 @@ describe("processCompanyIntelligenceRun (CI-1.2)", () => {
       .mockResolvedValue({ autoPromoted: false });
 
     const runUpdateEq = vi.fn().mockResolvedValue({ error: null });
+    const runUpdate = vi.fn().mockReturnValue({ eq: runUpdateEq });
 
     const admin = createMockSupabaseClient();
     vi.mocked(admin.from).mockImplementation((table: string) => {
       if (table === "company_intelligence_runs") {
-        return {
-          update: vi.fn().mockReturnValue({ eq: runUpdateEq }),
-        } as ReturnType<typeof admin.from>;
+        return { update: runUpdate } as ReturnType<typeof admin.from>;
       }
       return {} as ReturnType<typeof admin.from>;
     });
@@ -76,6 +82,12 @@ describe("processCompanyIntelligenceRun (CI-1.2)", () => {
     const outcome = await processCompanyIntelligenceRun(admin, baseRun, agentOn);
     expect(outcome).toEqual({ runId: "run-1", status: "completed" });
     expect(runUpdateEq).toHaveBeenCalledWith("id", "run-1");
+    expect(runUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        estimated_cost_cents: 6,
+        apis_called: ["serpapi", "openrouter"],
+      }),
+    );
     expect(persistSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         run: baseRun,
@@ -181,6 +193,7 @@ describe("processCompanyIntelligenceRuns (CI-1.2.2)", () => {
       skipPaidRounds: false,
       stoppedEarly: false,
       shortCircuitThreshold: 70,
+      costEstimate: { estimatedCostCents: 0, apisCalled: [] },
     });
     vi.spyOn(persistModule, "persistCompanyIntelligenceOutcome").mockResolvedValue({
       autoPromoted: false,

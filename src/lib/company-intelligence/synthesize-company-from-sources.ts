@@ -73,12 +73,16 @@ export type SynthesizeCompanyFromSourcesSuccess = {
   synthesis: SynthesisResult;
   prompt: string;
   response: string;
+  /** Billable OpenRouter HTTP attempts (CI-4.3). */
+  httpAttempts: number;
 };
 
 export type SynthesizeCompanyFromSourcesFailure = {
   ok: false;
   skippedReason: SynthesizeCompanySkippedReason;
   error?: string;
+  /** Billable OpenRouter HTTP attempts (CI-4.3). */
+  httpAttempts: number;
 };
 
 export type SynthesizeCompanyFromSourcesResult =
@@ -297,11 +301,11 @@ export async function synthesizeCompanyFromSources(
   const apiKey = options.apiKey ?? getOpenRouterApiKey();
 
   if (!apiKey) {
-    return { ok: false, skippedReason: "missing_credentials" };
+    return { ok: false, skippedReason: "missing_credentials", httpAttempts: 0 };
   }
 
   if (!hasSynthesisContext(input)) {
-    return { ok: false, skippedReason: "insufficient_context" };
+    return { ok: false, skippedReason: "insufficient_context", httpAttempts: 0 };
   }
 
   const model = options.model ?? getCompanyIntelOpenRouterModel(env);
@@ -311,6 +315,7 @@ export async function synthesizeCompanyFromSources(
   const timeoutMs = options.timeoutMs ?? DEFAULT_SYNTHESIS_TIMEOUT_MS;
 
   let lastContent: string | null = null;
+  let httpAttempts = 0;
 
   for (let attempt = 0; attempt < SYNTHESIS_MAX_PARSE_ATTEMPTS; attempt++) {
     const chat = await requestOpenRouterSynthesis({
@@ -322,13 +327,16 @@ export async function synthesizeCompanyFromSources(
     });
 
     if (!chat.ok) {
+      httpAttempts += 1;
       return {
         ok: false,
         skippedReason: chat.reason,
         error: chat.error,
+        httpAttempts,
       };
     }
 
+    httpAttempts += 1;
     lastContent = chat.content;
     const synthesis = parseAndValidateSynthesisJson(chat.content);
     if (synthesis) {
@@ -337,6 +345,7 @@ export async function synthesizeCompanyFromSources(
         synthesis,
         prompt: fullPrompt,
         response: chat.content,
+        httpAttempts,
       };
     }
   }
@@ -345,6 +354,7 @@ export async function synthesizeCompanyFromSources(
     ok: false,
     skippedReason: "parse_error",
     error: lastContent ? "invalid_json_after_retry" : "no_content",
+    httpAttempts,
   };
 }
 

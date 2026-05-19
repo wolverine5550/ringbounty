@@ -338,6 +338,7 @@ describe("runCompanyIntelligenceAgent (CI-4.2)", () => {
       },
       prompt: "system prompt",
       response: JSON.stringify({ company_name: "CarShield Vehicle Protection" }),
+      httpAttempts: 1,
     });
 
     const admin = createMockSupabaseClient();
@@ -362,5 +363,9 @@ describe("runCompanyIntelligenceAgent (CI-4.2)", () => {
     expect(result.allSources.some((h) => h.tier === "openrouter_synthesis")).toBe(
       true,
     );
+    expect(result.costEstimate).toEqual({
+      estimatedCostCents: 6,
+      apisCalled: ["serpapi", "openrouter"],
+    });
   });
 });

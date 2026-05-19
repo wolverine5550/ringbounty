@@ -132,6 +132,7 @@ describe("synthesizeCompanyFromSources (CI-4.2.4)", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.skippedReason).toBe("missing_credentials");
+      expect(result.httpAttempts).toBe(0);
     }
     expect(fetchImpl).not.toHaveBeenCalled();
   });
@@ -184,6 +185,7 @@ describe("synthesizeCompanyFromSources (CI-4.2.4)", () => {
     if (result.ok) {
       expect(result.synthesis.companyName).toBe("CarShield Vehicle Protection");
       expect(result.response).toBe(VALID_MODEL_JSON);
+      expect(result.httpAttempts).toBe(SYNTHESIS_MAX_PARSE_ATTEMPTS);
     }
   });
 
@@ -221,6 +223,7 @@ describe("synthesisResultToRound4Payload (CI-4.2.1)", () => {
       synthesis,
       prompt: "system\n\n---\n\n{}",
       response: VALID_MODEL_JSON,
+      httpAttempts: 1,
     });
     expect(payload.hit.tier).toBe("openrouter_synthesis");
     expect(payload.hit.companyName).toBe("CarShield Vehicle Protection");

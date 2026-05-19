@@ -15,6 +15,8 @@ import type { Database } from "@/types/database";
 import type { CompanyIntelligenceEnv } from "./company-intelligence-flags";
 import {
   COMPANY_IDENTIFICATION_SOURCE_KEY,
+  COMPANY_INTEL_APIS_CALLED_KEY,
+  COMPANY_INTEL_ESTIMATED_COST_CENTS_KEY,
   COMPANY_INTELLIGENCE_COMPLETED_KEY,
   COMPANY_INTELLIGENCE_EVENT_SOURCE,
   COMPANY_INTELLIGENCE_EVENT_TYPE,
@@ -93,6 +95,7 @@ function buildCompanyIntelligenceClaimEventRows(
   claimId: string,
   synthesis: SynthesisResult | null,
   promoted: boolean,
+  costEstimate: RunCompanyIntelligenceAgentResult["costEstimate"],
 ): Database["public"]["Tables"]["claim_events"]["Insert"][] {
   const source = COMPANY_INTELLIGENCE_EVENT_SOURCE;
   const rows: Database["public"]["Tables"]["claim_events"]["Insert"][] = [
@@ -108,6 +111,20 @@ function buildCompanyIntelligenceClaimEventRows(
       event_type: COMPANY_INTELLIGENCE_EVENT_TYPE,
       key: COMPANY_IDENTIFICATION_SOURCE_KEY,
       value: COMPANY_INTELLIGENCE_EVENT_SOURCE,
+      source,
+    },
+    {
+      claim_id: claimId,
+      event_type: COMPANY_INTELLIGENCE_EVENT_TYPE,
+      key: COMPANY_INTEL_ESTIMATED_COST_CENTS_KEY,
+      value: String(costEstimate.estimatedCostCents),
+      source,
+    },
+    {
+      claim_id: claimId,
+      event_type: COMPANY_INTELLIGENCE_EVENT_TYPE,
+      key: COMPANY_INTEL_APIS_CALLED_KEY,
+      value: JSON.stringify(costEstimate.apisCalled),
       source,
     },
   ];
@@ -221,6 +238,7 @@ export async function persistCompanyIntelligenceOutcome(
     subject.claimId,
     synthesis,
     autoPromote,
+    agentResult.costEstimate,
   );
   if (eventRows.length > 0) {
     const { error: eventsError } = await admin.from("claim_events").insert(eventRows);

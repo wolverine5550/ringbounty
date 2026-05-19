@@ -5,6 +5,8 @@ import type { Database } from "@/types/database";
 
 import {
   COMPANY_IDENTIFICATION_SOURCE_KEY,
+  COMPANY_INTEL_APIS_CALLED_KEY,
+  COMPANY_INTEL_ESTIMATED_COST_CENTS_KEY,
   COMPANY_INTELLIGENCE_COMPLETED_KEY,
   COMPANY_INTELLIGENCE_EVENT_SOURCE,
   COMPANY_INTELLIGENCE_EVENT_TYPE,
@@ -45,6 +47,7 @@ const baseAgentResult: RunCompanyIntelligenceAgentResult = {
   skipPaidRounds: true,
   stoppedEarly: true,
   shortCircuitThreshold: 70,
+  costEstimate: { estimatedCostCents: 0, apisCalled: [] },
 };
 
 function mockAdminForPersist(input: {
@@ -131,6 +134,44 @@ describe("persistCompanyIntelligenceOutcome (CI-3.2)", () => {
         expect.objectContaining({
           key: COMPANY_NAME_SUGGESTED_EVENT_KEY,
           value: "CarShield",
+        }),
+        expect.objectContaining({
+          key: COMPANY_INTEL_ESTIMATED_COST_CENTS_KEY,
+          value: "0",
+        }),
+        expect.objectContaining({
+          key: COMPANY_INTEL_APIS_CALLED_KEY,
+          value: "[]",
+        }),
+      ]),
+    );
+  });
+
+  it("CI-4.3.1 emits cost claim_events when paid APIs were billed", async () => {
+    vi.spyOn(seedModule, "writeBackSeedViolationFromAgent").mockResolvedValue();
+    const { admin, eventsInsert } = mockAdminForPersist({});
+
+    await persistCompanyIntelligenceOutcome({
+      admin,
+      run: baseRun,
+      agentResult: {
+        ...baseAgentResult,
+        costEstimate: {
+          estimatedCostCents: 11,
+          apisCalled: ["serpapi", "openrouter"] as const,
+        },
+      },
+    });
+
+    expect(eventsInsert).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: COMPANY_INTEL_ESTIMATED_COST_CENTS_KEY,
+          value: "11",
+        }),
+        expect.objectContaining({
+          key: COMPANY_INTEL_APIS_CALLED_KEY,
+          value: JSON.stringify(["serpapi", "openrouter"]),
         }),
       ]),
     );

@@ -22,3 +22,10 @@ export const COMPANY_NAME_SUGGESTED_EVENT_KEY = "company_name_suggested" as cons
 /** Qualify-namespace provenance key (not `company_name_source` from spam path). */
 export const COMPANY_IDENTIFICATION_SOURCE_KEY =
   "company_identification_source" as const;
+
+/** Estimated Lane B paid API cost in USD cents (CI-4.3). */
+export const COMPANY_INTEL_ESTIMATED_COST_CENTS_KEY =
+  "company_intel_estimated_cost_cents" as const;
+
+/** JSON array of billable API ids, e.g. `["serpapi","openrouter"]` (CI-4.3). */
+export const COMPANY_INTEL_APIS_CALLED_KEY = "company_intel_apis_called" as const;

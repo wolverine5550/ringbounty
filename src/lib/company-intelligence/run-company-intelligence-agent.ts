@@ -6,6 +6,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/types/database";
 
+import {
+  computeCompanyIntelRunCost,
+  isSerpapiBilled,
+  type CompanyIntelRunCost,
+} from "./company-intel-run-cost";
 import type { CompanyIntelligenceEnv } from "./company-intelligence-flags";
 import { loadClaimSubjectIntelContext } from "./load-claim-subject-intel-context";
 import {
@@ -65,6 +70,8 @@ export type RunCompanyIntelligenceAgentResult = {
   skipPaidRounds: boolean;
   stoppedEarly: boolean;
   shortCircuitThreshold: number;
+  /** CI-4.3 — estimated SerpAPI + OpenRouter marginal cost for this run. */
+  costEstimate: CompanyIntelRunCost;
 };
 
 function mergeSynthesis(
@@ -120,6 +127,7 @@ export async function runCompanyIntelligenceAgent(
     skipPaidRounds: false,
     stoppedEarly: false,
     shortCircuitThreshold,
+    costEstimate: { estimatedCostCents: 0, apisCalled: [] },
   };
 
   const allSources: IntelSourceHit[] = [];
@@ -130,6 +138,8 @@ export async function runCompanyIntelligenceAgent(
   let skipPaidRounds = false;
   let openrouterPrompt: string | null = null;
   let openrouterResponse: string | null = null;
+  let serpapiBilled = false;
+  let openRouterHttpAttempts = 0;
 
   const subjectContext = await loadClaimSubjectIntelContext(
     params.admin,
@@ -281,6 +291,7 @@ export async function runCompanyIntelligenceAgent(
       params.phoneNumberNormalized,
       { env: params.env },
     );
+    serpapiBilled = isSerpapiBilled(serp);
     const round3 = serpapiResultToRound3Payload(serp);
     rawResults.round_3 = round3.rawResultsSlice;
 
@@ -309,6 +320,7 @@ export async function runCompanyIntelligenceAgent(
       },
       { env: params.env },
     );
+    openRouterHttpAttempts = openRouter.httpAttempts;
 
     if (openRouter.ok) {
       openrouterPrompt = openRouter.prompt;
@@ -349,6 +361,11 @@ export async function runCompanyIntelligenceAgent(
     synthesis = buildSynthesisFromSourceHits(allSources);
   }
 
+  const costEstimate = computeCompanyIntelRunCost(
+    { serpapiBilled, openRouterHttpAttempts },
+    params.env,
+  );
+
   return {
     ...empty,
     durationMs: Date.now() - started,
@@ -362,5 +379,6 @@ export async function runCompanyIntelligenceAgent(
     skipPaidRounds,
     stoppedEarly: stoppedAfterRound2,
     shortCircuitThreshold,
+    costEstimate,
   };
 }

@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-05-19 (Company ID — CI-4.3 cost logging)
+
+### Infra
+
+- **CI-4.3.1** — Migration [`20260519200000_company_intel_run_cost.sql`](supabase/migrations/20260519200000_company_intel_run_cost.sql): `company_intelligence_runs.estimated_cost_cents`, `apis_called[]`; computed in [`company-intel-run-cost.ts`](src/lib/company-intelligence/company-intel-run-cost.ts) from billable SerpAPI + OpenRouter HTTP attempts.
+- **CI-4.3.1** — `claim_events` audit keys `company_intel_estimated_cost_cents`, `company_intel_apis_called` on agent completion ([`company-intelligence-events.ts`](src/lib/company-intelligence/company-intelligence-events.ts)).
+- **CI-4.3.2** — README ops monitoring thresholds for daily Lane B API spend (staging tune).
+- Env overrides: `COMPANY_INTEL_SERPAPI_COST_CENTS`, `COMPANY_INTEL_OPENROUTER_COST_CENTS` in [`.env.example`](.env.example).
+
 ## 2026-05-19 (Company ID — CI-4.2 OpenRouter synthesis Round 4)
 
 ### Infra (uses existing `OPENROUTER_API_KEY`)
