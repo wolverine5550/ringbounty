@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-05-19 (Company ID — CI-P.5 cost and abuse gates)
+
+### Policy + infra (no agent worker / UX yet)
+
+- **CI-P.5.1** — Anonymous `/check` may enqueue agent runs; **paid** rounds (SerpAPI + OpenRouter synthesis) run only when `authenticatedUserId` is set or `COMPANY_INTEL_ALLOW_ANONYMOUS_PAID_ROUNDS=true` (default off). [`paid-intel-rounds.ts`](src/lib/company-intelligence/paid-intel-rounds.ts), [`company-intelligence-flags.ts`](src/lib/company-intelligence/company-intelligence-flags.ts); Vitest: [`paid-intel-rounds.test.ts`](src/lib/company-intelligence/paid-intel-rounds.test.ts).
+- **CI-P.5.2** — Documented Turnstile (**O1**) dependency before marketing traffic + full agent scale ([`company-identification-strategy.md`](docs/company-identification-strategy.md), [`check_cadence.md`](docs/check_cadence.md) §3.5, [`ongoing_task_manager.md`](docs/ongoing_task_manager.md)).
+- **CI-P.5.3** — Baseline metrics SQL + prod snapshot (2026-05-19): [`docs/spikes/20260519150000-company-intel-step4-baseline-metrics.md`](docs/spikes/20260519150000-company-intel-step4-baseline-metrics.md). **Unblocks** **CI-4** paid API design (still requires **CI-1** worker in staging).
+
 ## 2026-05-19 (Company ID — CI-P.4 suggest-only v1 policy lock)
 
 ### Policy + infra (no agent worker / UX yet)
