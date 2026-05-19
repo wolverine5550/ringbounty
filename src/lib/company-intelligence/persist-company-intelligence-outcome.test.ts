@@ -196,6 +196,30 @@ describe("persistCompanyIntelligenceOutcome (CI-3.2)", () => {
     );
   });
 
+  it("CI-3.3.3 v1 never sets company_identified even with v2-eligible enforcement tier", async () => {
+    vi.spyOn(seedModule, "writeBackSeedViolationFromAgent").mockResolvedValue();
+    const { admin, subjectUpdate } = mockAdminForPersist({});
+
+    const result = await persistCompanyIntelligenceOutcome({
+      admin,
+      run: baseRun,
+      agentResult: {
+        ...baseAgentResult,
+        allSources: [
+          { tier: "ftc_enforcement", companyName: "CarShield" },
+        ],
+      },
+      env: { COMPANY_INTEL_AUTO_PROMOTE_ENABLED: "false" },
+    });
+
+    expect(result.autoPromoted).toBe(false);
+    expect(subjectUpdate.mock.calls[0]?.[0]).not.toHaveProperty(
+      "company_identified",
+      true,
+    );
+    expect(subjectUpdate.mock.calls[0]?.[0]).not.toHaveProperty("company_name");
+  });
+
   it("CI-3.2.3 v2 does not promote SerpAPI-only hits", async () => {
     vi.spyOn(seedModule, "writeBackSeedViolationFromAgent").mockResolvedValue();
     const raSpy = vi.spyOn(raModule, "persistRegisteredAgentLookup");

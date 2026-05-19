@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-05-19 (Company ID — CI-3.3 orchestrator tests)
+
+### Tests + docs (no new runtime behavior)
+
+- **CI-3.3.1** — UNKNOWN CNAM → `buildSynthesisFromSourceHits` path (null `companyName`, suggest reasoning).
+- **CI-3.3.2** — Path A FTC seed short-circuit before round 3 / SerpAPI.
+- **CI-3.3.3** — v1 persist never sets `company_identified` (even `ftc_enforcement` tier).
+- **CI-3.3.4** — Anonymous round-3 audit `anonymous_paid_rounds_disabled`.
+- Docs: [`check_cadence.md`](docs/check_cadence.md) §3.5 Lane B orchestrator diagram; [`company-identification-strategy.md`](docs/company-identification-strategy.md) code map.
+
 ## 2026-05-19 (Company ID — CI-3.2 suggest-only persistence)
 
 ### Infra (flags off by default)

@@ -138,3 +138,96 @@ describe("runCompanyIntelligenceAgent (CI-3.1)", () => {
     expect(result.roundAudits.some((a) => a.round === 2)).toBe(true);
   });
 });
+
+describe("runCompanyIntelligenceAgent (CI-3.3)", () => {
+  it("CI-3.3.1 UNKNOWN CNAM → deterministic synthesis, no substantive name", async () => {
+    vi.spyOn(contextModule, "loadClaimSubjectIntelContext").mockResolvedValue(
+      baseContext,
+    );
+    vi.spyOn(seedModule, "querySeedViolations").mockResolvedValue(null);
+    vi.spyOn(
+      laneAModule,
+      "evaluateLaneASpamProvidersRound2",
+    ).mockReturnValue({
+      hits: [{ tier: "whitepages", companyName: "UNKNOWN", confidence: 35 }],
+      rawByProvider: { twilio: { caller_name: "UNKNOWN" } },
+      reusedLaneA: true,
+      skippedReason: null,
+    });
+
+    const admin = createMockSupabaseClient();
+    const result = await runCompanyIntelligenceAgent({
+      admin,
+      phoneNumberNormalized: "+18005551234",
+      claimSubjectId: "sub-1",
+      runId: "run-1",
+    });
+
+    expect(result.synthesis).not.toBeNull();
+    expect(result.synthesis?.companyName).toBeNull();
+    expect(result.synthesis?.confidence).toBe(35);
+    expect(result.synthesis?.reasoning).toMatch(/substantive|qualify/i);
+    expect(result.stoppedEarly).toBe(false);
+    expect(result.roundAudits.some((a) => a.round === 3)).toBe(true);
+  });
+
+  it("CI-3.3.2 Path A high FTC seed exits before round 3 (no SerpAPI)", async () => {
+    vi.spyOn(contextModule, "loadClaimSubjectIntelContext").mockResolvedValue(
+      baseContext,
+    );
+    vi.spyOn(seedModule, "querySeedViolations").mockResolvedValue({
+      phoneNumberNormalized: "+18005551234",
+      reportedCompanyName: "CarShield",
+      confidenceLevel: "ftc_complaint_high",
+      violationCount: 120,
+      source: "ftc_complaint",
+      litigationStatus: null,
+      metadata: { complaint_count: 120 },
+    });
+
+    const admin = createMockSupabaseClient();
+    const result = await runCompanyIntelligenceAgent({
+      admin,
+      phoneNumberNormalized: "+18005551234",
+      claimSubjectId: "sub-1",
+      runId: "run-1",
+    });
+
+    expect(result.skipPaidRounds).toBe(true);
+    expect(result.stoppedEarly).toBe(true);
+    expect(result.roundAudits.some((a) => a.round === 3)).toBe(false);
+    expect(
+      result.roundAudits.flatMap((a) => a.sourceTiers),
+    ).not.toContain("serpapi");
+  });
+
+  it("CI-3.3.4 anonymous submit records paid-round skip at round 3", async () => {
+    vi.spyOn(contextModule, "loadClaimSubjectIntelContext").mockResolvedValue({
+      ...baseContext,
+      authenticatedUserId: null,
+    });
+    vi.spyOn(seedModule, "querySeedViolations").mockResolvedValue(null);
+    vi.spyOn(
+      laneAModule,
+      "evaluateLaneASpamProvidersRound2",
+    ).mockReturnValue({
+      hits: [],
+      rawByProvider: {},
+      reusedLaneA: false,
+      skippedReason: "missing_metadata",
+    });
+
+    const admin = createMockSupabaseClient();
+    const result = await runCompanyIntelligenceAgent({
+      admin,
+      phoneNumberNormalized: "+18005551234",
+      claimSubjectId: "sub-1",
+      runId: "run-1",
+      env: { COMPANY_INTEL_ALLOW_ANONYMOUS_PAID_ROUNDS: "false" },
+    });
+
+    const round3 = result.roundAudits.find((a) => a.round === 3);
+    expect(round3?.skippedReason).toBe("anonymous_paid_rounds_disabled");
+    expect(round3?.sourceTiers).toEqual([]);
+  });
+});
