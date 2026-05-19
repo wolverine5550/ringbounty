@@ -6,6 +6,7 @@ import * as contextModule from "./load-claim-subject-intel-context";
 import { runCompanyIntelligenceAgent } from "./run-company-intelligence-agent";
 import * as seedModule from "./sources/seed-violations";
 import * as laneAModule from "./sources/lane-a-spam-providers";
+import * as scrapeModule from "./sources/scrape-complaint-sites";
 import * as serpModule from "./sources/serpapi-complaint-search";
 import * as synthesisModule from "./synthesize-company-from-sources";
 
@@ -367,5 +368,86 @@ describe("runCompanyIntelligenceAgent (CI-4.2)", () => {
       estimatedCostCents: 6,
       apisCalled: ["serpapi", "openrouter"],
     });
+  });
+});
+
+describe("runCompanyIntelligenceAgent (CI-5.1)", () => {
+  it("CI-5.1.2 passes scrape comments into OpenRouter synthesis when enabled", async () => {
+    vi.spyOn(contextModule, "loadClaimSubjectIntelContext").mockResolvedValue({
+      ...baseContext,
+      authenticatedUserId: "user-1",
+    });
+    vi.spyOn(seedModule, "querySeedViolations").mockResolvedValue(null);
+    vi.spyOn(
+      laneAModule,
+      "evaluateLaneASpamProvidersRound2",
+    ).mockReturnValue({
+      hits: [],
+      rawByProvider: {},
+      reusedLaneA: false,
+      skippedReason: "missing_metadata",
+    });
+    vi.spyOn(serpModule, "searchComplaintSnippetsViaSerpapi").mockResolvedValue({
+      query: null,
+      snippets: [],
+      skippedReason: null,
+      raw: { result_count: 0 },
+    });
+    vi.spyOn(scrapeModule, "scrapeComplaintSites").mockResolvedValue({
+      comments: [
+        {
+          site: "800notes",
+          url: "https://800notes.com/Phone.aspx/1-800-555-1234",
+          text: "CarShield extended warranty spam",
+        },
+      ],
+      skippedReason: null,
+      pages: [],
+      raw: { comment_count: 1 },
+    });
+    const synthesizeSpy = vi
+      .spyOn(synthesisModule, "synthesizeCompanyFromSources")
+      .mockResolvedValue({
+        ok: true,
+        synthesis: {
+          companyName: "CarShield",
+          confidence: 72,
+          reasoning: "Complaint site consensus.",
+          callbackNumbers: [],
+          isSpoofedPool: false,
+        },
+        prompt: "p",
+        response: "{}",
+        httpAttempts: 1,
+      });
+
+    const admin = createMockSupabaseClient();
+    const result = await runCompanyIntelligenceAgent({
+      admin,
+      phoneNumberNormalized: "+18005551234",
+      claimSubjectId: "sub-1",
+      runId: "run-1",
+      env: {
+        COMPANY_INTEL_SERP_ENABLED: "true",
+        SERPAPI_API_KEY: "test-key",
+        COMPANY_INTEL_SCRAPE_ENABLED: "true",
+        OPENROUTER_API_KEY: "or-key",
+      },
+    });
+
+    expect(synthesizeSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        complaintSiteComments: [
+          expect.objectContaining({ text: "CarShield extended warranty spam" }),
+        ],
+      }),
+      expect.anything(),
+    );
+    expect(result.rawResults.complaint_site_scrape).toMatchObject({
+      comment_count: 1,
+    });
+    expect(result.allSources.some((h) => h.tier === "complaint_site_scrape")).toBe(
+      true,
+    );
   });
 });

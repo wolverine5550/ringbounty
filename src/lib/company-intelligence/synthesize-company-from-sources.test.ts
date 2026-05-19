@@ -69,6 +69,25 @@ describe("buildSynthesisUserPrompt (CI-4.2.4)", () => {
     expect(parsed.sources).toHaveLength(2);
     expect(parsed.serpapi_snippets).toHaveLength(1);
   });
+
+  it("CI-5.1 includes complaint_site_comments in payload", () => {
+    const prompt = buildSynthesisUserPrompt({
+      phoneNumberNormalized: "+18005551234",
+      sources: FIXTURE_SOURCES,
+      complaintSiteComments: [
+        {
+          site: "800notes",
+          url: "https://800notes.com/Phone.aspx/1-800-555-1234",
+          text: "CarShield warranty robocall",
+        },
+      ],
+    });
+    const parsed = JSON.parse(prompt) as {
+      complaint_site_comments: Array<{ site: string; text: string }>;
+    };
+    expect(parsed.complaint_site_comments).toHaveLength(1);
+    expect(parsed.complaint_site_comments[0]?.site).toBe("800notes");
+  });
 });
 
 describe("parseAndValidateSynthesisJson (CI-4.2.3)", () => {

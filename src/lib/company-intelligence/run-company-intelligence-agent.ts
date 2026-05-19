@@ -25,6 +25,10 @@ import {
 import { buildSynthesisFromSourceHits } from "./synthesize-from-sources";
 import { evaluateLaneASpamProvidersRound2 } from "./sources/lane-a-spam-providers";
 import {
+  scrapeComplaintSites,
+  scrapeResultToComplaintSitePayload,
+} from "./sources/scrape-complaint-sites";
+import {
   searchComplaintSnippetsViaSerpapi,
   serpapiResultToRound3Payload,
 } from "./sources/serpapi-complaint-search";
@@ -311,12 +315,38 @@ export async function runCompanyIntelligenceAgent(
       skippedReason: round3.auditSkippedReason,
     });
 
-    // CI-4.2 — OpenRouter synthesis from accumulated sources + SerpAPI snippets.
+    // CI-5.1 — optional direct complaint-site scrape (after SerpAPI, before synthesis).
+    const scrape = await scrapeComplaintSites(params.phoneNumberNormalized, {
+      env: params.env,
+    });
+    const scrapePayload = scrapeResultToComplaintSitePayload(scrape);
+    rawResults.complaint_site_scrape = scrapePayload.rawResultsSlice.complaint_site_scrape;
+    if (scrapePayload.hits.length > 0) {
+      allSources.push(...scrapePayload.hits);
+    }
+    if (scrapePayload.auditSkippedReason && scrape.comments.length === 0) {
+      roundAudits.push({
+        round: 3,
+        sourceTiers: [],
+        stoppedEarly: false,
+        skippedReason: scrapePayload.auditSkippedReason,
+      });
+    } else if (scrape.comments.length > 0) {
+      roundAudits.push({
+        round: 3,
+        sourceTiers: ["complaint_site_scrape"],
+        stoppedEarly: false,
+        skippedReason: null,
+      });
+    }
+
+    // CI-4.2 — OpenRouter synthesis from accumulated sources + SerpAPI + scrape comments.
     const openRouter = await synthesizeCompanyFromSources(
       {
         phoneNumberNormalized: params.phoneNumberNormalized,
         sources: allSources,
         serpapiSnippets: serp.snippets,
+        complaintSiteComments: scrape.comments,
       },
       { env: params.env },
     );

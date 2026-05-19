@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-05-19 (Company ID — CI-5.1 complaint site scrape)
+
+### Infra (default off)
+
+- **CI-5.1.1** — Legal spike [`docs/spikes/20260519210000-complaint-site-scrape-legal-review.md`](docs/spikes/20260519210000-complaint-site-scrape-legal-review.md): conditional go behind feature flag; counsel sign-off pending.
+- **CI-5.1.2** — [`scrape-complaint-sites.ts`](src/lib/company-intelligence/sources/scrape-complaint-sites.ts): 800notes / WhoCalledMe / CallerComplaints comment extraction; feeds OpenRouter synthesis after SerpAPI.
+- **CI-5.1.3** — `COMPANY_INTEL_SCRAPE_ENABLED=false` in [`.env.example`](.env.example).
+- **CI-5.1.4** — Vitest HTML fixtures under `sources/fixtures/` (no live scrape in CI).
+
 ## 2026-05-19 (Company ID — CI-4.3 cost logging)
 
 ### Infra

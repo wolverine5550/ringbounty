@@ -19,6 +19,7 @@ import {
 
 import type { CompanyIntelligenceEnv } from "./company-intelligence-flags";
 import { redactPhonePiiForLog } from "./sources/serpapi-complaint-search";
+import type { ComplaintSiteComment } from "./sources/scrape-complaint-sites";
 import type { SerpapiComplaintSnippet } from "./sources/serpapi-complaint-search";
 import type { IntelSourceHit, SynthesisResult } from "./types";
 
@@ -52,6 +53,8 @@ export type SynthesizeCompanyFromSourcesInput = {
   phoneNumberNormalized: string;
   sources: IntelSourceHit[];
   serpapiSnippets?: SerpapiComplaintSnippet[];
+  /** CI-5.1 — user comment text from 800notes / WhoCalledMe / CallerComplaints. */
+  complaintSiteComments?: ComplaintSiteComment[];
 };
 
 export type SynthesizeCompanySkippedReason =
@@ -136,6 +139,11 @@ export function buildSynthesisUserPrompt(
       title: s.title,
       link: s.link,
       snippet: s.snippet,
+    })),
+    complaint_site_comments: (input.complaintSiteComments ?? []).map((c) => ({
+      site: c.site,
+      url: c.url,
+      text: c.text,
     })),
   };
 
@@ -222,7 +230,10 @@ function hasSynthesisContext(input: SynthesizeCompanyFromSourcesInput): boolean 
   if (input.sources.length > 0) {
     return true;
   }
-  return (input.serpapiSnippets?.length ?? 0) > 0;
+  if ((input.serpapiSnippets?.length ?? 0) > 0) {
+    return true;
+  }
+  return (input.complaintSiteComments?.length ?? 0) > 0;
 }
 
 type ChatCompletionResponse = {
