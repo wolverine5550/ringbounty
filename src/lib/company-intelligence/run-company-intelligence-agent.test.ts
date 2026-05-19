@@ -6,6 +6,7 @@ import * as contextModule from "./load-claim-subject-intel-context";
 import { runCompanyIntelligenceAgent } from "./run-company-intelligence-agent";
 import * as seedModule from "./sources/seed-violations";
 import * as laneAModule from "./sources/lane-a-spam-providers";
+import * as serpModule from "./sources/serpapi-complaint-search";
 
 const baseContext = {
   metadata: null,
@@ -229,5 +230,71 @@ describe("runCompanyIntelligenceAgent (CI-3.3)", () => {
     const round3 = result.roundAudits.find((a) => a.round === 3);
     expect(round3?.skippedReason).toBe("anonymous_paid_rounds_disabled");
     expect(round3?.sourceTiers).toEqual([]);
+  });
+});
+
+describe("runCompanyIntelligenceAgent (CI-4.1)", () => {
+  it("CI-4.1.3 signed-in + Serp enabled stores snippets in raw_results.round_3", async () => {
+    vi.spyOn(contextModule, "loadClaimSubjectIntelContext").mockResolvedValue({
+      ...baseContext,
+      authenticatedUserId: "user-1",
+    });
+    vi.spyOn(seedModule, "querySeedViolations").mockResolvedValue(null);
+    vi.spyOn(
+      laneAModule,
+      "evaluateLaneASpamProvidersRound2",
+    ).mockReturnValue({
+      hits: [],
+      rawByProvider: {},
+      reusedLaneA: false,
+      skippedReason: "missing_metadata",
+    });
+    vi.spyOn(serpModule, "searchComplaintSnippetsViaSerpapi").mockResolvedValue({
+      query: '"(800) 555-1234" robocall OR spam OR complaint OR "who called"',
+      snippets: [
+        {
+          position: 1,
+          title: "800notes",
+          link: "https://800notes.com/example",
+          snippet: "CarShield warranty robocall",
+        },
+      ],
+      skippedReason: null,
+      raw: {
+        query: '"(800) 555-1234" robocall OR spam OR complaint OR "who called"',
+        result_count: 1,
+        snippets: [
+          {
+            position: 1,
+            title: "800notes",
+            link: "https://800notes.com/example",
+            snippet: "CarShield warranty robocall",
+          },
+        ],
+      },
+    });
+
+    const admin = createMockSupabaseClient();
+    const result = await runCompanyIntelligenceAgent({
+      admin,
+      phoneNumberNormalized: "+18005551234",
+      claimSubjectId: "sub-1",
+      runId: "run-1",
+      env: {
+        COMPANY_INTEL_SERP_ENABLED: "true",
+        SERPAPI_API_KEY: "test-key",
+      },
+    });
+
+    expect(result.rawResults.round_3).toMatchObject({
+      serpapi: expect.objectContaining({ result_count: 1 }),
+    });
+    expect(
+      result.roundAudits.find((a) => a.round === 3)?.sourceTiers,
+    ).toContain("serpapi");
+    expect(
+      result.roundAudits.find((a) => a.round === 4)?.skippedReason,
+    ).toBe("openrouter_synthesis_not_implemented");
+    expect(result.allSources.some((h) => h.tier === "serpapi")).toBe(true);
   });
 });

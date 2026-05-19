@@ -1,5 +1,5 @@
 /**
- * CI-3.1 — Lane B agent orchestrator (multi-round; paid rounds stubbed until CI-4).
+ * CI-3.1 — Lane B agent orchestrator (Rounds 1–2 + CI-4.1 SerpAPI; OpenRouter CI-4.2 stub).
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -15,6 +15,10 @@ import { shouldStopCompanyIntelligenceOrchestrator } from "./orchestrator-short-
 import { shouldRunPaidIntelRounds } from "./paid-intel-rounds";
 import { buildSynthesisFromSourceHits } from "./synthesize-from-sources";
 import { evaluateLaneASpamProvidersRound2 } from "./sources/lane-a-spam-providers";
+import {
+  searchComplaintSnippetsViaSerpapi,
+  serpapiResultToRound3Payload,
+} from "./sources/serpapi-complaint-search";
 import {
   evaluateSeedViolationRound1,
   querySeedViolations,
@@ -241,21 +245,58 @@ export async function runCompanyIntelligenceAgent(
     };
   }
 
-  // --- Rounds 3–4: SerpAPI + OpenRouter (**CI-4**) — gated by CI-P.5.1 ---
+  // --- Rounds 3–4: SerpAPI (**CI-4.1**) + OpenRouter synthesis (**CI-4.2**) — CI-P.5.1 ---
   const paidAllowed = shouldRunPaidIntelRounds(
     { authenticatedUserId: subjectContext.authenticatedUserId },
     params.env,
   );
-  roundAudits.push({
-    round: 3,
-    sourceTiers: [],
-    stoppedEarly: false,
-    skippedReason: skipPaidRounds
-      ? "seed_short_circuit"
-      : !paidAllowed
-        ? "anonymous_paid_rounds_disabled"
-        : "ci_4_not_implemented",
-  });
+
+  if (skipPaidRounds) {
+    roundAudits.push({
+      round: 3,
+      sourceTiers: [],
+      stoppedEarly: false,
+      skippedReason: "seed_short_circuit",
+    });
+  } else if (!paidAllowed) {
+    roundAudits.push({
+      round: 3,
+      sourceTiers: [],
+      stoppedEarly: false,
+      skippedReason: "anonymous_paid_rounds_disabled",
+    });
+  } else {
+    const serp = await searchComplaintSnippetsViaSerpapi(
+      params.phoneNumberNormalized,
+      { env: params.env },
+    );
+    const round3 = serpapiResultToRound3Payload(serp);
+    rawResults.round_3 = round3.rawResultsSlice;
+
+    if (round3.hits.length > 0) {
+      allSources.push(...round3.hits);
+      rounds.push({
+        round: 3,
+        hits: round3.hits,
+        stoppedEarly: false,
+      });
+    }
+
+    roundAudits.push({
+      round: 3,
+      sourceTiers: round3.hits.map((h) => h.tier),
+      stoppedEarly: false,
+      skippedReason: round3.auditSkippedReason,
+    });
+
+    // CI-4.2 — OpenRouter synthesis from accumulated sources + SerpAPI snippets (stub).
+    roundAudits.push({
+      round: 4,
+      sourceTiers: [],
+      stoppedEarly: false,
+      skippedReason: "openrouter_synthesis_not_implemented",
+    });
+  }
 
   if (!synthesis && allSources.length > 0) {
     synthesis = buildSynthesisFromSourceHits(allSources);

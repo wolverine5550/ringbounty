@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-05-19 (Company ID — CI-4.1 SerpAPI Round 3)
+
+### Infra (flags off by default)
+
+- **CI-4.1.1** — Env `SERPAPI_API_KEY`, `COMPANY_INTEL_SERP_ENABLED` in [`.env.example`](.env.example).
+- **CI-4.1.2** — [`serpapi-complaint-search.ts`](src/lib/company-intelligence/sources/serpapi-complaint-search.ts): Google complaint query with `num=10`; wired into Round 3 of [`run-company-intelligence-agent.ts`](src/lib/company-intelligence/run-company-intelligence-agent.ts) when paid rounds allowed (**CI-P.5**).
+- **CI-4.1.3** — Snippets stored in `company_intelligence_runs.raw_results.round_3.serpapi`; `redactPhonePiiForLog` on errors (no phone in logs).
+- **CI-4.1.4** — Vitest: [`serpapi-complaint-search.test.ts`](src/lib/company-intelligence/sources/serpapi-complaint-search.test.ts), orchestrator integration test.
+- Round 4 OpenRouter synthesis remains stub (`openrouter_synthesis_not_implemented`) until **CI-4.2**.
+
 ## 2026-05-19 (Company ID — CI-3.3 orchestrator tests)
 
 ### Tests + docs (no new runtime behavior)
