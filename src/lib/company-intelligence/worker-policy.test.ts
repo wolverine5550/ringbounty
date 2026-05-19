@@ -6,6 +6,7 @@ import {
   COMPANY_INTEL_MAX_ATTEMPTS,
   clampCronBatchSize,
   computeRetryDelaySeconds,
+  resolveCronBatchSizeFromEnv,
   shouldPermanentlyFail,
 } from "./worker-policy";
 
@@ -26,6 +27,23 @@ describe("shouldPermanentlyFail (CI-P.6.3)", () => {
     expect(shouldPermanentlyFail(COMPANY_INTEL_MAX_ATTEMPTS - 1)).toBe(false);
     expect(shouldPermanentlyFail(COMPANY_INTEL_MAX_ATTEMPTS)).toBe(true);
     expect(shouldPermanentlyFail(COMPANY_INTEL_MAX_ATTEMPTS + 1)).toBe(true);
+  });
+});
+
+describe("resolveCronBatchSizeFromEnv (CI-1.3)", () => {
+  it("uses default when env unset", () => {
+    expect(resolveCronBatchSizeFromEnv({})).toBe(
+      COMPANY_INTEL_CRON_BATCH_SIZE_DEFAULT,
+    );
+  });
+
+  it("parses COMPANY_INTEL_CRON_BATCH_SIZE", () => {
+    expect(
+      resolveCronBatchSizeFromEnv({ COMPANY_INTEL_CRON_BATCH_SIZE: "10" }),
+    ).toBe(10);
+    expect(
+      resolveCronBatchSizeFromEnv({ COMPANY_INTEL_CRON_BATCH_SIZE: "99" }),
+    ).toBe(COMPANY_INTEL_CRON_BATCH_SIZE_MAX);
   });
 });
 

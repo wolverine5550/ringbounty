@@ -11,6 +11,7 @@ import {
   type CompanyIntelligenceEnv,
 } from "./company-intelligence-flags";
 import { shouldEnqueueCompanyIntelligenceRun } from "./should-enqueue-company-intelligence-run";
+import { triggerCompanyIntelligenceRunFetch } from "./trigger-company-intelligence-run";
 
 export type EnqueueCompanyIntelligenceRunParams = {
   claimSubjectId: string;
@@ -77,7 +78,14 @@ export async function maybeEnqueueCompanyIntelligenceRun(
   params: EnqueueCompanyIntelligenceRunParams,
 ): Promise<EnqueueCompanyIntelligenceRunResult> {
   try {
-    return await enqueueCompanyIntelligenceRun(admin, params);
+    const result = await enqueueCompanyIntelligenceRun(admin, params);
+    if (result.enqueued) {
+      triggerCompanyIntelligenceRunFetch({
+        runId: result.runId,
+        env: params.env,
+      });
+    }
+    return result;
   } catch (error) {
     console.error(
       JSON.stringify({

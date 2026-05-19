@@ -6,6 +6,7 @@ import {
   enqueueCompanyIntelligenceRun,
   maybeEnqueueCompanyIntelligenceRun,
 } from "./enqueue-company-intelligence-run";
+import * as triggerModule from "./trigger-company-intelligence-run";
 
 const agentOn = { COMPANY_INTELLIGENCE_AGENT_ENABLED: "true" };
 
@@ -90,6 +91,48 @@ describe("enqueueCompanyIntelligenceRun (CI-1.1)", () => {
 });
 
 describe("maybeEnqueueCompanyIntelligenceRun (CI-1.1)", () => {
+  it("triggers fail-open fetch when enqueue succeeds (CI-1.3.3)", async () => {
+    const triggerSpy = vi
+      .spyOn(triggerModule, "triggerCompanyIntelligenceRunFetch")
+      .mockImplementation(() => {});
+
+    const runInsert = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue({
+          data: { id: "run-uuid" },
+          error: null,
+        }),
+      }),
+    });
+    const subjectUpdateEq = vi.fn().mockResolvedValue({ error: null });
+    const subjectUpdate = vi.fn().mockReturnValue({ eq: subjectUpdateEq });
+
+    const admin = createMockSupabaseClient();
+    vi.mocked(admin.from).mockImplementation((table: string) => {
+      if (table === "company_intelligence_runs") {
+        return { insert: runInsert } as ReturnType<typeof admin.from>;
+      }
+      if (table === "claim_subjects") {
+        return { update: subjectUpdate } as ReturnType<typeof admin.from>;
+      }
+      return {} as ReturnType<typeof admin.from>;
+    });
+
+    await maybeEnqueueCompanyIntelligenceRun(admin, {
+      claimSubjectId: "subject-1",
+      phoneNumberNormalized: "+18005551234",
+      companyIdentified: false,
+      isExempt: false,
+      env: agentOn,
+    });
+
+    expect(triggerSpy).toHaveBeenCalledWith({
+      runId: "run-uuid",
+      env: agentOn,
+    });
+    triggerSpy.mockRestore();
+  });
+
   it("returns enqueued false on DB error without throwing", async () => {
     const runInsert = vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({

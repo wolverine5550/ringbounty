@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-05-19 (Company ID — CI-1.3 cron drain)
+
+### Infra (agent stub until CI-3; flags off by default)
+
+- **CI-1.3.1** — [`GET /api/cron/company-intelligence-drain`](src/app/api/cron/company-intelligence-drain/route.ts) (`CRON_SECRET`): claims up to N pending runs via `claim_company_intelligence_runs` and processes each. [`vercel.json`](vercel.json) schedules every 2 minutes.
+- **CI-1.3.3** — After enqueue, fail-open `fetch` to internal worker with `{ run_id }` ([`trigger-company-intelligence-run.ts`](src/lib/company-intelligence/trigger-company-intelligence-run.ts)); cron remains source of truth if fetch drops. Vitest: [`trigger-company-intelligence-run.test.ts`](src/lib/company-intelligence/trigger-company-intelligence-run.test.ts).
+
 ## 2026-05-19 (Company ID — CI-1.2 internal worker)
 
 ### Infra (agent stub until CI-3; flags off by default)

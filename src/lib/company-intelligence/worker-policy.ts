@@ -54,3 +54,14 @@ export function clampCronBatchSize(requested: number): number {
     Math.max(1, n),
   );
 }
+
+/** Optional `COMPANY_INTEL_CRON_BATCH_SIZE` env (1–25); else default 5. */
+export function resolveCronBatchSizeFromEnv(
+  env: Record<string, string | undefined> = process.env,
+): number {
+  const raw = env.COMPANY_INTEL_CRON_BATCH_SIZE?.trim();
+  if (!raw) {
+    return COMPANY_INTEL_CRON_BATCH_SIZE_DEFAULT;
+  }
+  return clampCronBatchSize(Number(raw));
+}
