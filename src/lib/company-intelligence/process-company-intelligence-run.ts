@@ -10,6 +10,7 @@ import {
   getCompanyIntelligenceFeatureFlags,
   type CompanyIntelligenceEnv,
 } from "./company-intelligence-flags";
+import { persistCompanyIntelligenceOutcome } from "./persist-company-intelligence-outcome";
 import { runCompanyIntelligenceAgent } from "./run-company-intelligence-agent";
 import {
   clampCronBatchSize,
@@ -103,6 +104,7 @@ async function markRunCompleted(
   admin: SupabaseClient<Database>,
   run: IntelligenceRunRow,
   agentResult: Awaited<ReturnType<typeof runCompanyIntelligenceAgent>>,
+  env?: CompanyIntelligenceEnv,
 ): Promise<void> {
   const now = new Date().toISOString();
   const durationMs = agentResult.durationMs;
@@ -118,20 +120,12 @@ async function markRunCompleted(
       raw_results: agentResult.rawResults as Database["public"]["Tables"]["company_intelligence_runs"]["Update"]["raw_results"],
     };
 
-  const subjectPatch: Database["public"]["Tables"]["claim_subjects"]["Update"] =
-    {
-      company_intel_status: "completed",
-    };
-
   if (synthesis) {
     runPatch.synthesized_company_name = synthesis.companyName;
     runPatch.synthesized_confidence = synthesis.confidence;
     runPatch.synthesized_reasoning = synthesis.reasoning;
     runPatch.callback_numbers = synthesis.callbackNumbers;
     runPatch.is_spoofed_pool = synthesis.isSpoofedPool;
-    subjectPatch.company_name_suggested = synthesis.companyName;
-    subjectPatch.company_intel_confidence = synthesis.confidence;
-    subjectPatch.company_intel_reasoning = synthesis.reasoning;
   }
 
   const { error: runError } = await admin
@@ -142,13 +136,12 @@ async function markRunCompleted(
     throw runError;
   }
 
-  const { error: subjectError } = await admin
-    .from("claim_subjects")
-    .update(subjectPatch)
-    .eq("id", run.claim_subject_id);
-  if (subjectError) {
-    throw subjectError;
-  }
+  await persistCompanyIntelligenceOutcome({
+    admin,
+    run,
+    agentResult,
+    env,
+  });
 }
 
 async function markRunFailed(
@@ -257,7 +250,7 @@ export async function processCompanyIntelligenceRun(
     if (agentResult.durationMs <= 0) {
       agentResult.durationMs = Date.now() - started;
     }
-    await markRunCompleted(admin, run, agentResult);
+    await markRunCompleted(admin, run, agentResult, env);
     return { runId: run.id, status: "completed" };
   } catch (error) {
     return markRunFailed(admin, run, errorMessage(error));

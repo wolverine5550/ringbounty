@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-05-19 (Company ID — CI-3.2 suggest-only persistence)
+
+### Infra (flags off by default)
+
+- **CI-3.2.1** — [`persist-company-intelligence-outcome.ts`](src/lib/company-intelligence/persist-company-intelligence-outcome.ts): suggest fields on `claim_subjects`; v1 never sets `company_identified` unless already true from Lane A / voicemail / Q13.
+- **CI-3.2.2** — `claim_events` with `event_type=company_intelligence`: `company_intelligence_completed`, `company_name_suggested`, `company_identification_source=company_intelligence` ([`company-intelligence-events.ts`](src/lib/company-intelligence/company-intelligence-events.ts), [`claimEvent.ts`](src/lib/constants/claimEvent.ts)).
+- **CI-3.2.3** — v2 auto-promote when `COMPANY_INTEL_AUTO_PROMOTE_ENABLED` + `shouldPromoteToIdentified` (CI-P.4.3 tiers).
+- **CI-3.2.4** — OpenCorporates RA via [`persistRegisteredAgentLookup`](src/lib/company/persist-registered-agent-lookup.ts) only on v2 auto-promote with substantive name + user state.
+- **CI-2.2.3** — Seed write-back wired on agent completion when synthesis has substantive name.
+- Vitest: [`persist-company-intelligence-outcome.test.ts`](src/lib/company-intelligence/persist-company-intelligence-outcome.test.ts).
+
 ## 2026-05-19 (Company ID — CI-3.1 orchestrator core)
 
 ### Infra (flags off by default; CI-4 paid rounds not wired yet)

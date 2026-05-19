@@ -9,6 +9,8 @@
  * - **Company Intelligence Agent (v1):** does **not** set `company_identified` — suggest-only
  *   (`company_name_suggested` on subject + `company_identification_source=company_intelligence`
  *   on `claim_events`; see `docs/spikes/20260519140000-company-identification-source-audit.md`).
+ * - **Company Intelligence Agent (v2):** may auto-promote when `COMPANY_INTEL_AUTO_PROMOTE_ENABLED`
+ *   and `shouldPromoteToIdentified` (voicemail/callback/ftc_enforcement tiers only — CI-P.4.3).
  *
  * Event key split (audit CI-P.3): Lane A spam uses `company_name_source` on `spam_db_match`;
  * qualify/voicemail/agent use `company_identification_source` on `qualification_answer` (agent in CI-3).

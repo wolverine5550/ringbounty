@@ -10,6 +10,7 @@ export const CLAIM_EVENT_TYPE_VALUES = [
   "spam_db_match",
   "registered_agent_lookup",
   "qualification_answer",
+  "company_intelligence",
   "value_calculated",
   "evidence_checklist_ack",
   "attorney_referral",
@@ -32,6 +33,7 @@ export type ClaimEventType = (typeof CLAIM_EVENT_TYPE_VALUES)[number];
 export const CLAIM_EVENT_SOURCE_VALUES = [
   "user_input",
   "voicemail_transcription",
+  "company_intelligence",
   "ftc_api",
   "state_api",
   "nomorobo",

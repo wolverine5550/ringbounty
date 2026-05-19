@@ -5,6 +5,7 @@ import { createMockSupabaseClient } from "@/test-utils/mockSupabaseClient";
 import type { Database } from "@/types/database";
 
 import * as agentModule from "./run-company-intelligence-agent";
+import * as persistModule from "./persist-company-intelligence-outcome";
 import {
   processCompanyIntelligenceRun,
   processCompanyIntelligenceRuns,
@@ -39,8 +40,8 @@ const baseRun: IntelligenceRunRow = {
 };
 
 describe("processCompanyIntelligenceRun (CI-1.2)", () => {
-  it("marks run and subject completed on agent success", async () => {
-    vi.spyOn(agentModule, "runCompanyIntelligenceAgent").mockResolvedValue({
+  it("marks run completed and persists CI-3.2 outcome on agent success", async () => {
+    const agentResult = {
       durationMs: 42,
       synthesis: null,
       allSources: [],
@@ -50,10 +51,15 @@ describe("processCompanyIntelligenceRun (CI-1.2)", () => {
       skipPaidRounds: false,
       stoppedEarly: false,
       shortCircuitThreshold: 70,
-    });
+    };
+    vi.spyOn(agentModule, "runCompanyIntelligenceAgent").mockResolvedValue(
+      agentResult,
+    );
+    const persistSpy = vi
+      .spyOn(persistModule, "persistCompanyIntelligenceOutcome")
+      .mockResolvedValue({ autoPromoted: false });
 
     const runUpdateEq = vi.fn().mockResolvedValue({ error: null });
-    const subjectUpdateEq = vi.fn().mockResolvedValue({ error: null });
 
     const admin = createMockSupabaseClient();
     vi.mocked(admin.from).mockImplementation((table: string) => {
@@ -62,18 +68,19 @@ describe("processCompanyIntelligenceRun (CI-1.2)", () => {
           update: vi.fn().mockReturnValue({ eq: runUpdateEq }),
         } as ReturnType<typeof admin.from>;
       }
-      if (table === "claim_subjects") {
-        return {
-          update: vi.fn().mockReturnValue({ eq: subjectUpdateEq }),
-        } as ReturnType<typeof admin.from>;
-      }
       return {} as ReturnType<typeof admin.from>;
     });
 
     const outcome = await processCompanyIntelligenceRun(admin, baseRun, agentOn);
     expect(outcome).toEqual({ runId: "run-1", status: "completed" });
     expect(runUpdateEq).toHaveBeenCalledWith("id", "run-1");
-    expect(subjectUpdateEq).toHaveBeenCalledWith("id", "subject-1");
+    expect(persistSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        run: baseRun,
+        agentResult,
+        env: agentOn,
+      }),
+    );
   });
 
   it("schedules retry on agent failure before max attempts", async () => {
@@ -171,9 +178,11 @@ describe("processCompanyIntelligenceRuns (CI-1.2.2)", () => {
       stoppedEarly: false,
       shortCircuitThreshold: 70,
     });
+    vi.spyOn(persistModule, "persistCompanyIntelligenceOutcome").mockResolvedValue({
+      autoPromoted: false,
+    });
 
     const runUpdateEq = vi.fn().mockResolvedValue({ error: null });
-    const subjectUpdateEq = vi.fn().mockResolvedValue({ error: null });
 
     const admin = adminWithRpc();
     vi.mocked(admin.rpc).mockResolvedValue({
@@ -187,11 +196,6 @@ describe("processCompanyIntelligenceRuns (CI-1.2.2)", () => {
       if (table === "company_intelligence_runs") {
         return {
           update: vi.fn().mockReturnValue({ eq: runUpdateEq }),
-        } as ReturnType<typeof admin.from>;
-      }
-      if (table === "claim_subjects") {
-        return {
-          update: vi.fn().mockReturnValue({ eq: subjectUpdateEq }),
         } as ReturnType<typeof admin.from>;
       }
       return {} as ReturnType<typeof admin.from>;
