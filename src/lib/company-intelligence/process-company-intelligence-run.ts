@@ -246,6 +246,7 @@ export async function processCompanyIntelligenceRun(
   const started = Date.now();
   try {
     const agentResult = await runCompanyIntelligenceAgent({
+      admin,
       phoneNumberNormalized: run.phone_number_normalized,
       claimSubjectId: run.claim_subject_id,
       runId: run.id,

@@ -1,6 +1,22 @@
+import { createRequire } from "node:module";
+
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/types/database";
+
+const nodeRequire = createRequire(import.meta.url);
+
+/**
+ * `@supabase/supabase-js` initializes Realtime on `createClient`. Node 20 lacks native
+ * WebSocket — CLI scripts (e.g. CI-2.1 ETL) need the `ws` package (Node 22+ has global WebSocket).
+ */
+function ensureNodeWebSocket(): void {
+  if (typeof globalThis.WebSocket !== "undefined") {
+    return;
+  }
+  const ws = nodeRequire("ws") as typeof WebSocket;
+  globalThis.WebSocket = ws;
+}
 
 /**
  * Server-only Supabase key with elevated access (bypasses RLS via `service_role`).
@@ -37,6 +53,7 @@ export function createAdminClient(): SupabaseClient<Database> {
   if (!url || !key) {
     throw new SupabaseAdminKeyMissingError();
   }
+  ensureNodeWebSocket();
   return createClient<Database>(url, key, {
     auth: {
       autoRefreshToken: false,

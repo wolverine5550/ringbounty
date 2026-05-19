@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-05-19 (Company ID — CI-2.2 seed Round 1 lookup)
+
+### Infra (requires `seed_violations` data from CI-2.1 ETL)
+
+- **CI-2.2.1** — [`querySeedViolations`](src/lib/company-intelligence/sources/seed-violations.ts): local `seed_violations` lookup by E.164.
+- **CI-2.2.2** — Round 1 short-circuit in [`run-company-intelligence-agent.ts`](src/lib/company-intelligence/run-company-intelligence-agent.ts): Path A (count &gt; 50 + substantive name) → confidence 85, `skipPaidRounds`; Path B → FTC category suggest only, paid rounds still allowed.
+- **CI-2.2.3** — [`writeBackSeedViolationFromAgent`](src/lib/company-intelligence/sources/seed-violations.ts) for cache compound after substantive name from later rounds (**CI-3**). Vitest: [`seed-violations.test.ts`](src/lib/company-intelligence/sources/seed-violations.test.ts), [`run-company-intelligence-agent.test.ts`](src/lib/company-intelligence/run-company-intelligence-agent.test.ts).
+
 ## 2026-05-19 (Company ID — CI-2.1 FTC bulk ETL script)
 
 ### Infra (no prod ingest until CI-P.2.4 counsel sign-off)

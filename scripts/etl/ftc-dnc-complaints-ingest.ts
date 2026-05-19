@@ -17,8 +17,13 @@
  *   npx tsx scripts/etl/ftc-dnc-complaints-ingest.ts --file ./docs/DNC_Complaint_Numbers_2026-05-15.csv
  *   npx tsx scripts/etl/ftc-dnc-complaints-ingest.ts --file a.csv --file b.csv --dry-run
  *
- * Env: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SECRET_KEY (or SUPABASE_SERVICE_ROLE_KEY).
+ * Env: reads `.env.local` / `.env` from project root (same as Next.js), then:
+ * `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SECRET_KEY` (or `SUPABASE_SERVICE_ROLE_KEY`).
  */
+
+import { loadLocalEnv } from "@/lib/scripts/load-local-env";
+
+loadLocalEnv();
 
 import { readFile } from "node:fs/promises";
 import path from "node:path";
