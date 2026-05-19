@@ -2,7 +2,33 @@
  * Company Intelligence Agent — shared types (CI-0.2.2 / CI-P.4).
  *
  * Used by confidence scoring and (later) orchestrator + source adapters.
+ * DB enums mirror `company_intelligence_runs.status` / `claim_subjects.company_intel_status`.
  */
+
+/** Async worker + subject lifecycle (CI-0.1.2 / CI-0.1.3). */
+export type CompanyIntelRunStatus =
+  | "pending"
+  | "running"
+  | "completed"
+  | "failed";
+
+/** OpenRouter synthesis output shape (CI-3 / CI-4). */
+export type SynthesisResult = {
+  companyName: string | null;
+  confidence: number;
+  reasoning: string;
+  callCategory?: string | null;
+  callbackNumbers: string[];
+  isSpoofedPool: boolean;
+  contradictions?: string | null;
+};
+
+/** One orchestrator round before synthesis (CI-3.1). */
+export type AgentRoundResult = {
+  round: number;
+  hits: IntelSourceHit[];
+  stoppedEarly: boolean;
+};
 
 /** Per-source tier labels for confidence aggregation and v2 auto-promote policy. */
 export type SourceTier =

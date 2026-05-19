@@ -57,7 +57,11 @@ export type Database = {
           call_category: string | null
           claim_id: string
           company_identified: boolean
+          company_intel_confidence: number | null
+          company_intel_reasoning: string | null
+          company_intel_status: string | null
           company_name: string | null
+          company_name_suggested: string | null
           created_at: string
           exempt_reason: string | null
           id: string
@@ -76,7 +80,11 @@ export type Database = {
           call_category?: string | null
           claim_id: string
           company_identified?: boolean
+          company_intel_confidence?: number | null
+          company_intel_reasoning?: string | null
+          company_intel_status?: string | null
           company_name?: string | null
+          company_name_suggested?: string | null
           created_at?: string
           exempt_reason?: string | null
           id?: string
@@ -95,7 +103,11 @@ export type Database = {
           call_category?: string | null
           claim_id?: string
           company_identified?: boolean
+          company_intel_confidence?: number | null
+          company_intel_reasoning?: string | null
+          company_intel_status?: string | null
           company_name?: string | null
+          company_name_suggested?: string | null
           created_at?: string
           exempt_reason?: string | null
           id?: string
@@ -173,6 +185,83 @@ export type Database = {
             columns: ["violation_type"]
             isOneToOne: false
             referencedRelation: "violation_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_intelligence_runs: {
+        Row: {
+          attempt_count: number
+          callback_numbers: string[] | null
+          claim_subject_id: string
+          created_at: string
+          duration_ms: number | null
+          id: string
+          is_spoofed_pool: boolean | null
+          last_error: string | null
+          next_attempt_at: string | null
+          openrouter_prompt: string | null
+          openrouter_response: string | null
+          phone_number_normalized: string
+          raw_results: Json | null
+          sources_queried: Json | null
+          started_at: string | null
+          status: string
+          synthesized_company_name: string | null
+          synthesized_confidence: number | null
+          synthesized_reasoning: string | null
+          updated_at: string
+        }
+        Insert: {
+          attempt_count?: number
+          callback_numbers?: string[] | null
+          claim_subject_id: string
+          created_at?: string
+          duration_ms?: number | null
+          id?: string
+          is_spoofed_pool?: boolean | null
+          last_error?: string | null
+          next_attempt_at?: string | null
+          openrouter_prompt?: string | null
+          openrouter_response?: string | null
+          phone_number_normalized: string
+          raw_results?: Json | null
+          sources_queried?: Json | null
+          started_at?: string | null
+          status?: string
+          synthesized_company_name?: string | null
+          synthesized_confidence?: number | null
+          synthesized_reasoning?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attempt_count?: number
+          callback_numbers?: string[] | null
+          claim_subject_id?: string
+          created_at?: string
+          duration_ms?: number | null
+          id?: string
+          is_spoofed_pool?: boolean | null
+          last_error?: string | null
+          next_attempt_at?: string | null
+          openrouter_prompt?: string | null
+          openrouter_response?: string | null
+          phone_number_normalized?: string
+          raw_results?: Json | null
+          sources_queried?: Json | null
+          started_at?: string | null
+          status?: string
+          synthesized_company_name?: string | null
+          synthesized_confidence?: number | null
+          synthesized_reasoning?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_intelligence_runs_claim_subject_id_fkey"
+            columns: ["claim_subject_id"]
+            isOneToOne: false
+            referencedRelation: "claim_subjects"
             referencedColumns: ["id"]
           },
         ]
@@ -617,6 +706,39 @@ export type Database = {
         }
         Relationships: []
       }
+      seed_violations: {
+        Row: {
+          confidence_level: string
+          last_refreshed_at: string
+          litigation_status: string | null
+          metadata: Json | null
+          phone_number_normalized: string
+          reported_company_name: string | null
+          source: string
+          violation_count: number
+        }
+        Insert: {
+          confidence_level: string
+          last_refreshed_at?: string
+          litigation_status?: string | null
+          metadata?: Json | null
+          phone_number_normalized: string
+          reported_company_name?: string | null
+          source: string
+          violation_count?: number
+        }
+        Update: {
+          confidence_level?: string
+          last_refreshed_at?: string
+          litigation_status?: string | null
+          metadata?: Json | null
+          phone_number_normalized?: string
+          reported_company_name?: string | null
+          source?: string
+          violation_count?: number
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string
@@ -691,6 +813,37 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_company_intelligence_runs: {
+        Args: { p_batch_size?: number }
+        Returns: {
+          attempt_count: number
+          callback_numbers: string[] | null
+          claim_subject_id: string
+          created_at: string
+          duration_ms: number | null
+          id: string
+          is_spoofed_pool: boolean | null
+          last_error: string | null
+          next_attempt_at: string | null
+          openrouter_prompt: string | null
+          openrouter_response: string | null
+          phone_number_normalized: string
+          raw_results: Json | null
+          sources_queried: Json | null
+          started_at: string | null
+          status: string
+          synthesized_company_name: string | null
+          synthesized_confidence: number | null
+          synthesized_reasoning: string | null
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "company_intelligence_runs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       consume_rate_limit: {
         Args: {
           p_action: string

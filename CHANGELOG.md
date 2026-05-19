@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-05-19 (Company ID — CI-0.1 schema)
+
+### Database (infra; no agent routes / UX yet)
+
+- **CI-0.1.1** — `seed_violations` — proprietary phone cache (`phone_number_normalized` PK, `confidence_level`, `violation_count`, `source`, `litigation_status`, `metadata`). `service_role` only (RLS enabled, no authenticated policies).
+- **CI-0.1.2** — `company_intelligence_runs` — Lane B queue + run audit (`status`, retry columns per **CI-P.6.3**, synthesis fields). RPC `claim_company_intelligence_runs(p_batch_size)` with `FOR UPDATE SKIP LOCKED`.
+- **CI-0.1.3** — `claim_subjects` — `company_intel_status`, `company_intel_confidence`, `company_intel_reasoning`, `company_name_suggested` (distinct from `company_name`; suggest-only per **CI-P.4**).
+- **CI-0.1.4–0.1.5** — RLS + indexes (authenticated SELECT own runs via claim; partial index on `pending`). Migration: [`supabase/migrations/20260519193000_company_intelligence_schema.sql`](supabase/migrations/20260519193000_company_intelligence_schema.sql). Types: [`src/types/database.ts`](src/types/database.ts), [`src/lib/company-intelligence/types.ts`](src/lib/company-intelligence/types.ts). **Unblocks** **CI-1** enqueue/worker, **CI-2** FTC ETL.
+
 ## 2026-05-19 (Company ID — CI-P.6 worker design)
 
 ### Policy + infra (no worker routes / migrations yet)
