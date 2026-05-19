@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-05-19 (Company ID — CI-P.3 identification source audit)
+
+### Planning docs (no runtime changes)
+
+- **CI-P.3.1** — Audited `claim_events` vs `claim_subjects`: identification provenance is **events-only** (no `company_name_source` on subjects). Lane A uses `company_name_source` on `spam_db_match` (Nomorobo); qualify uses `company_identification_source` on `qualification_answer` (`user_input`, `voicemail_transcription`).
+- **CI-P.3.2** — v1 agent locked: `claim_events` keys `company_intelligence_completed`, `company_name_suggested`, `company_identification_source=company_intelligence`; suggest fields on subject per **CI-0.1.3** — **no** new `claim_subjects.company_name_source` column.
+- **CI-P.3.3** — [`company-identification.ts`](src/lib/constants/company-identification.ts) header documents v0.1 promoters (Nomorobo, voicemail, Q13) and agent suggest-only.
+- **Spike:** [`docs/spikes/20260519140000-company-identification-source-audit.md`](docs/spikes/20260519140000-company-identification-source-audit.md). **Unblocks** **CI-3.2** event persistence design.
+
 ## 2026-05-19 (Company ID — CI-P.2 FTC bulk CSV schema, Path B)
 
 ### Planning docs (no runtime / ingest yet)

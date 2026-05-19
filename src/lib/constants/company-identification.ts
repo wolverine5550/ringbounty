@@ -2,9 +2,16 @@
  * Phase 6.4 — Company identification for attorney referral path (PRD §7 Step 2, Q13 in Phase 7).
  *
  * v0.1 trust policy (see `docs/company-identification-strategy.md`):
- * - `company_identified = true` only from a **substantive** Nomorobo `reported_name` or user Q13 (`user_input`).
+ * - `company_identified = true` only from: **substantive Nomorobo** `reported_name` (Lane A),
+ *   **voicemail transcription** (qualify §7.5.4), or **user Q13** (`user_input`).
  * - Placeholders such as `UNKNOWN` are not identified — Whitepages may still run on `/check`.
  * - Twilio CNAM and Whitepages are hints only (spoofed / employer ≠ defendant).
+ * - **Company Intelligence Agent (v1):** does **not** set `company_identified` — suggest-only
+ *   (`company_name_suggested` on subject + `company_identification_source=company_intelligence`
+ *   on `claim_events`; see `docs/spikes/20260519140000-company-identification-source-audit.md`).
+ *
+ * Event key split (audit CI-P.3): Lane A spam uses `company_name_source` on `spam_db_match`;
+ * qualify/voicemail/agent use `company_identification_source` on `qualification_answer` (agent in CI-3).
  */
 
 /** Nomorobo / user strings that must not count as an identified defendant (§6.4). */
