@@ -1,13 +1,21 @@
 # Changelog
 
+## 2026-05-19 (Company ID — CI-P.2 FTC bulk CSV schema, Path B)
+
+### Planning docs (no runtime / ingest yet)
+
+- **CI-P.1.3** — Spike outcome doc complete: [`docs/spikes/20260519120000-ftc-bulk-csv-schema-validation.md`](docs/spikes/20260519120000-ftc-bulk-csv-schema-validation.md).
+- **CI-P.2** — Validated FTC daily CSV (`DNC_Complaint_Numbers_2026-05-15.csv`, ~12.9k rows / 11k unique phones / 1.3 MB): columns `Company_Phone_Number` (caller), `Subject` (category — same as live API), robocall flag; **no company/entity name column**. Complainant `Consumer_*` fields must not be ingested.
+- **Path B chosen** — **CI-2** ETL will store phone + modal FTC category + complaint count in `seed_violations.metadata`; `reported_company_name` stays null; identification still requires Nomorobo / voicemail / Q13 / **CI-4** agent rounds.
+- **Storage (first ingest)** — Recommend 30-day rolling aggregate (~200k–400k phones, ~60–150 MB Postgres). **CI-P.2.4** counsel checkpoint remains open before prod ingest.
+- **Unblocks** — **CI-2.1** ETL design; live API spike table updated for bulk Path B.
+
 ## 2026-05-19 (Company ID — CI-P.1 doc and spike alignment)
 
 ### Planning docs (no runtime changes)
 
 - **CI-P.1.1** — Cross-links: product spec is [`docs/claude_chat_company_finder.md`](docs/claude_chat_company_finder.md) (chat export + doc header); no remaining `company_finder.md` references in tracked docs. [`docs/check_cadence.md`](docs/check_cadence.md) §3.5 links task manager, product spec, FTC spikes, and planned Lane B agent.
 - **CI-P.1.2** — FTC live API vs bulk CSV: [`docs/spikes/20260516210000-ftc-complaints-company-lookup.md`](docs/spikes/20260516210000-ftc-complaints-company-lookup.md) § CI-P.1 alignment (live `subject` = category only; do not conflate with bulk ETL).
-- **CI-P.2 placeholder** — [`docs/spikes/20260519120000-ftc-bulk-csv-schema-validation.md`](docs/spikes/20260519120000-ftc-bulk-csv-schema-validation.md) for Path A/B/C decision (completed in **CI-P.2**).
-- **Task manager** — [`docs/company_id_task_manager.md`](docs/company_id_task_manager.md) **CI-P.1** checked; **CI-P.1.3** remains for **CI-P.2** fill-in.
 
 ## 2026-05-18 (Qualify UX — caller context, Screen 4 evidence uploads)
 
