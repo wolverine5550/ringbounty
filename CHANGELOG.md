@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-05-19 (Company ID — CI-1.2 internal worker)
+
+### Infra (agent stub until CI-3; flags off by default)
+
+- **CI-1.2** — `POST /api/internal/company-intelligence/run` (`CRON_SECRET`): process `{ run_id }` or claim batch via `claim_company_intelligence_runs` RPC. Retry/backoff + terminal `failed` on errors; `company_intel_status` synced on subject. Agent entry [`run-company-intelligence-agent.ts`](src/lib/company-intelligence/run-company-intelligence-agent.ts) is a no-op stub until **CI-3**. Vitest: [`process-company-intelligence-run.test.ts`](src/lib/company-intelligence/process-company-intelligence-run.test.ts).
+
 ## 2026-05-19 (Company ID — CI-1.1 enqueue on check)
 
 ### Infra (flag off by default; no worker UX)
