@@ -54,6 +54,8 @@ export type RunCompanyIntelligenceAgentParams = {
   phoneNumberNormalized: string;
   claimSubjectId: string;
   runId: string;
+  /** CI-6.1.2 — callback child: agent-only (skip Lane A metadata reuse on parent subject). */
+  isCallbackLookup?: boolean;
   env?: CompanyIntelligenceEnv;
 };
 
@@ -211,38 +213,51 @@ export async function runCompanyIntelligenceAgent(
   }
 
   // --- Round 2: reuse Lane A `metadata.spam_providers` (CI-3.1.3) ---
-  const laneA = evaluateLaneASpamProvidersRound2(
-    subjectContext.metadata,
-    subjectContext.subjectCreatedAt,
-    params.env,
-  );
-  if (laneA.reusedLaneA) {
+  // CI-6.1.2 — callback numbers are a different E.164; skip parent subject Lane A reuse.
+  if (params.isCallbackLookup) {
     rawResults.round_2 = {
-      reused_lane_a: true,
-      providers: laneA.rawByProvider,
-      skipped_reason: laneA.skippedReason,
+      skipped_reason: "callback_lookup_agent_only",
     };
-  }
-  if (laneA.hits.length > 0) {
-    allSources.push(...laneA.hits);
-    synthesis = mergeSynthesis(synthesis, buildRound2Synthesis(laneA.hits));
-    rounds.push({
-      round: 2,
-      hits: laneA.hits,
-      stoppedEarly: false,
-    });
-    roundAudits.push({
-      round: 2,
-      sourceTiers: laneA.hits.map((h) => h.tier),
-      stoppedEarly: false,
-    });
-  } else {
     roundAudits.push({
       round: 2,
       sourceTiers: [],
       stoppedEarly: false,
-      skippedReason: laneA.skippedReason,
+      skippedReason: "callback_lookup_agent_only",
     });
+  } else {
+    const laneA = evaluateLaneASpamProvidersRound2(
+      subjectContext.metadata,
+      subjectContext.subjectCreatedAt,
+      params.env,
+    );
+    if (laneA.reusedLaneA) {
+      rawResults.round_2 = {
+        reused_lane_a: true,
+        providers: laneA.rawByProvider,
+        skipped_reason: laneA.skippedReason,
+      };
+    }
+    if (laneA.hits.length > 0) {
+      allSources.push(...laneA.hits);
+      synthesis = mergeSynthesis(synthesis, buildRound2Synthesis(laneA.hits));
+      rounds.push({
+        round: 2,
+        hits: laneA.hits,
+        stoppedEarly: false,
+      });
+      roundAudits.push({
+        round: 2,
+        sourceTiers: laneA.hits.map((h) => h.tier),
+        stoppedEarly: false,
+      });
+    } else {
+      roundAudits.push({
+        round: 2,
+        sourceTiers: [],
+        stoppedEarly: false,
+        skippedReason: laneA.skippedReason,
+      });
+    }
   }
 
   const stoppedAfterRound2 = shouldStopCompanyIntelligenceOrchestrator({

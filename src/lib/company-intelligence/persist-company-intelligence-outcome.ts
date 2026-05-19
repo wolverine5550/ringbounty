@@ -22,6 +22,7 @@ import {
   COMPANY_INTELLIGENCE_EVENT_TYPE,
   COMPANY_NAME_SUGGESTED_EVENT_KEY,
 } from "./company-intelligence-events";
+import { applyCallbackResolutionToParent } from "./apply-callback-resolution-to-parent";
 import { shouldPromoteToIdentified } from "./confidence";
 import type { RunCompanyIntelligenceAgentResult } from "./run-company-intelligence-agent";
 import { writeBackSeedViolationFromAgent } from "./sources/seed-violations";
@@ -196,6 +197,23 @@ export async function persistCompanyIntelligenceOutcome(
 ): Promise<PersistCompanyIntelligenceOutcomeResult> {
   const { admin, run, agentResult, env } = params;
   const synthesis = agentResult.synthesis;
+
+  // CI-6.1 — callback child: no subject/claim_events churn; resolve parent when named.
+  if (run.parent_run_id) {
+    const substantiveSuggested = isSubstantiveCompanyName(synthesis?.companyName);
+    if (substantiveSuggested && synthesis?.companyName) {
+      await writeBackSeedViolationFromAgent(admin, {
+        phoneNumberNormalized: run.phone_number_normalized,
+        companyName: synthesis.companyName,
+        confidence: synthesis.confidence,
+        claimSubjectId: run.claim_subject_id,
+        runId: run.id,
+      });
+    }
+    await applyCallbackResolutionToParent({ admin, childRun: run, agentResult });
+    return { autoPromoted: false };
+  }
+
   const subject = await loadSubjectForIntelPersist(admin, run.claim_subject_id);
 
   const substantiveSuggested = isSubstantiveCompanyName(synthesis?.companyName);

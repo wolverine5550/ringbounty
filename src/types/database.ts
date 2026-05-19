@@ -204,8 +204,10 @@ export type Database = {
           next_attempt_at: string | null
           openrouter_prompt: string | null
           openrouter_response: string | null
+          parent_run_id: string | null
           phone_number_normalized: string
           raw_results: Json | null
+          run_metadata: Json | null
           sources_queried: Json | null
           started_at: string | null
           status: string
@@ -228,8 +230,10 @@ export type Database = {
           next_attempt_at?: string | null
           openrouter_prompt?: string | null
           openrouter_response?: string | null
+          parent_run_id?: string | null
           phone_number_normalized: string
           raw_results?: Json | null
+          run_metadata?: Json | null
           sources_queried?: Json | null
           started_at?: string | null
           status?: string
@@ -252,8 +256,10 @@ export type Database = {
           next_attempt_at?: string | null
           openrouter_prompt?: string | null
           openrouter_response?: string | null
+          parent_run_id?: string | null
           phone_number_normalized?: string
           raw_results?: Json | null
+          run_metadata?: Json | null
           sources_queried?: Json | null
           started_at?: string | null
           status?: string
@@ -268,6 +274,13 @@ export type Database = {
             columns: ["claim_subject_id"]
             isOneToOne: false
             referencedRelation: "claim_subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_intelligence_runs_parent_run_id_fkey"
+            columns: ["parent_run_id"]
+            isOneToOne: false
+            referencedRelation: "company_intelligence_runs"
             referencedColumns: ["id"]
           },
         ]
@@ -835,8 +848,10 @@ export type Database = {
           next_attempt_at: string | null
           openrouter_prompt: string | null
           openrouter_response: string | null
+          parent_run_id: string | null
           phone_number_normalized: string
           raw_results: Json | null
+          run_metadata: Json | null
           sources_queried: Json | null
           started_at: string | null
           status: string

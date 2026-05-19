@@ -13,6 +13,7 @@ import {
   COMPANY_NAME_SUGGESTED_EVENT_KEY,
 } from "./company-intelligence-events";
 import { persistCompanyIntelligenceOutcome } from "./persist-company-intelligence-outcome";
+import * as callbackModule from "./apply-callback-resolution-to-parent";
 import * as raModule from "@/lib/company/persist-registered-agent-lookup";
 import * as seedModule from "./sources/seed-violations";
 import type { RunCompanyIntelligenceAgentResult } from "./run-company-intelligence-agent";
@@ -288,5 +289,24 @@ describe("persistCompanyIntelligenceOutcome (CI-3.2)", () => {
       true,
     );
     expect(raSpy).not.toHaveBeenCalled();
+  });
+
+  it("CI-6.1 callback child skips subject patch and resolves parent", async () => {
+    vi.spyOn(seedModule, "writeBackSeedViolationFromAgent").mockResolvedValue();
+    const callbackSpy = vi
+      .spyOn(callbackModule, "applyCallbackResolutionToParent")
+      .mockResolvedValue({ applied: true });
+
+    const { admin, subjectUpdate } = mockAdminForPersist({});
+
+    const result = await persistCompanyIntelligenceOutcome({
+      admin,
+      run: { ...baseRun, parent_run_id: "parent-run" } as IntelligenceRunRow,
+      agentResult: baseAgentResult,
+    });
+
+    expect(result.autoPromoted).toBe(false);
+    expect(subjectUpdate).not.toHaveBeenCalled();
+    expect(callbackSpy).toHaveBeenCalled();
   });
 });

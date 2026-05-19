@@ -10,6 +10,7 @@ import {
   getCompanyIntelligenceFeatureFlags,
   type CompanyIntelligenceEnv,
 } from "./company-intelligence-flags";
+import { enqueueCallbackIntelligenceRuns } from "./enqueue-callback-intelligence-runs";
 import { persistCompanyIntelligenceOutcome } from "./persist-company-intelligence-outcome";
 import { runCompanyIntelligenceAgent } from "./run-company-intelligence-agent";
 import {
@@ -155,6 +156,16 @@ async function markRunCompleted(
     agentResult,
     env,
   });
+
+  // CI-6.1.1 — enqueue callback child runs after top-level parent completes.
+  if (!run.parent_run_id) {
+    await enqueueCallbackIntelligenceRuns({
+      admin,
+      parentRun: run,
+      agentResult,
+      env,
+    });
+  }
 }
 
 async function markRunFailed(
@@ -258,6 +269,7 @@ export async function processCompanyIntelligenceRun(
       phoneNumberNormalized: run.phone_number_normalized,
       claimSubjectId: run.claim_subject_id,
       runId: run.id,
+      isCallbackLookup: Boolean(run.parent_run_id),
       env,
     });
     if (agentResult.durationMs <= 0) {

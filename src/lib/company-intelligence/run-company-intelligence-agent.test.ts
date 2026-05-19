@@ -46,6 +46,36 @@ describe("runCompanyIntelligenceAgent (CI-3.1)", () => {
     expect(result.roundAudits[0]?.round).toBe(1);
   });
 
+  it("CI-6.1.2 skips Lane A reuse for callback child lookups", async () => {
+    vi.spyOn(contextModule, "loadClaimSubjectIntelContext").mockResolvedValue(
+      baseContext,
+    );
+    vi.spyOn(seedModule, "querySeedViolations").mockResolvedValue(null);
+    const laneASpy = vi.spyOn(
+      laneAModule,
+      "evaluateLaneASpamProvidersRound2",
+    );
+
+    const admin = createMockSupabaseClient();
+    const result = await runCompanyIntelligenceAgent({
+      admin,
+      phoneNumberNormalized: "+18005559999",
+      claimSubjectId: "sub-1",
+      runId: "child-run",
+      isCallbackLookup: true,
+    });
+
+    expect(laneASpy).not.toHaveBeenCalled();
+    expect(result.rawResults.round_2).toEqual({
+      skipped_reason: "callback_lookup_agent_only",
+    });
+    expect(
+      result.roundAudits.some(
+        (a) => a.skippedReason === "callback_lookup_agent_only",
+      ),
+    ).toBe(true);
+  });
+
   it("Path B high-count seed returns category suggest without skipping paid rounds", async () => {
     vi.spyOn(contextModule, "loadClaimSubjectIntelContext").mockResolvedValue(
       baseContext,

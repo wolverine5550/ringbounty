@@ -39,6 +39,8 @@ const baseRun: IntelligenceRunRow = {
   openrouter_response: null,
   estimated_cost_cents: null,
   apis_called: null,
+  parent_run_id: null,
+  run_metadata: null,
   created_at: "2026-05-19T00:00:00.000Z",
 };
 

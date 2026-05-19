@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-05-19 (Company ID — CI-6.1 callback recursive lookup)
+
+### Infra (follows parent agent completion)
+
+- **CI-6.1.1** — Migration [`20260520101500_company_intel_callback_recursive.sql`](supabase/migrations/20260520101500_company_intel_callback_recursive.sql): `parent_run_id`, `run_metadata` on `company_intelligence_runs`; [`enqueue-callback-intelligence-runs.ts`](src/lib/company-intelligence/enqueue-callback-intelligence-runs.ts) enqueues up to two child pending runs (no CI-1.4 rate-limit consumption).
+- **CI-6.1.2** — Callback child runs use agent-only Round 2 (`isCallbackLookup` skips parent Lane A reuse).
+- **CI-6.1.3** — [`apply-callback-resolution-to-parent.ts`](src/lib/company-intelligence/apply-callback-resolution-to-parent.ts): substantive callback hit → parent `company_name_suggested` at confidence 90 (`callback_confirmed`); parent `run_metadata.callback_resolved_from`.
+- **CI-6.1.4** — [`callback-recursive-policy.ts`](src/lib/company-intelligence/callback-recursive-policy.ts): max 2 callbacks; one recursion level (children do not enqueue further).
+
 ## 2026-05-19 (Company ID — CI-5.1 complaint site scrape)
 
 ### Infra (default off)
