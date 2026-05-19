@@ -40,6 +40,8 @@ const baseAgentResult: RunCompanyIntelligenceAgentResult = {
   rounds: [],
   roundAudits: [],
   rawResults: {},
+  openrouterPrompt: null,
+  openrouterResponse: null,
   skipPaidRounds: true,
   stoppedEarly: true,
   shortCircuitThreshold: 70,

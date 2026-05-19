@@ -1,5 +1,5 @@
 /**
- * CI-3.1 — Lane B agent orchestrator (Rounds 1–2 + CI-4.1 SerpAPI; OpenRouter CI-4.2 stub).
+ * CI-3.1 — Lane B agent orchestrator (Rounds 1–4: seed, Lane A, SerpAPI, OpenRouter synthesis).
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -13,6 +13,10 @@ import {
 } from "./orchestrator-policy";
 import { shouldStopCompanyIntelligenceOrchestrator } from "./orchestrator-short-circuit";
 import { shouldRunPaidIntelRounds } from "./paid-intel-rounds";
+import {
+  synthesizeCompanyFromSources,
+  synthesisResultToRound4Payload,
+} from "./synthesize-company-from-sources";
 import { buildSynthesisFromSourceHits } from "./synthesize-from-sources";
 import { evaluateLaneASpamProvidersRound2 } from "./sources/lane-a-spam-providers";
 import {
@@ -54,6 +58,9 @@ export type RunCompanyIntelligenceAgentResult = {
   roundAudits: CompanyIntelligenceRoundAudit[];
   /** Persisted to `company_intelligence_runs.raw_results` (CI-3.1.5). */
   rawResults: Record<string, unknown>;
+  /** Audit trail for OpenRouter Round 4 (CI-4.2). */
+  openrouterPrompt: string | null;
+  openrouterResponse: string | null;
   /** Path A seed short-circuit — skip SerpAPI/OpenRouter (**CI-4**). */
   skipPaidRounds: boolean;
   stoppedEarly: boolean;
@@ -108,6 +115,8 @@ export async function runCompanyIntelligenceAgent(
     rounds: [],
     roundAudits: [],
     rawResults: {},
+    openrouterPrompt: null,
+    openrouterResponse: null,
     skipPaidRounds: false,
     stoppedEarly: false,
     shortCircuitThreshold,
@@ -119,6 +128,8 @@ export async function runCompanyIntelligenceAgent(
   const rawResults: Record<string, unknown> = {};
   let synthesis: SynthesisResult | null = null;
   let skipPaidRounds = false;
+  let openrouterPrompt: string | null = null;
+  let openrouterResponse: string | null = null;
 
   const subjectContext = await loadClaimSubjectIntelContext(
     params.admin,
@@ -289,13 +300,49 @@ export async function runCompanyIntelligenceAgent(
       skippedReason: round3.auditSkippedReason,
     });
 
-    // CI-4.2 — OpenRouter synthesis from accumulated sources + SerpAPI snippets (stub).
-    roundAudits.push({
-      round: 4,
-      sourceTiers: [],
-      stoppedEarly: false,
-      skippedReason: "openrouter_synthesis_not_implemented",
-    });
+    // CI-4.2 — OpenRouter synthesis from accumulated sources + SerpAPI snippets.
+    const openRouter = await synthesizeCompanyFromSources(
+      {
+        phoneNumberNormalized: params.phoneNumberNormalized,
+        sources: allSources,
+        serpapiSnippets: serp.snippets,
+      },
+      { env: params.env },
+    );
+
+    if (openRouter.ok) {
+      openrouterPrompt = openRouter.prompt;
+      openrouterResponse = openRouter.response;
+      const round4 = synthesisResultToRound4Payload(openRouter);
+      rawResults.round_4 = round4.rawResultsSlice;
+      allSources.push(round4.hit);
+      synthesis = mergeSynthesis(synthesis, openRouter.synthesis);
+      rounds.push({
+        round: 4,
+        hits: [round4.hit],
+        stoppedEarly: false,
+      });
+      roundAudits.push({
+        round: 4,
+        sourceTiers: ["openrouter_synthesis"],
+        stoppedEarly: false,
+        skippedReason: null,
+      });
+    } else {
+      rawResults.round_4 = {
+        openrouter: {
+          skipped: true,
+          reason: openRouter.skippedReason,
+          error: openRouter.error ?? null,
+        },
+      };
+      roundAudits.push({
+        round: 4,
+        sourceTiers: [],
+        stoppedEarly: false,
+        skippedReason: `openrouter_${openRouter.skippedReason}`,
+      });
+    }
   }
 
   if (!synthesis && allSources.length > 0) {
@@ -310,6 +357,8 @@ export async function runCompanyIntelligenceAgent(
     rounds,
     roundAudits,
     rawResults,
+    openrouterPrompt,
+    openrouterResponse,
     skipPaidRounds,
     stoppedEarly: stoppedAfterRound2,
     shortCircuitThreshold,

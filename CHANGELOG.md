@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-05-19 (Company ID — CI-4.2 OpenRouter synthesis Round 4)
+
+### Infra (uses existing `OPENROUTER_API_KEY`)
+
+- **CI-4.2.1** — [`synthesize-company-from-sources.ts`](src/lib/company-intelligence/synthesize-company-from-sources.ts): structured JSON synthesis from accumulated `sources[]` + SerpAPI snippets; Round 4 wired in [`run-company-intelligence-agent.ts`](src/lib/company-intelligence/run-company-intelligence-agent.ts).
+- **CI-4.2.2** — Env `COMPANY_INTEL_OPENROUTER_MODEL` (default `anthropic/claude-sonnet-4`) in [`.env.example`](.env.example).
+- **CI-4.2.3** — `parseAndValidateSynthesisJson` + one retry on malformed model JSON.
+- **CI-4.2.4** — Vitest: [`synthesize-company-from-sources.test.ts`](src/lib/company-intelligence/synthesize-company-from-sources.test.ts), orchestrator integration test.
+- Persists `openrouter_prompt` / `openrouter_response` on `company_intelligence_runs` when synthesis succeeds.
+
 ## 2026-05-19 (Company ID — CI-4.1 SerpAPI Round 3)
 
 ### Infra (flags off by default)
@@ -8,7 +18,7 @@
 - **CI-4.1.2** — [`serpapi-complaint-search.ts`](src/lib/company-intelligence/sources/serpapi-complaint-search.ts): Google complaint query with `num=10`; wired into Round 3 of [`run-company-intelligence-agent.ts`](src/lib/company-intelligence/run-company-intelligence-agent.ts) when paid rounds allowed (**CI-P.5**).
 - **CI-4.1.3** — Snippets stored in `company_intelligence_runs.raw_results.round_3.serpapi`; `redactPhonePiiForLog` on errors (no phone in logs).
 - **CI-4.1.4** — Vitest: [`serpapi-complaint-search.test.ts`](src/lib/company-intelligence/sources/serpapi-complaint-search.test.ts), orchestrator integration test.
-- Round 4 OpenRouter synthesis remains stub (`openrouter_synthesis_not_implemented`) until **CI-4.2**.
+- Round 4 OpenRouter synthesis shipped in **CI-4.2** (separate changelog entry).
 
 ## 2026-05-19 (Company ID — CI-3.3 orchestrator tests)
 

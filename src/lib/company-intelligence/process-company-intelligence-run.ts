@@ -128,6 +128,13 @@ async function markRunCompleted(
     runPatch.is_spoofed_pool = synthesis.isSpoofedPool;
   }
 
+  if (agentResult.openrouterPrompt) {
+    runPatch.openrouter_prompt = agentResult.openrouterPrompt;
+  }
+  if (agentResult.openrouterResponse) {
+    runPatch.openrouter_response = agentResult.openrouterResponse;
+  }
+
   const { error: runError } = await admin
     .from("company_intelligence_runs")
     .update(runPatch)

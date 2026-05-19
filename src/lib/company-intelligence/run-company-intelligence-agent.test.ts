@@ -7,6 +7,7 @@ import { runCompanyIntelligenceAgent } from "./run-company-intelligence-agent";
 import * as seedModule from "./sources/seed-violations";
 import * as laneAModule from "./sources/lane-a-spam-providers";
 import * as serpModule from "./sources/serpapi-complaint-search";
+import * as synthesisModule from "./synthesize-company-from-sources";
 
 const baseContext = {
   metadata: null,
@@ -292,9 +293,74 @@ describe("runCompanyIntelligenceAgent (CI-4.1)", () => {
     expect(
       result.roundAudits.find((a) => a.round === 3)?.sourceTiers,
     ).toContain("serpapi");
-    expect(
-      result.roundAudits.find((a) => a.round === 4)?.skippedReason,
-    ).toBe("openrouter_synthesis_not_implemented");
     expect(result.allSources.some((h) => h.tier === "serpapi")).toBe(true);
+  });
+});
+
+describe("runCompanyIntelligenceAgent (CI-4.2)", () => {
+  it("CI-4.2 wires Round 4 OpenRouter synthesis into synthesis + raw_results", async () => {
+    vi.spyOn(contextModule, "loadClaimSubjectIntelContext").mockResolvedValue({
+      ...baseContext,
+      authenticatedUserId: "user-1",
+    });
+    vi.spyOn(seedModule, "querySeedViolations").mockResolvedValue(null);
+    vi.spyOn(
+      laneAModule,
+      "evaluateLaneASpamProvidersRound2",
+    ).mockReturnValue({
+      hits: [],
+      rawByProvider: {},
+      reusedLaneA: false,
+      skippedReason: "missing_metadata",
+    });
+    vi.spyOn(serpModule, "searchComplaintSnippetsViaSerpapi").mockResolvedValue({
+      query: '"(800) 555-1234" robocall OR spam OR complaint OR "who called"',
+      snippets: [
+        {
+          position: 1,
+          title: "800notes",
+          link: "https://800notes.com/example",
+          snippet: "CarShield warranty robocall",
+        },
+      ],
+      skippedReason: null,
+      raw: { result_count: 1, snippets: [] },
+    });
+    vi.spyOn(synthesisModule, "synthesizeCompanyFromSources").mockResolvedValue({
+      ok: true,
+      synthesis: {
+        companyName: "CarShield Vehicle Protection",
+        confidence: 78,
+        reasoning: "SerpAPI + Nomorobo agree on CarShield.",
+        callCategory: "telemarketer",
+        callbackNumbers: [],
+        isSpoofedPool: false,
+      },
+      prompt: "system prompt",
+      response: JSON.stringify({ company_name: "CarShield Vehicle Protection" }),
+    });
+
+    const admin = createMockSupabaseClient();
+    const result = await runCompanyIntelligenceAgent({
+      admin,
+      phoneNumberNormalized: "+18005551234",
+      claimSubjectId: "sub-1",
+      runId: "run-1",
+      env: {
+        COMPANY_INTEL_SERP_ENABLED: "true",
+        SERPAPI_API_KEY: "test-key",
+        OPENROUTER_API_KEY: "or-key",
+      },
+    });
+
+    expect(result.synthesis?.companyName).toBe("CarShield Vehicle Protection");
+    expect(result.openrouterPrompt).toBe("system prompt");
+    expect(result.rawResults.round_4).toBeDefined();
+    expect(
+      result.roundAudits.find((a) => a.round === 4)?.sourceTiers,
+    ).toContain("openrouter_synthesis");
+    expect(result.allSources.some((h) => h.tier === "openrouter_synthesis")).toBe(
+      true,
+    );
   });
 });
