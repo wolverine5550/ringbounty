@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-05-19 (Company ID — CI-P.6 worker design)
+
+### Policy + infra (no worker routes / migrations yet)
+
+- **CI-P.6.1** — Cron drain must claim pending runs via `createAdminClient().rpc('claim_company_intelligence_runs')` with Postgres `FOR UPDATE SKIP LOCKED` inside a `security definer` function (same pattern as `consume_rate_limit`). PostgREST filter-only `.select().eq('status','pending')` is **not** safe for concurrent workers.
+- **CI-P.6.2** — v1: **cron drain required** (1–2 min schedule); optional fail-open `fetch` from submit (**CI-1.3.3**). Cron is source of truth.
+- **CI-P.6.3** — Retry policy locked: 3 attempts, exponential backoff 60s/120s/240s, 72h stale pending, 15m stale `running` reclaim. [`worker-policy.ts`](src/lib/company-intelligence/worker-policy.ts), Vitest: [`worker-policy.test.ts`](src/lib/company-intelligence/worker-policy.test.ts). Spike: [`docs/spikes/20260519160000-company-intel-worker-design.md`](docs/spikes/20260519160000-company-intel-worker-design.md). **Unblocks** **CI-0.1.2** schema + **CI-1** worker routes.
+
 ## 2026-05-19 (Company ID — CI-P.5 cost and abuse gates)
 
 ### Policy + infra (no agent worker / UX yet)
