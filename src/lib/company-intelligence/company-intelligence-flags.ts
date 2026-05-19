@@ -15,6 +15,10 @@ export const COMPANY_INTEL_AUTO_PROMOTE_ENABLED_ENV_KEY =
 export const COMPANY_INTEL_ALLOW_ANONYMOUS_PAID_ROUNDS_ENV_KEY =
   "COMPANY_INTEL_ALLOW_ANONYMOUS_PAID_ROUNDS" as const;
 
+/** Lane B worker + enqueue on check submit (**CI-1.1.4**). Default off until cron drain ships. */
+export const COMPANY_INTELLIGENCE_AGENT_ENABLED_ENV_KEY =
+  "COMPANY_INTELLIGENCE_AGENT_ENABLED" as const;
+
 export type CompanyIntelligenceEnv = Record<string, string | undefined>;
 
 export type CompanyIntelligenceFeatureFlags = {
@@ -22,6 +26,8 @@ export type CompanyIntelligenceFeatureFlags = {
   autoPromoteEnabled: boolean;
   /** v1 production default: false — paid API rounds require `authenticatedUserId` (CI-P.5.1). */
   allowAnonymousPaidRounds: boolean;
+  /** v1 production default: false — enqueue + worker inactive until **CI-1.2** ships. */
+  agentEnabled: boolean;
 };
 
 /**
@@ -37,6 +43,9 @@ export function getCompanyIntelligenceFeatureFlags(
     ),
     allowAnonymousPaidRounds: parseBooleanEnv(
       env[COMPANY_INTEL_ALLOW_ANONYMOUS_PAID_ROUNDS_ENV_KEY],
+    ),
+    agentEnabled: parseBooleanEnv(
+      env[COMPANY_INTELLIGENCE_AGENT_ENABLED_ENV_KEY],
     ),
   };
 }

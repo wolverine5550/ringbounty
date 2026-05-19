@@ -12,6 +12,8 @@ import { isDebtCollectionCallCategory } from "@/lib/constants/fdcpa-debt-collect
 import type { Database } from "@/types/database";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { maybeEnqueueCompanyIntelligenceRun } from "@/lib/company-intelligence/enqueue-company-intelligence-run";
+
 import { isSkippedSpamResult } from "./merge-spam-results";
 import { persistSpamCheckOutcome } from "./persist-spam-check-outcome";
 import {
@@ -102,6 +104,13 @@ export async function runSpamChecksForPhoneList(
           providerOutcomes,
           userStateCode: params.userStateCode,
           anonymousSessionId: params.anonymousSessionId,
+          env: params.env,
+        });
+        await maybeEnqueueCompanyIntelligenceRun(admin, {
+          claimSubjectId: p.subjectId,
+          phoneNumberNormalized: p.phoneNumberNormalized,
+          companyIdentified: merged.companyIdentified,
+          isExempt: merged.isExempt,
           env: params.env,
         });
       }

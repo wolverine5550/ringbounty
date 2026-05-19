@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-05-19 (Company ID — CI-1.1 enqueue on check)
+
+### Infra (flag off by default; no worker UX)
+
+- **CI-1.1** — After Lane A spam persist, [`maybeEnqueueCompanyIntelligenceRun`](src/lib/company-intelligence/enqueue-company-intelligence-run.ts) inserts `company_intelligence_runs` (`pending`) and sets `claim_subjects.company_intel_status=pending` when `COMPANY_INTELLIGENCE_AGENT_ENABLED=true` and `company_identified=false` and not exempt. Fail-open (never blocks `/check`). Hook: [`spam-check-pipeline.ts`](src/lib/spam/spam-check-pipeline.ts). Vitest: [`should-enqueue-company-intelligence-run.test.ts`](src/lib/company-intelligence/should-enqueue-company-intelligence-run.test.ts), [`enqueue-company-intelligence-run.test.ts`](src/lib/company-intelligence/enqueue-company-intelligence-run.test.ts).
+
 ## 2026-05-19 (Company ID — CI-0.1 schema)
 
 ### Database (infra; no agent routes / UX yet)
