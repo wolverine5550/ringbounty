@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-05-19 (Company ID — CI-P.4 suggest-only v1 policy lock)
+
+### Policy + infra (no agent worker / UX yet)
+
+- **CI-P.4.1** — `shouldPromoteToIdentified` returns `false` unless `COMPANY_INTEL_AUTO_PROMOTE_ENABLED=true` (unset/false in production). Modules: [`company-intelligence/confidence.ts`](src/lib/company-intelligence/confidence.ts), [`company-intelligence-flags.ts`](src/lib/company-intelligence/company-intelligence-flags.ts), [`company-intelligence/types.ts`](src/lib/company-intelligence/types.ts); Vitest: [`confidence.test.ts`](src/lib/company-intelligence/confidence.test.ts).
+- **CI-P.4.2** — [`docs/company-identification-strategy.md`](docs/company-identification-strategy.md): agent row in trust matrix; v1 suggest-only + v2 auto-promote table.
+- **CI-P.4.3** — v2 allowlist documented (voicemail, callback-confirmed, FTC enforcement with Path A name); SerpAPI/LLM/Path B FTC never auto-promote alone.
+- **Also ships early:** **CI-0.3** confidence map + aggregation (gates **CI-3.2** auto-promote). **Unblocks** **CI-3.2** v1 persistence path.
+
 ## 2026-05-19 (Company ID — CI-P.3 identification source audit)
 
 ### Planning docs (no runtime changes)
