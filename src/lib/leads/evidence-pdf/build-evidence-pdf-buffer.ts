@@ -99,6 +99,12 @@ export function buildEvidencePdfBuffer(context: EvidencePdfContext): Promise<Buf
       if (subject.voicemailAudioPath) {
         writeKeyValue(doc, "Voicemail audio (storage)", subject.voicemailAudioPath);
       }
+      if (subject.companyIntelEvidenceLines.length > 0) {
+        writeSectionTitle(doc, "Automated company research");
+        for (const line of subject.companyIntelEvidenceLines) {
+          doc.text(line, { lineGap: 2 });
+        }
+      }
     }
 
     if (context.qualificationLines.length > 0) {

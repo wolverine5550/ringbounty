@@ -34,6 +34,11 @@ const minimalContext: EvidencePdfContext = {
       dncSummary: "Federal DNC registered.",
       federalDncScreenshotPath: null,
       voicemailAudioPath: null,
+      companyIntelEvidenceLines: [
+        "Suggested company: Acme Corp (confidence 85)",
+        "Research summary: FTC seed match.",
+        "Round 1: FTC consumer complaint database (high volume)",
+      ],
     },
   ],
   qualificationLines: [{ label: "Gave direct consent to call", value: "No" }],

@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-05-19 (Company ID — CI-8.4 results + evidence PDF)
+
+### Results (`/results`)
+
+- **CI-8.4.1** — Subject cards show Lane B `company_intel_reasoning` under “Company research” when present ([`results-subject-card.tsx`](src/components/results/results-subject-card.tsx), [`load-results-page-context.ts`](src/lib/claims/load-results-page-context.ts)).
+
+### Attorney evidence PDF
+
+- **CI-8.4.2** — Evidence package includes automated company research: suggested name, reasoning summary, per-round source tiers, and billable APIs — no raw scrape payloads ([`load-company-intel-evidence-by-subject.ts`](src/lib/company-intelligence/load-company-intel-evidence-by-subject.ts), [`format-company-intel-evidence.ts`](src/lib/company-intelligence/format-company-intel-evidence.ts), [`build-evidence-pdf-buffer.ts`](src/lib/leads/evidence-pdf/build-evidence-pdf-buffer.ts)).
+
 ## 2026-05-19 (Company ID — CI-8.3 check funnel background research copy)
 
 ### Check (`/check`)

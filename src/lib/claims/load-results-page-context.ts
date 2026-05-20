@@ -46,6 +46,8 @@ export type ResultsSubjectView = {
   referral: CanReferToAttorneyResult;
   /** CI-6.2.3 — set when Lane B identified company via callback child run. */
   companyIdentifiedViaCallback: string | null;
+  /** CI-8.4.1 — Lane B agent reasoning summary (informational). */
+  companyIntelReasoning: string | null;
 };
 
 export type ResultsPageContext = {
@@ -146,7 +148,7 @@ export async function loadResultsPageContext(
       supabase
         .from("claim_subjects")
         .select(
-          "id, phone_number, company_name, company_identified, is_exempt, exempt_reason, call_category, spam_db_confidence_score, registered_agent_name",
+          "id, phone_number, company_name, company_identified, is_exempt, exempt_reason, call_category, spam_db_confidence_score, registered_agent_name, company_intel_reasoning",
         )
         .eq("claim_id", claim.id),
       supabase
@@ -223,6 +225,7 @@ export async function loadResultsPageContext(
         call_category: subject.call_category,
       }),
       companyIdentifiedViaCallback: callbackDisplay,
+      companyIntelReasoning: subject.company_intel_reasoning?.trim() || null,
     };
   });
 

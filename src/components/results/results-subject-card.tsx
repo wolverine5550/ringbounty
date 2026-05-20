@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import type { ResultsSubjectView } from "@/lib/claims/load-results-page-context";
+import { RESULTS_COMPANY_INTEL_REASONING_LABEL } from "@/lib/constants/results-company-intel";
 import type { ResultsStrengthTone } from "@/lib/constants/results-strength";
 import { getResultsStrengthDisplay } from "@/lib/constants/results-strength";
 import { cn } from "@/lib/utils";
@@ -90,6 +91,16 @@ export function ResultsSubjectCard({
             <dt className="text-muted-foreground text-xs font-medium">Do Not Call</dt>
             <dd className="mt-0.5 text-xs leading-relaxed sm:text-sm">
               {subject.dncSummary}
+            </dd>
+          </div>
+        ) : null}
+        {subject.companyIntelReasoning ? (
+          <div>
+            <dt className="text-muted-foreground text-xs font-medium">
+              {RESULTS_COMPANY_INTEL_REASONING_LABEL}
+            </dt>
+            <dd className="mt-0.5 text-xs leading-relaxed sm:text-sm">
+              {subject.companyIntelReasoning}
             </dd>
           </div>
         ) : null}

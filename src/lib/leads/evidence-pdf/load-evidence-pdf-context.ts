@@ -19,6 +19,9 @@ import { formatUsdFromCents } from "@/lib/scoring/compute-valuation";
 import type { Database } from "@/types/database";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { loadCompanyIntelEvidenceBySubject } from "@/lib/company-intelligence/load-company-intel-evidence-by-subject";
+import { formatCompanyIntelEvidenceLines } from "@/lib/company-intelligence/format-company-intel-evidence";
+
 import { formatQualificationLines } from "./format-qualification-lines";
 
 export type EvidencePdfSubjectSection = {
@@ -34,6 +37,8 @@ export type EvidencePdfSubjectSection = {
   dncSummary: string;
   federalDncScreenshotPath: string | null;
   voicemailAudioPath: string | null;
+  /** CI-8.4.2 — Lane B source tiers + reasoning (no raw scrape payloads). */
+  companyIntelEvidenceLines: string[];
 };
 
 export type EvidencePdfContext = {
@@ -153,7 +158,7 @@ export async function loadEvidencePdfContext(
   const { data: subjects, error: subjectsError } = await admin
     .from("claim_subjects")
     .select(
-      "id, phone_number, company_name, company_identified, call_category, metadata, is_exempt, spam_db_confidence_score, spam_db_complaint_count, spam_db_source, registered_agent_name, registered_agent_address, registered_agent_lookup_source",
+      "id, phone_number, company_name, company_identified, call_category, metadata, is_exempt, spam_db_confidence_score, spam_db_complaint_count, spam_db_source, registered_agent_name, registered_agent_address, registered_agent_lookup_source, company_intel_reasoning",
     )
     .eq("claim_id", lead.claim_id);
 
@@ -167,6 +172,19 @@ export async function loadEvidencePdfContext(
       : (subjects ?? []);
 
   const subjectIds = subjectFilter.map((s) => s.id);
+
+  const subjectReasoningById = new Map<string, string | null>();
+  for (const s of subjectFilter) {
+    subjectReasoningById.set(
+      s.id,
+      s.company_intel_reasoning?.trim() || null,
+    );
+  }
+
+  const companyIntelBySubject = await loadCompanyIntelEvidenceBySubject(admin, {
+    claimSubjectIds: subjectIds,
+    subjectReasoningById,
+  });
 
   const { data: dncRows, error: dncError } =
     subjectIds.length > 0
@@ -228,6 +246,9 @@ export async function loadEvidencePdfContext(
     dncSummary: buildDncSummary(dncBySubject.get(s.id) ?? null),
     federalDncScreenshotPath: getFederalDncScreenshotPathFromMetadata(s.metadata),
     voicemailAudioPath: getVoicemailAudioPathFromMetadata(s.metadata),
+    companyIntelEvidenceLines: formatCompanyIntelEvidenceLines(
+      companyIntelBySubject.get(s.id) ?? null,
+    ),
   }));
 
   return {
