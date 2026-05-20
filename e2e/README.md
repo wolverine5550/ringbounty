@@ -1,12 +1,35 @@
 # End-to-end tests (Playwright)
 
-This folder holds Playwright specs for RingBounty. The first **application-level** flows (auth, number check, payments) will land in later milestones once those surfaces exist in the app.
+## Wiring (no server)
 
-Until then, `e2e/wiring.spec.ts` only verifies that Playwright can drive Chromium (no local Next.js server required).
+`e2e/wiring.spec.ts` verifies Playwright + Chromium without Next.js.
 
-## Running E2E tests
+```bash
+npx playwright install chromium   # once
+npm run test:e2e -- --project=wiring
+```
 
-1. Install browsers once: `npx playwright install` (or `npx playwright install chromium` for a smaller install).
-2. Run: `npm run test:e2e`
+## Qualify Screen 4 — company intelligence UX (CI-8.5)
 
-For specs that call `page.goto("/")` or other app routes, start the dev server first (`npm run dev`) so `baseURL` in `playwright.config.ts` resolves, or add a [`webServer`](https://playwright.dev/docs/test-webserver) entry to `playwright.config.ts` and supply the same environment variables CI/production would use.
+`e2e/qualify-screen-4-company-intel.spec.ts` covers UNKNOWN numbers on Qualify step 4:
+
+1. **Voicemail CTA** — Lane B completed with no suggestion → primary voicemail prompt (CI-8.2.3).
+2. **Agent suggestion** — Lane B `running` + mocked `GET /api/qualify/company-intel` → pre-filled Q13 + confidence badge (CI-8.2.2 / CI-8.2.4).
+
+### Prerequisites
+
+1. `npm run dev` (or set `webServer` in `playwright.config.ts`).
+2. `.env.local` with `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`.
+3. A **password-enabled** Supabase Auth user (create in Dashboard → Authentication):
+   - `E2E_USER_EMAIL`
+   - `E2E_USER_PASSWORD`
+
+`e2e/global-setup.ts` seeds a fresh `checking` claim and two subjects via the service role. `e2e/auth.setup.ts` signs in at `/auth/login` and saves `playwright/.auth/user.json` (gitignored).
+
+### Run
+
+```bash
+npm run test:e2e -- --project=qualify-e2e
+```
+
+Without `E2E_USER_*`, the qualify project tests are skipped (wiring still runs).

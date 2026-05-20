@@ -14,6 +14,7 @@
 /coverage
 /test-results/
 /playwright-report/
+/playwright/.auth/
 /blob-report/
 
 # next.js

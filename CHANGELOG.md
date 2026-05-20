@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-05-19 (Company ID — CI-8.5 qualify Screen 4 E2E)
+
+### Qualify E2E (Playwright)
+
+- **CI-8.5.1** — Playwright specs for UNKNOWN callers on Qualify step 4: primary voicemail CTA when Lane B has no suggestion, and mocked `GET /api/qualify/company-intel` polling that pre-fills Q13 with a confidence badge ([`e2e/qualify-screen-4-company-intel.spec.ts`](e2e/qualify-screen-4-company-intel.spec.ts), [`e2e/README.md`](e2e/README.md)).
+
 ## 2026-05-19 (Company ID — CI-8.4 results + evidence PDF)
 
 ### Results (`/results`)
