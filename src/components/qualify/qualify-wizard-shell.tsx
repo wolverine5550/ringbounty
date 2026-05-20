@@ -19,6 +19,7 @@ import type { QualifyScreen1Answers } from "@/lib/qualify/screen-1-consent";
 import type { QualifyScreen2Answers } from "@/lib/qualify/screen-2-stop-request";
 import type { QualifyScreen3Answers } from "@/lib/qualify/screen-3-call-details";
 import type { QualifyScreen4Answers } from "@/lib/qualify/screen-4-company-identification";
+import type { QualifyCompanyIntelSnapshot } from "@/lib/qualify/load-qualify-company-intel";
 import type { QualifyScreen5Answers } from "@/lib/qualify/screen-5-line-type";
 
 export type QualifyWizardShellProps = {
@@ -37,6 +38,10 @@ export type QualifyWizardShellProps = {
   screen4Initial?: QualifyScreen4Answers | null;
   /** Subject column fallback for Q13 company name. */
   subjectCompanyName?: string | null;
+  /** Lane A `company_identified` for Screen 4 voicemail promotion (CI-8.2.3). */
+  subjectCompanyIdentified?: boolean;
+  /** SSR Lane B snapshot for Screen 4 polling (CI-8.2). */
+  screen4IntelSnapshot?: QualifyCompanyIntelSnapshot | null;
   /** Loaded from `claim_events` when step is 5 (§7.6). */
   screen5Initial?: QualifyScreen5Answers | null;
 };
@@ -54,6 +59,8 @@ export function QualifyWizardShell({
   showPostStopCount = false,
   screen4Initial = null,
   subjectCompanyName = null,
+  subjectCompanyIdentified = false,
+  screen4IntelSnapshot = null,
   screen5Initial = null,
 }: QualifyWizardShellProps) {
   const title = QUALIFY_STEP_TITLES[step];
@@ -88,6 +95,8 @@ export function QualifyWizardShell({
           claimId={claimId}
           initialAnswers={screen4Initial}
           initialCompanyName={subjectCompanyName}
+          companyIdentified={subjectCompanyIdentified}
+          initialIntelSnapshot={screen4IntelSnapshot}
         />
       ) : step === 5 ? (
         <Screen5ConsentForm

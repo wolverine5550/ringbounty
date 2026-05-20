@@ -6,6 +6,24 @@
 export const QUALIFY_VOICEMAIL_PROMPT =
   "Do you have a voicemail from this number you can upload?";
 
+/**
+ * CI-8.2.3 — Primary voicemail CTA when Lane A + agent did not identify the caller.
+ * Voicemail extraction is the highest-trust path for unknown numbers.
+ */
+export const QUALIFY_VOICEMAIL_PRIMARY_PROMPT =
+  "Upload a voicemail if you have one — it is the fastest way to identify who called.";
+
+export const QUALIFY_VOICEMAIL_PRIMARY_HINT =
+  "We can read the transcript for a company name, callback number, and what they were selling.";
+
+/** CI-8.2.1 — Shown while Lane B worker status is `running`. */
+export const QUALIFY_INTEL_RESEARCHING_BANNER =
+  "Researching this number…";
+
+/** CI-8.2.2 — Intro when agent completed with a suggest-only company name. */
+export const QUALIFY_INTEL_SUGGEST_HEADING =
+  "We found a possible company — please confirm or edit below.";
+
 /** Q13 — optional company name (many callers are unknown at this stage). */
 export const QUALIFY_Q13_PROMPT =
   "If you know who called, enter the company or caller name. Check your voicemail or try calling the number back.";

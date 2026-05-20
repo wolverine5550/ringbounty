@@ -32,6 +32,7 @@ import { isNamedCompanyForConsent } from "@/lib/qualify/format-company-consent-p
 import { loadQualifyScreen1Answers } from "@/lib/qualify/screen-1-consent";
 import { loadQualifyScreen2Answers } from "@/lib/qualify/screen-2-stop-request";
 import { loadQualifyScreen3Answers } from "@/lib/qualify/screen-3-call-details";
+import { loadQualifyCompanyIntelSnapshot } from "@/lib/qualify/load-qualify-company-intel";
 import { loadQualifyScreen4Answers } from "@/lib/qualify/screen-4-company-identification";
 import { loadQualifyScreen5Answers } from "@/lib/qualify/screen-5-line-type";
 import { createClient } from "@/lib/supabase/server";
@@ -211,6 +212,13 @@ async function QualifyPageContent({
           pageContext.subject.company_name,
         )
       : null;
+  const screen4IntelSnapshot =
+    wizardStep === 4
+      ? await loadQualifyCompanyIntelSnapshot(supabase, {
+          claimSubjectId: pageContext.subject.id,
+          userId: user.id,
+        })
+      : null;
   const screen5ConsentInitial =
     wizardStep === 5 ? await loadQualifyScreen1Answers(supabase, claimId) : null;
   const screen6LineInitial =
@@ -247,6 +255,8 @@ async function QualifyPageContent({
         showPostStopCount={showPostStopCount}
         screen4Initial={screen4Initial}
         subjectCompanyName={pageContext.subject.company_name}
+        subjectCompanyIdentified={pageContext.subject.company_identified}
+        screen4IntelSnapshot={screen4IntelSnapshot}
         screen5ConsentInitial={screen5ConsentInitial}
         screen5Initial={screen6LineInitial}
       />

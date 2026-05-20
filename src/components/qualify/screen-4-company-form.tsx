@@ -1,13 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { isSubstantiveCompanyName } from "@/lib/constants/company-identification";
 import { COMPANY_NAME_UNVERIFIED_WARNING } from "@/lib/constants/company-name-verification";
 import {
+  QUALIFY_INTEL_RESEARCHING_BANNER,
+  QUALIFY_INTEL_SUGGEST_HEADING,
   QUALIFY_Q13_CALLBACK_PROMPT,
   QUALIFY_Q13_PITCH_PROMPT,
   QUALIFY_Q13_OPTIONAL_HINT,
@@ -16,15 +20,23 @@ import {
   buildQualifyQ14Prompt,
   QUALIFY_Q14_UPLOAD_HELP,
   QUALIFY_Q14_UPLOAD_LABEL,
+  QUALIFY_VOICEMAIL_PRIMARY_HINT,
+  QUALIFY_VOICEMAIL_PRIMARY_PROMPT,
   QUALIFY_VOICEMAIL_PROMPT,
   QUALIFY_VOICEMAIL_TRANSCRIPT_LABEL,
   QUALIFY_VOICEMAIL_TRANSCRIPTION_UNAVAILABLE,
 } from "@/lib/constants/qualify-screen-4";
 import {
+  formatCompanyIntelConfidenceTierLabel,
+  resolveCompanyIntelConfidenceTier,
+} from "@/lib/qualify/company-intel-confidence-tier";
+import type { QualifyCompanyIntelSnapshot } from "@/lib/qualify/load-qualify-company-intel";
+import {
   buildQualifyPageHref,
   resolveWizardStepAfterCompanyScreen,
 } from "@/lib/qualify/qualify-step";
 import type { QualifyScreen4Answers } from "@/lib/qualify/screen-4-company-identification";
+import { useQualifyCompanyIntelPoll } from "@/lib/qualify/use-qualify-company-intel-poll";
 
 export type Screen4CompanyFormProps = {
   claimSubjectId: string;
@@ -32,24 +44,37 @@ export type Screen4CompanyFormProps = {
   initialAnswers?: QualifyScreen4Answers | null;
   /** Pre-filled from `claim_subjects.company_name` when events are empty. */
   initialCompanyName?: string | null;
+  /** Lane A — when true, skip unidentified voicemail promotion (CI-8.2.3). */
+  companyIdentified?: boolean;
+  /** SSR snapshot from `loadQualifyCompanyIntelSnapshot` (CI-8.1 / CI-8.2). */
+  initialIntelSnapshot?: QualifyCompanyIntelSnapshot | null;
 };
 
 type YesNoFieldProps = {
   legend: string;
   value: boolean | null;
   onChange: (value: boolean) => void;
+  /** CI-8.2.3 — emphasize Yes when voicemail is the primary unidentified path. */
+  promotePrimary?: boolean;
 };
 
-function YesNoField({ legend, value, onChange }: YesNoFieldProps) {
+function YesNoField({
+  legend,
+  value,
+  onChange,
+  promotePrimary = false,
+}: YesNoFieldProps) {
+  const yesVariant =
+    value === true
+      ? "default"
+      : promotePrimary && value === null
+        ? "default"
+        : "outline";
   return (
     <fieldset className="flex flex-col gap-3">
       <legend className="text-sm font-medium">{legend}</legend>
       <div className="flex flex-wrap gap-3">
-        <Button
-          type="button"
-          variant={value === true ? "default" : "outline"}
-          onClick={() => onChange(true)}
-        >
+        <Button type="button" variant={yesVariant} onClick={() => onChange(true)}>
           Yes
         </Button>
         <Button
@@ -66,14 +91,23 @@ function YesNoField({ legend, value, onChange }: YesNoFieldProps) {
 
 /**
  * Phase 7.5 — Screen 4 voicemail upload, Q13 company, Q14 evidence flag.
+ * CI-8.2 — Lane B suggest banner, pre-fill, confidence badge, voicemail promotion, polling.
  */
 export function Screen4CompanyForm({
   claimSubjectId,
   claimId,
   initialAnswers = null,
   initialCompanyName = null,
+  companyIdentified = false,
+  initialIntelSnapshot = null,
 }: Screen4CompanyFormProps) {
   const router = useRouter();
+  const { snapshot: intelSnapshot } = useQualifyCompanyIntelPoll(
+    claimSubjectId,
+    initialIntelSnapshot,
+  );
+  const appliedIntelSuggestionRef = useRef<string | null>(null);
+  const userEditedCompanyNameRef = useRef(false);
   const [hasVoicemail, setHasVoicemail] = useState<boolean | null>(() => {
     if (initialAnswers) {
       return initialAnswers.hasVoicemailForUpload;
@@ -114,6 +148,43 @@ export function Screen4CompanyForm({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isUploadingVoicemail, setIsUploadingVoicemail] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const intelStatus = intelSnapshot?.status ?? null;
+  const intelSuggestion = intelSnapshot?.company_name_suggested ?? null;
+  const hasIntelSuggestion =
+    intelStatus === "completed" && isSubstantiveCompanyName(intelSuggestion);
+  const confidenceTier = resolveCompanyIntelConfidenceTier(
+    intelSnapshot?.confidence,
+  );
+  const promoteVoicemailPrimary =
+    !companyIdentified &&
+    !hasIntelSuggestion &&
+    !voicemailIdentified &&
+    intelStatus !== "running";
+  const voicemailPrompt = promoteVoicemailPrimary
+    ? QUALIFY_VOICEMAIL_PRIMARY_PROMPT
+    : QUALIFY_VOICEMAIL_PROMPT;
+
+  useEffect(() => {
+    const suggested = intelSuggestion?.trim() ?? "";
+    if (
+      intelStatus !== "completed" ||
+      !isSubstantiveCompanyName(suggested) ||
+      userEditedCompanyNameRef.current
+    ) {
+      return;
+    }
+    if (appliedIntelSuggestionRef.current === suggested) {
+      return;
+    }
+    setCompanyName((current) => {
+      if (current.trim().length > 0) {
+        return current;
+      }
+      appliedIntelSuggestionRef.current = suggested;
+      return suggested;
+    });
+  }, [intelStatus, intelSuggestion]);
 
   const canSubmit =
     hasVoicemail !== null && hasAdditionalEvidence !== null;
@@ -315,21 +386,42 @@ export function Screen4CompanyForm({
 
   return (
     <form className="flex flex-col gap-6" onSubmit={(ev) => void handleSubmit(ev)}>
-      <YesNoField
-        legend={QUALIFY_VOICEMAIL_PROMPT}
-        value={hasVoicemail}
-        onChange={(value) => {
-          setHasVoicemail(value);
-          if (!value) {
-            setVoicemailFile(null);
-            setVoicemailError(null);
-            setTranscript("");
-            setVoicemailIdentified(false);
-            setCallbackPhone("");
-            setProductPitch("");
-          }
-        }}
-      />
+      {intelStatus === "running" ? (
+        <p
+          className="bg-muted text-muted-foreground rounded-md border px-3 py-2 text-sm"
+          role="status"
+          aria-live="polite"
+        >
+          {QUALIFY_INTEL_RESEARCHING_BANNER}
+        </p>
+      ) : null}
+
+      <div
+        className={
+          promoteVoicemailPrimary
+            ? "border-primary/40 bg-primary/5 flex flex-col gap-4 rounded-lg border p-4"
+            : "flex flex-col gap-4"
+        }
+      >
+        {promoteVoicemailPrimary ? (
+          <p className="text-muted-foreground text-sm">{QUALIFY_VOICEMAIL_PRIMARY_HINT}</p>
+        ) : null}
+        <YesNoField
+          legend={voicemailPrompt}
+          value={hasVoicemail}
+          promotePrimary={promoteVoicemailPrimary && hasVoicemail === null}
+          onChange={(value) => {
+            setHasVoicemail(value);
+            if (!value) {
+              setVoicemailFile(null);
+              setVoicemailError(null);
+              setTranscript("");
+              setVoicemailIdentified(false);
+              setCallbackPhone("");
+              setProductPitch("");
+            }
+          }}
+        />
 
       {hasVoicemail === true ? (
         <div className="flex flex-col gap-3">
@@ -342,7 +434,7 @@ export function Screen4CompanyForm({
           />
           <Button
             type="button"
-            variant="secondary"
+            variant={promoteVoicemailPrimary ? "default" : "secondary"}
             disabled={!voicemailFile || isUploadingVoicemail}
             onClick={() => void handleVoicemailUpload()}
           >
@@ -363,8 +455,22 @@ export function Screen4CompanyForm({
           ) : null}
         </div>
       ) : null}
+      </div>
 
       <div className="flex flex-col gap-2">
+        {hasIntelSuggestion ? (
+          <div className="flex flex-col gap-2">
+            <p className="text-sm font-medium">{QUALIFY_INTEL_SUGGEST_HEADING}</p>
+            {confidenceTier ? (
+              <Badge variant="secondary" className="w-fit">
+                {formatCompanyIntelConfidenceTierLabel(confidenceTier)}
+              </Badge>
+            ) : null}
+            {intelSnapshot?.reasoning ? (
+              <p className="text-muted-foreground text-xs">{intelSnapshot.reasoning}</p>
+            ) : null}
+          </div>
+        ) : null}
         <Label htmlFor="company-name">
           {hasVoicemail === false
             ? QUALIFY_Q13_PROMPT_NO_VOICEMAIL
@@ -373,7 +479,10 @@ export function Screen4CompanyForm({
         <Input
           id="company-name"
           value={companyName}
-          onChange={(e) => setCompanyName(e.target.value)}
+          onChange={(e) => {
+            userEditedCompanyNameRef.current = true;
+            setCompanyName(e.target.value);
+          }}
           placeholder="Company name (optional)"
         />
         <p className="text-muted-foreground text-xs">{QUALIFY_Q13_OPTIONAL_HINT}</p>

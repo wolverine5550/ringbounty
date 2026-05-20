@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-05-19 (Company ID — CI-8.2 qualify Screen 4 agent UX)
+
+### Qualify (Screen 4)
+
+- **CI-8.2.1** — “Researching this number…” banner while Lane B `company_intel_status` is `running` ([`screen-4-company-form.tsx`](src/components/qualify/screen-4-company-form.tsx)).
+- **CI-8.2.2** — On `completed` with `company_name_suggested`, pre-fills Q13 (when empty) and shows confidence tier badge ([`company-intel-confidence-tier.ts`](src/lib/qualify/company-intel-confidence-tier.ts)).
+- **CI-8.2.3** — When caller still unidentified, voicemail upload is the primary CTA (highlighted block + primary Yes/upload buttons).
+- **CI-8.2.4** — Polls [`GET /api/qualify/company-intel`](src/app/api/qualify/company-intel/route.ts) every 3s while status is `pending` or `running` ([`use-qualify-company-intel-poll.ts`](src/lib/qualify/use-qualify-company-intel-poll.ts)); SSR initial snapshot on step 4 ([`qualify/[claimSubjectId]/page.tsx`](src/app/(post-check)/qualify/[claimSubjectId]/page.tsx)).
+
 ## 2026-05-19 (Company ID — CI-8.1 qualify company-intel polling API)
 
 ### Qualify (Screen 4 backend)
