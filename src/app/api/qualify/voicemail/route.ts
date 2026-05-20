@@ -4,6 +4,7 @@ import {
   extractCompanyFromVoicemailTranscript,
   transcribeVoicemailWithOpenRouter,
 } from "@/lib/company/openrouter-voicemail";
+import { maybeEnqueueQualifyCallbackIntelligenceRun } from "@/lib/company-intelligence/enqueue-qualify-callback-intelligence-run";
 import { persistVoicemailCompanyIdentification } from "@/lib/company/persist-voicemail-company-identification";
 import { uploadVoicemailAudio } from "@/lib/company/upload-voicemail-evidence";
 import { loadQualifyPageContext } from "@/lib/qualify/load-qualify-context";
@@ -131,6 +132,18 @@ export async function POST(request: NextRequest) {
       console.error("POST /api/qualify/voicemail persist", e);
       return NextResponse.json({ error: "Internal error" }, { status: 500 });
     }
+  }
+
+  // CI-6.2.1 — research callback E.164 when voicemail extraction surfaces one.
+  if (extracted?.callbackPhone?.trim()) {
+    const admin = createAdminClient();
+    await maybeEnqueueQualifyCallbackIntelligenceRun({
+      admin,
+      claimSubjectId,
+      subjectPhoneNormalized: pageContext.subject.phone_number_normalized,
+      callbackPhoneRaw: extracted.callbackPhone,
+      trigger: "voicemail_upload",
+    });
   }
 
   return NextResponse.json({

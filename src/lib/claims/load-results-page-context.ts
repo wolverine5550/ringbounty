@@ -23,6 +23,8 @@ import type { DncRowForStrength } from "@/lib/scoring/build-strength-matrix-inpu
 import { ensureClaimScoringPersisted } from "@/lib/scoring/persist-claim-scoring";
 import { loadSolFlags } from "@/lib/scoring/load-sol-flags";
 import type { PersistedSolFlags } from "@/lib/scoring/sol-claim-events";
+import { loadCallbackResolvedFromBySubject } from "@/lib/company-intelligence/load-callback-resolved-from-by-subject";
+import { formatUsPhoneMask } from "@/lib/check/us-phone";
 import {
   buildDncSummary,
   buildSpamSummary,
@@ -42,6 +44,8 @@ export type ResultsSubjectView = {
   strength: StrengthMatrixStrength;
   strengthLabel: string;
   referral: CanReferToAttorneyResult;
+  /** CI-6.2.3 — set when Lane B identified company via callback child run. */
+  companyIdentifiedViaCallback: string | null;
 };
 
 export type ResultsPageContext = {
@@ -172,6 +176,10 @@ export async function loadResultsPageContext(
   }
 
   const subjectRows = subjectsResult.data ?? [];
+  const callbackResolvedBySubject = await loadCallbackResolvedFromBySubject(
+    supabase,
+    subjectRows.map((s) => s.id),
+  );
   const scoring = computeClaimScoring({
     subjects: subjectRows,
     dncBySubject,
@@ -194,6 +202,11 @@ export async function loadResultsPageContext(
       throw new Error("Subject row missing after scoring");
     }
 
+    const callbackE164 = callbackResolvedBySubject.get(subject.id) ?? null;
+    const callbackDisplay = callbackE164
+      ? formatUsPhoneMask(callbackE164)
+      : null;
+
     return {
       subjectId: subject.id,
       phoneNumber: subject.phone_number,
@@ -209,6 +222,7 @@ export async function loadResultsPageContext(
         company_identified: subject.company_identified,
         call_category: subject.call_category,
       }),
+      companyIdentifiedViaCallback: callbackDisplay,
     };
   });
 

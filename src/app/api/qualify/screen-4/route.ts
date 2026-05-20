@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 
+import { maybeEnqueueQualifyCallbackIntelligenceRun } from "@/lib/company-intelligence/enqueue-qualify-callback-intelligence-run";
 import { loadQualifyPageContext } from "@/lib/qualify/load-qualify-context";
 import {
   parseQualifyScreen4Body,
@@ -75,6 +76,21 @@ export async function POST(request: NextRequest) {
       answers: parsedAnswers,
       skipUserCompanyPersist,
     });
+
+    // CI-6.2.2 — callback from Screen 4 when caller company still unidentified.
+    if (
+      parsedAnswers.hasVoicemailForUpload &&
+      parsedAnswers.companyCallbackPhone
+    ) {
+      await maybeEnqueueQualifyCallbackIntelligenceRun({
+        admin,
+        claimSubjectId,
+        subjectPhoneNormalized: pageContext.subject.phone_number_normalized,
+        callbackPhoneRaw: parsedAnswers.companyCallbackPhone,
+        requireSubjectUnidentified: true,
+        trigger: "screen_4_save",
+      });
+    }
 
     return NextResponse.json({
       ok: true,

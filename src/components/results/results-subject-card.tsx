@@ -49,6 +49,11 @@ export function ResultsSubjectCard({
           subject.companyName !== subject.phoneNumber ? (
             <p className="text-muted-foreground text-xs">{subject.companyName}</p>
           ) : null}
+          {subject.companyIdentifiedViaCallback ? (
+            <p className="text-muted-foreground text-xs">
+              Identified via callback number {subject.companyIdentifiedViaCallback}
+            </p>
+          ) : null}
         </div>
         {!isCompact ? (
           <div className="flex flex-wrap gap-2">

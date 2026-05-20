@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-05-19 (Company ID — CI-8.1 qualify company-intel polling API)
+
+### Qualify (Screen 4 backend)
+
+- **CI-8.1.1** — [`GET /api/qualify/company-intel?claimSubjectId=`](src/app/api/qualify/company-intel/route.ts) returns Lane B suggest fields (`status`, `company_name_suggested`, `confidence`, `reasoning`) without raw scrape payloads — [`load-qualify-company-intel.ts`](src/lib/qualify/load-qualify-company-intel.ts).
+- **CI-8.1.2** — Same ownership gate as other qualify routes via [`loadQualifyPageContext`](src/lib/qualify/load-qualify-context.ts). Screen 4 UI polling → **CI-8.2**.
+
+## 2026-05-19 (Company ID — CI-6.2 qualify callback triggers)
+
+### Qualify + results
+
+- **CI-6.2.1** — After voicemail transcription extracts `callback_phone`, [`maybeEnqueueQualifyCallbackIntelligenceRun`](src/lib/company-intelligence/enqueue-qualify-callback-intelligence-run.ts) enqueues a callback child run ([`POST /api/qualify/voicemail`](src/app/api/qualify/voicemail/route.ts)).
+- **CI-6.2.2** — Screen 4 save with `company_callback_phone` enqueues when the screened caller is still unidentified ([`POST /api/qualify/screen-4`](src/app/api/qualify/screen-4/route.ts)).
+- **CI-6.2.3** — `/results` subject cards show “Identified via callback number …” from parent run `run_metadata.callback_resolved_from` ([`load-callback-resolved-from-by-subject.ts`](src/lib/company-intelligence/load-callback-resolved-from-by-subject.ts), [`results-subject-card.tsx`](src/components/results/results-subject-card.tsx)).
+
 ## 2026-05-19 (Company ID — CI-6.1 callback recursive lookup)
 
 ### Infra (follows parent agent completion)
