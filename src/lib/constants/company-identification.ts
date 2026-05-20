@@ -54,6 +54,13 @@ export const TCPA_LETTER_BLOCKED_COMPANY_UNIDENTIFIED =
 export const COMPANY_UNIDENTIFIED_CHECK_MESSAGE =
   "We could not automatically identify the company behind this number. You will need to name the caller during qualification before we can connect you with an attorney for this number. If you know who called, continue — you can enter the company name on the next steps.";
 
+/**
+ * CI-8.3.1 — Shown on `/check` after submit when Lane B was enqueued (non-blocking).
+ * Full progress and suggestions appear on qualify Screen 4 (CI-8.2).
+ */
+export const CHECK_COMPANY_INTEL_BACKGROUND_MESSAGE =
+  "We're researching the company in the background.";
+
 /** Returns true when attorney referral should stay blocked for missing company (§6.4.3 / §6.6). */
 export function isTcpaLetterBlockedForUnidentifiedCompany(input: {
   companyIdentified: boolean;

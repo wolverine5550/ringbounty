@@ -22,6 +22,7 @@ import { EXEMPT_TCPA_USER_MESSAGE } from "@/lib/constants/exempt-categories";
 import { FDCPA_DEBT_COLLECTION_USER_MESSAGE } from "@/lib/constants/fdcpa-debt-collection";
 import { FEDERAL_DNC_UNAVAILABLE_USER_MESSAGE } from "@/lib/constants/federal-dnc-unavailable";
 import {
+  CHECK_COMPANY_INTEL_BACKGROUND_MESSAGE,
   COMPANY_CNAM_HINT_PREFIX,
   COMPANY_UNIDENTIFIED_CHECK_MESSAGE,
 } from "@/lib/constants/company-identification";
@@ -31,6 +32,7 @@ import {
   NO_SPAM_HIT_HEADLINE,
   NO_SPAM_HIT_USER_MESSAGE,
 } from "@/lib/constants/no-spam-hit";
+import { hasCompanyIntelEnqueuedOnCheck } from "@/lib/check/check-company-intel-background";
 import {
   allNumberChecksExempt,
   buildCheckFunnelContinueTarget,
@@ -355,6 +357,11 @@ export function CheckFunnelClient({
     });
   }, [lastClaimId, lastClaimSubjectIds, numberChecks, requiresAccountWall]);
 
+  const showCompanyIntelBackgroundMessage = useMemo(
+    () => (numberChecks ? hasCompanyIntelEnqueuedOnCheck(numberChecks) : false),
+    [numberChecks],
+  );
+
   useEffect(() => {
     let cancelled = false;
     fetch("/api/claims/anonymous/status", { credentials: "include" })
@@ -676,6 +683,15 @@ export function CheckFunnelClient({
                 ))}
               </ul>
             </div>
+          ) : null}
+
+          {showCompanyIntelBackgroundMessage ? (
+            <p
+              className="rounded-md border border-border bg-muted/30 px-3 py-2 text-sm leading-relaxed"
+              role="status"
+            >
+              {CHECK_COMPANY_INTEL_BACKGROUND_MESSAGE}
+            </p>
           ) : null}
 
           {continueTarget && numberChecks && !allNumberChecksExempt(numberChecks) ? (

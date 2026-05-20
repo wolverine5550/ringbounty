@@ -87,4 +87,20 @@ describe("buildCheckFunnelContinueTarget", () => {
     });
     expect(target?.signInHref).toBeNull();
   });
+
+  it("does not wait on Lane B — continue target when company_intel_enqueued (CI-8.3.2)", () => {
+    const target = buildCheckFunnelContinueTarget({
+      claimId: "claim-1",
+      claimSubjectIds: ["sub-1"],
+      numberChecks: [
+        row({
+          phone_number_normalized: "+12125550199",
+          claim_subject_id: "sub-1",
+          company_intel_enqueued: true,
+        }),
+      ],
+      requiresAccountWall: false,
+    });
+    expect(target?.qualifyHref).toBe("/qualify/sub-1?claim=claim-1");
+  });
 });

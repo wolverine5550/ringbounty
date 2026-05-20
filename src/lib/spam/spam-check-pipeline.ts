@@ -98,6 +98,7 @@ export async function runSpamChecksForPhoneList(
       );
 
       let merged = null;
+      let companyIntelEnqueued = false;
       if (p.subjectId) {
         merged = await persistSpamCheckOutcome(admin, {
           claimId: params.claimId,
@@ -108,7 +109,7 @@ export async function runSpamChecksForPhoneList(
           anonymousSessionId: params.anonymousSessionId,
           env: params.env,
         });
-        await maybeEnqueueCompanyIntelligenceRun(admin, {
+        const intelEnqueue = await maybeEnqueueCompanyIntelligenceRun(admin, {
           claimSubjectId: p.subjectId,
           phoneNumberNormalized: p.phoneNumberNormalized,
           companyIdentified: merged.companyIdentified,
@@ -117,6 +118,7 @@ export async function runSpamChecksForPhoneList(
           clientIp: params.clientIp,
           env: params.env,
         });
+        companyIntelEnqueued = intelEnqueue.enqueued;
       }
 
       const providers = providerOutcomes.map(providerOutcomeToApi);
@@ -133,6 +135,7 @@ export async function runSpamChecksForPhoneList(
         claim_subject_id: p.subjectId,
         providers,
         had_provider_failure,
+        ...(companyIntelEnqueued ? { company_intel_enqueued: true } : {}),
         ...(merged
           ? {
               is_exempt: merged.isExempt,

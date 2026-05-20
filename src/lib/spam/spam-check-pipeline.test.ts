@@ -10,9 +10,16 @@ vi.mock("./persist-spam-check-outcome", () => ({
   persistSpamCheckOutcome: vi.fn().mockResolvedValue({
     isKnownSpammer: false,
     spamDbSource: "none",
-    isExempt: true,
-    callCategory: "debt_collector",
+    isExempt: false,
+    companyIdentified: false,
+    callCategory: "robocall",
   }),
+}));
+
+vi.mock("@/lib/company-intelligence/enqueue-company-intelligence-run", () => ({
+  maybeEnqueueCompanyIntelligenceRun: vi
+    .fn()
+    .mockResolvedValue({ enqueued: true, runId: "run-1" }),
 }));
 
 function providerReturning(result: SpamCheckResult): SpamCheckProvider {
@@ -55,9 +62,10 @@ describe("runSpamChecksForPhoneList", () => {
     expect(outcomes).toHaveLength(1);
     expect(outcomes[0]?.providers).toHaveLength(2);
     expect(outcomes[0]?.had_provider_failure).toBe(false);
-    expect(outcomes[0]?.is_exempt).toBe(true);
-    expect(outcomes[0]?.call_category).toBe("debt_collector");
+    expect(outcomes[0]?.is_exempt).toBe(false);
+    expect(outcomes[0]?.call_category).toBe("robocall");
     expect(outcomes[0]?.is_known_spammer).toBe(false);
-    expect(outcomes[0]?.is_debt_collection).toBe(true);
+    expect(outcomes[0]?.is_debt_collection).toBe(false);
+    expect(outcomes[0]?.company_intel_enqueued).toBe(true);
   });
 });

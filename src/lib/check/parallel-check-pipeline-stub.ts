@@ -32,6 +32,8 @@ export type NumberCheckSummary = {
   /** Phase 6.4 — spam merge resolved a company name for this caller number. */
   company_identified?: boolean;
   company_name?: string | null;
+  /** CI-8.3.1 — Lane B agent row inserted after Lane A when eligible (does not block qualify). */
+  company_intel_enqueued?: boolean;
   /** Twilio CNAM / Whitepages — not letter-grade identification (§6.4). */
   company_name_hint?: string | null;
   /** Phase 6.5 — OpenCorporates registered agent when lookup ran. */

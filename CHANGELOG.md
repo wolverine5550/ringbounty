@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-05-19 (Company ID — CI-8.3 check funnel background research copy)
+
+### Check (`/check`)
+
+- **CI-8.3.1** — After submit, when Lane B is enqueued, shows “We're researching the company in the background” ([`check-funnel-client.tsx`](src/components/check/check-funnel-client.tsx)); `number_checks[].company_intel_enqueued` from [`spam-check-pipeline.ts`](src/lib/spam/spam-check-pipeline.ts).
+- **CI-8.3.2** — “Continue to questions” remains available immediately; qualify is not gated on agent completion ([`check-funnel-continue.ts`](src/lib/check/check-funnel-continue.ts)).
+
 ## 2026-05-19 (Company ID — CI-8.2 qualify Screen 4 agent UX)
 
 ### Qualify (Screen 4)
